@@ -1,0 +1,243 @@
+/* Layout follows available space; information stays visible at every width. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.workspace, .main, .panel, .modal, .modal-body, .field, .top-actions,
+.page-heading > *, .panel-head > *, .form-grid > *, .detail-grid > * { min-width: 0; }
+img { max-width: 100%; }
+.page-title, .item-detail-title, .page-subtitle, .notice, .detail-pair,
+.stat-value, .supplier-card, .recipe-card, .store-summary, .modal,
+.settings-row, .footer-note { overflow-wrap: anywhere; }
+.stat-value { white-space: normal; }
+.page-heading .actions, .panel-head, .modal-foot, .pagination,
+.history-pagination, .settings-row, .footer-note, .chart-bottom,
+.cost-section-heading, .cost-location-heading { flex-wrap: wrap; }
+.btn { max-width: 100%; white-space: normal; text-align: center; }
+.tabs, .prep-navigation, .recipe-detail-tabs, .history-tabs {
+  flex-wrap: wrap; overflow: visible; min-width: 0;
+}
+.tab, .prep-navigation button, .recipe-detail-tabs button, .history-tab {
+  white-space: normal; overflow-wrap: anywhere;
+}
+.input-wrap { min-width: 0; max-width: 100%; }
+.input-wrap input { min-width: 0; width: 100%; }
+select, input, textarea { max-width: 100%; }
+.prep-filters > *, .prep-route > *, .purchasing-history-controls > * { min-width: 0; max-width: 100%; }
+.status, .item-sku, .prep-variation { white-space: normal; overflow-wrap: anywhere; }
+.name-cell { min-width: 0; }
+.modal-head, .modal-foot { flex-shrink: 0; }
+.modal-body { overscroll-behavior: contain; }
+.modal-head h2 { overflow-wrap: anywhere; }
+.modal-head .icon-btn { flex-shrink: 0; }
+.navigation-close, .navigation-backdrop { display: none; }
+.responsive-table-container { container-type: inline-size; min-width: 0; max-width: 100%; }
+.responsive-table { width: 100%; min-width: 0 !important; }
+.responsive-table th, .responsive-table td { overflow-wrap: anywhere; white-space: normal; }
+.responsive-table td[data-column-label]::before { display: none; }
+
+/* 16px editable controls prevent iOS focus zoom without disabling pinch zoom. */
+@media (max-width: 1024px), (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea,
+  .location-search input, .hd-calendar-time input {
+    font-size: 16px !important;
+  }
+  .btn, .btn.sm, .pagination .btn, .icon-btn, .row-action, .avatar,
+  .tab, .history-tab, .chip, .location-trigger, .hd-date-trigger,
+  .login-eye, .search-trigger { min-height: 44px; }
+  .icon-btn, .row-action, .avatar, .login-eye { min-width: 44px; }
+  .nav-item { min-height: 44px; font-size: 14px; }
+  .location-option { min-height: 48px; }
+  .field input, .field select, .filter-select, .line-item input,
+  .line-item select, .count-input, #count-rows select { min-height: 44px; }
+}
+
+@media (max-width: 1024px) {
+  :root { --sidebar: 0px; }
+  .sidebar {
+    width: min(310px, calc(100vw - 32px)); transform: translateX(-100%);
+    visibility: hidden; transition: transform .2s, visibility .2s;
+    z-index: 61; padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  .sidebar.open { transform: none; visibility: visible; box-shadow: 10px 0 35px #10170f33; }
+  .navigation-close { display: inline-flex; position: absolute; right: 8px; top: 10px; color: white; }
+  .sidebar .brand { padding-top: 26px; }
+  .navigation-backdrop:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 60; background: #10170f66; border: 0; width: 100%; height: 100%; }
+  .mobile-menu { display: inline-flex; flex-shrink: 0; }
+  .topbar { min-height: 68px; height: auto; padding: 8px 16px; gap: 10px; }
+  .top-actions { flex: 1; justify-content: flex-end; gap: 6px; }
+  .topbar .breadcrumb { display: none; }
+  .location-trigger { font-size: 14px; min-width: 0; max-width: 100%; }
+  .location-trigger strong { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+  .main { padding: 24px; }
+  .attention-panel { display: block; }
+  .dashboard-grid, .operations-grid { grid-template-columns: minmax(0, 1fr); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-heading { align-items: flex-start; }
+  .page-heading .actions { justify-content: flex-start; }
+  .table-wrap { overscroll-behavior-x: none; }
+  .prep-navigation button, .recipe-detail-tabs button { min-height: 44px; }
+}
+
+@media (max-width: 700px) {
+  .main { padding: 22px 16px max(28px, env(safe-area-inset-bottom)); }
+  .topbar { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+  .topbar .search-trigger { display: inline-flex; padding: 8px; }
+  .topbar .search-trigger span, .topbar .search-trigger kbd { display: none; }
+  .top-actions { gap: 2px; }
+  .location-trigger { gap: 3px; font-size: 13px; flex: 1; justify-content: center; }
+  .location-trigger svg { width: 12px; }
+  .page-subtitle { max-width: none; font-size: 13px; }
+  .page-heading .actions { gap: 8px; }
+  .page-heading .actions > .btn { flex: 1 1 auto; }
+  .btn, .btn.sm, .pagination .btn { font-size: 12px; }
+  .stats { gap: 10px; }
+  .stat-card, .stats.compact .stat-card { padding: 14px; }
+  .stat-value, .stats.compact .stat-value { font-size: 24px; letter-spacing: -.8px; }
+  .stat-top { font-size: 11px; line-height: 1.5; align-items: flex-start; }
+  .stat-bottom { font-size: 11px; line-height: 1.5; }
+  .stat-icon { flex-shrink: 0; }
+  .panel-head { padding: 16px; gap: 12px; }
+  .panel-head p, .prep-help, .prep-environment, .table-count { font-size: 12px; }
+  .panel-head h2 { font-size: 16px; }
+  .tabs, .prep-navigation, .recipe-detail-tabs { gap: 4px; padding-left: 0; padding-right: 0; }
+  .tab, .prep-navigation button, .recipe-detail-tabs button { flex: 1 1 auto; padding: 12px 10px; font-size: 12px; }
+  .history-tab { flex: 1 1 90px; font-size: 12px; }
+  .prep-filters, .prep-route, .purchasing-history-controls { gap: 12px; padding: 14px; }
+  .prep-filters label, .prep-route label { font-size: 12px; width: 100%; }
+  .prep-filters .prep-select { min-width: 0; }
+  .prep-filters input, .prep-route input, .prep-filters select { width: 100%; }
+  .purchasing-history-controls .input-wrap { min-width: 0; width: 100%; flex-basis: 100%; }
+  .purchasing-page-size { flex-wrap: wrap; max-width: 100%; }
+  .pagination { padding: 14px; gap: 12px; }
+  .pagination .pages { flex-wrap: wrap; align-items: center; }
+  .history-pagination { gap: 12px; }
+  .overlay { padding: 0; top: var(--visible-top, 0px); bottom: auto; height: var(--visible-height, 100dvh); }
+  .modal, .modal.wide, .modal.catalog-item-modal, .modal.operation-modal, .drawer .modal {
+    width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0;
+  }
+  .modal-head { padding: max(16px, env(safe-area-inset-top)) 16px 16px; gap: 12px; }
+  #count-rows .table-wrap { max-height: none !important; }
+  .modal-body, .catalog-item-modal .modal-body { padding: 16px; flex: 1; }
+  .modal-foot { padding: 12px 16px max(12px, env(safe-area-inset-bottom)); gap: 8px; }
+  .modal-foot .meta, .catalog-save-note { flex-basis: 100%; margin: 0; }
+  .modal-foot .btn { flex: 1 1 auto; }
+  .form-grid, .catalog-section .form-grid, .operation-modal .operation-detail-grid,
+  .operation-modal .detail-grid, .recipe-metadata { grid-template-columns: minmax(0, 1fr); }
+  .line-item { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+  .line-item > select:first-child { grid-column: 1 / -1; }
+  .line-item .icon-btn { width: 44px; }
+  .recipe-photo { flex-wrap: wrap; }
+  .recipe-photo > div { min-width: 0; }
+  .recipe-steps li { padding: 12px; gap: 10px; }
+  .recipe-steps li > div { min-width: 0; }
+  .catalog-section { padding: 14px; }
+  .catalog-conversion-row { grid-template-columns: minmax(0,1fr) 10px minmax(65px,1fr) minmax(0,1fr) 44px; gap: 5px; }
+  .catalog-conversion-row > .icon-btn { width: 44px; height: 44px; }
+  .catalog-add-conversion { flex-wrap: wrap; }
+  .catalog-add-conversion select { flex-basis: 100%; }
+  .route-card { display: block; padding: 16px; }
+  .route-stats { margin-top: 16px; }
+  .route-note { margin-top: 12px; }
+  .route-card .btn { margin-top: 16px; }
+  .report-bars { padding: 4px 16px 20px; }
+  .report-bar-row { grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+  .report-bar-track { grid-row: 2; grid-column: 1/-1; }
+  .footer-note { gap: 12px; line-height: 1.6; }
+  .footer-note span:last-child { display: flex; }
+  .login-content { padding: 24px 20px; }
+  .login-brand, .login-footer, .login-demo { flex-wrap: wrap; }
+  .boot { padding: 24px; height: auto; min-height: 100dvh; overflow-wrap: anywhere; }
+}
+
+/* On phones, presets wrap above the calendar instead of squeezing seven days. */
+@media (max-width: 600px) {
+  .hd-calendar { grid-template-columns: minmax(0,1fr); width: 390px; }
+  .hd-calendar-presets { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3px; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; }
+  .hd-calendar-presets button { min-height: 40px; font-size: 11px; text-align: center; }
+  .hd-calendar-main { padding: 10px; }
+  .hd-calendar-header .hd-calendar-title { font-size: 17px; }
+  .hd-calendar-days button { min-height: 40px; height: 40px; font-size: 13px; }
+  .hd-calendar-header .hd-calendar-arrow, .hd-calendar-modes button, .hd-calendar footer button { min-height: 40px; height: auto; }
+  .hd-calendar footer { gap: 8px; }
+  .hd-calendar footer button { font-size: 12px; }
+  .hd-calendar-selection small { font-size: 10px; }
+  .hd-calendar-selection > button { font-size: 12px; }
+}
+@media (max-width: 360px) {
+  .main { padding-left: 12px; padding-right: 12px; }
+  .stats { grid-template-columns: minmax(0,1fr); }
+  .topbar { gap: 2px; padding-left: 6px; padding-right: 6px; }
+  .top-actions { gap: 0; }
+  .catalog-conversion-row { grid-template-columns: minmax(0,1fr) 10px minmax(65px,1fr); }
+  .catalog-conversion-row > :nth-child(4) { grid-column: 1 / 3; }
+}
+
+/* Switch each table according to its own available width, including drawers. */
+@container (max-width: 720px) {
+
+.responsive-table { display: block; table-layout: auto; }
+.responsive-table > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.responsive-table > thead.has-table-controls { position: static; width: auto; height: auto; overflow: visible; clip-path: none; display: block; padding: 10px; border-bottom: 1px solid var(--line); }
+.responsive-table > thead.has-table-controls > tr { display: flex; flex-wrap: wrap; gap: 8px; }
+.responsive-table > thead.has-table-controls th:not(.has-table-control) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; }
+.responsive-table > thead .has-table-control { display: block; border: 0; padding: 0; }
+.responsive-table > thead button { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; }
+.responsive-table > tbody { display: grid; gap: 12px; padding: 12px; }
+.responsive-table > tbody > tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.responsive-table > tbody > tr > td { display: block; min-width: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; border: 0; text-align: left !important; font-size: 13px; line-height: 1.6; }
+.responsive-table > tbody > tr > td:first-child, .responsive-table .responsive-cell-wide { grid-column: 1/-1; }
+.responsive-table td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: #737d6a; letter-spacing: .3px; margin-bottom: 5px; }
+.responsive-table td strong, .responsive-table .table-name-button { font-size: 13px; }
+.responsive-table td small { font-size: 11px; max-width: none; }
+.responsive-table td input:not([type=checkbox]), .responsive-table td select { width: 100%; min-width: 0; max-width: 100%; }
+.responsive-table td .name-cell { min-width: 0; }
+}
+@container (max-width: 1100px) {
+
+.responsive-table-wide { display: block; table-layout: auto; }
+.responsive-table-wide > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.responsive-table-wide > thead.has-table-controls { position: static; width: auto; height: auto; overflow: visible; clip-path: none; display: block; padding: 10px; border-bottom: 1px solid var(--line); }
+.responsive-table-wide > thead.has-table-controls > tr { display: flex; flex-wrap: wrap; gap: 8px; }
+.responsive-table-wide > thead.has-table-controls th:not(.has-table-control) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; }
+.responsive-table-wide > thead .has-table-control { display: block; border: 0; padding: 0; }
+.responsive-table-wide > thead button { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; }
+.responsive-table-wide > tbody { display: grid; gap: 12px; padding: 12px; }
+.responsive-table-wide > tbody > tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.responsive-table-wide > tbody > tr > td { display: block; min-width: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; border: 0; text-align: left !important; font-size: 13px; line-height: 1.6; }
+.responsive-table-wide > tbody > tr > td:first-child, .responsive-table-wide .responsive-cell-wide { grid-column: 1/-1; }
+.responsive-table-wide td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: #737d6a; letter-spacing: .3px; margin-bottom: 5px; }
+.responsive-table-wide td strong, .responsive-table-wide .table-name-button { font-size: 13px; }
+.responsive-table-wide td small { font-size: 11px; max-width: none; }
+.responsive-table-wide td input:not([type=checkbox]), .responsive-table-wide td select { width: 100%; min-width: 0; max-width: 100%; }
+.responsive-table-wide td .name-cell { min-width: 0; }
+}
+@container (max-width: 1350px) {
+
+.responsive-table-extra-wide { display: block; table-layout: auto; }
+.responsive-table-extra-wide > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.responsive-table-extra-wide > thead.has-table-controls { position: static; width: auto; height: auto; overflow: visible; clip-path: none; display: block; padding: 10px; border-bottom: 1px solid var(--line); }
+.responsive-table-extra-wide > thead.has-table-controls > tr { display: flex; flex-wrap: wrap; gap: 8px; }
+.responsive-table-extra-wide > thead.has-table-controls th:not(.has-table-control) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; }
+.responsive-table-extra-wide > thead .has-table-control { display: block; border: 0; padding: 0; }
+.responsive-table-extra-wide > thead button { min-height: 44px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; }
+.responsive-table-extra-wide > tbody { display: grid; gap: 12px; padding: 12px; }
+.responsive-table-extra-wide > tbody > tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.responsive-table-extra-wide > tbody > tr > td { display: block; min-width: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; border: 0; text-align: left !important; font-size: 13px; line-height: 1.6; }
+.responsive-table-extra-wide > tbody > tr > td:first-child, .responsive-table-extra-wide .responsive-cell-wide { grid-column: 1/-1; }
+.responsive-table-extra-wide td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: #737d6a; letter-spacing: .3px; margin-bottom: 5px; }
+.responsive-table-extra-wide td strong, .responsive-table-extra-wide .table-name-button { font-size: 13px; }
+.responsive-table-extra-wide td small { font-size: 11px; max-width: none; }
+.responsive-table-extra-wide td input:not([type=checkbox]), .responsive-table-extra-wide td select { width: 100%; min-width: 0; max-width: 100%; }
+.responsive-table-extra-wide td .name-cell { min-width: 0; }
+}
+@container (max-width: 340px) { .responsive-table > tbody > tr { grid-template-columns: minmax(0,1fr); padding: 12px; } }
+@media print { .navigation-backdrop, .navigation-close { display: none !important; } }
+
+@media (max-width: 1024px) and (max-height: 500px) {
+  .overlay { padding: 0; top: var(--visible-top, 0px); bottom: auto; height: var(--visible-height, 100dvh); }
+  .modal, .modal.wide, .modal.catalog-item-modal, .modal.operation-modal, .drawer .modal { width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+  .modal-head { padding: 10px 16px; }
+  .modal-body { padding: 16px; flex: 1; }
+  .modal-foot { padding: 8px 16px; }
+  .login-page { grid-template-columns: minmax(0,1fr); }
+  .login-visual { display: none; }
+}
