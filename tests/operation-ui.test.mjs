@@ -8,7 +8,7 @@ function render(method,record){
   let modal;
   const ui=createOperationUI({
     e,money,date,preciseNumber,
-    status:value=>'<span>'+e(value??'Não informado')+'</span>',
+    status:value=>'<span>'+e(value??'Not specified')+'</span>',
     icon:()=>'<i></i>',
     pair:(label,value)=>'<div><small>'+e(label)+'</small><strong>'+value+'</strong></div>',
     notice:html=>'<aside>'+html+'</aside>',
@@ -25,7 +25,7 @@ test('invoice distinguishes stored zero from missing values and keeps negative c
   assert.match(modal.body,/\$0\.00/);
   assert.match(modal.body,/-\$2\.00/);
   assert.match(modal.body,/<td>0<\/td>/);
-  assert.match(modal.body,/Subtotal<\/small><strong><span class="muted">Não informado/);
+  assert.match(modal.body,/Subtotal<\/small><strong><span class="muted">Not specified/);
   assert.equal(modal.options.wide,true);
   assert.equal(modal.options.className,'operation-modal');
 });
@@ -34,42 +34,42 @@ test('untrusted invoice metadata is escaped in title, notes, lines, documents an
   const modal=render('showInvoice',{...base,number:value,supplierName:value,notes:value,lines:[{name:value,sku:value,quantity:1}],documents:[{fileName:value,storagePath:value,mimeType:value,fileExists:false}],timeline:[{at:'2026-10-04',text:value}]});
   assert.doesNotMatch(modal.title+modal.body,/<img/);
   assert.match(modal.body,/&lt;img/);
-  assert.match(modal.body,/Arquivo não encontrado/);
+  assert.match(modal.body,/File not found/);
   assert.doesNotMatch(modal.body,/href=|accessUrl=/);
 });
 test('paid invoice does not invent a payment timestamp or a received state',()=>{
   const modal=render('showInvoice',{...base,status:'paid',updatedAt:'2026-10-04T13:00:00Z'});
-  assert.match(modal.body,/Data, método e valor do pagamento não estão cadastrados separadamente/);
-  assert.match(modal.body,/Não há recebimento explicitamente vinculado/);
-  assert.doesNotMatch(modal.body,/Pagamento em 04/);
+  assert.match(modal.body,/Payment date, method, and amount are not recorded separately/);
+  assert.match(modal.body,/No receipt is explicitly linked/);
+  assert.doesNotMatch(modal.body,/Payment on Oct 04/);
 });
 test('transfer preserves zero in-transit and absent approval independently',()=>{
   const modal=render('showTransfer',{...base,status:'completed',fromLocationName:'A',toLocationName:'B',lines:[{name:'Item',requestedQuantity:2,approvedQuantity:null,dispatchedQuantity:2,receivedQuantity:2,inTransitQuantity:0,remainingToDispatch:0,uom:'bag'}]});
   assert.match(modal.body,/<td>0<\/td><td>0<\/td>/);
-  assert.match(modal.body,/<td><span class="muted">Não informado<\/span><\/td>/);
+  assert.match(modal.body,/<td><span class="muted">Not specified<\/span><\/td>/);
 });
 test('empty order keeps its stored status and does not fabricate lines or receipt evidence',()=>{
   const modal=render('showOrder',{...base,status:'ordered',lineCount:0,total:null,receiptEvidence:{computedStatus:'no_receipt_recorded',orderLineCount:0,comparableLineCount:0}});
-  assert.match(modal.body,/Não há linhas de itens cadastradas/);
-  assert.match(modal.body,/Sem recebimento vinculado/);
+  assert.match(modal.body,/This record has no item lines/);
+  assert.match(modal.body,/No linked receipt/);
   assert.doesNotMatch(modal.body,/\$0\.00/);
 });
 const data=JSON.parse(readFileSync(new URL('../public/data/operations-detail.json',import.meta.url),'utf8'));
 test('historical receipt confirms document without inventing item quantities or a stock entry',()=>{
   const order=data.orders.find(x=>x.receiptEvidence?.computedStatus==='confirmed_received'&&!x.receipts[0].confirmedInvoiceLines.length);
   const modal=render('showOrder',order);
-  assert.match(modal.body,/Quantidades recebidas — confirmação do usuário/);
-  assert.match(modal.body,/sem movimentação de estoque/);
-  assert.match(modal.body,/nenhum número foi estimado/);
+  assert.match(modal.body,/Received quantities — user confirmation/);
+  assert.match(modal.body,/without an inventory movement/);
+  assert.match(modal.body,/no quantities were estimated/);
   assert.equal(order.receipts[0].lines.length,0);
   assert.equal(order.receipts[0].historicalConfirmation.inventoryMovement,false);
 });
 test('historical receipt displays recorded invoice quantities and distinguishes missing UOM',()=>{
   const order=data.orders.find(x=>x.receiptEvidence?.computedStatus==='confirmed_received'&&x.receipts[0].confirmedInvoiceLines.some(l=>!l.uom));
   const modal=render('showOrder',order);
-  assert.match(modal.body,/Quantidade recebida conforme invoice/);
-  assert.match(modal.body,/não representam uma nova contagem física/);
-  assert.match(modal.body,/Não informado/);
+  assert.match(modal.body,/Quantity received per invoice/);
+  assert.match(modal.body,/do not represent a new physical count/);
+  assert.match(modal.body,/Not specified/);
   for(const r of order.receipts) assert.equal(r.receivedAt.slice(0,10),r.historicalConfirmation.invoiceDate);
 });
 test('real operation export preserves all declared records and line coverage',()=>{
@@ -93,7 +93,7 @@ test('documented location corrections stay linked but separate from current-loca
   for(const t of invoice.historicalCorrections)totals.set(t.inventoryItemId,(totals.get(t.inventoryItemId)||0)+t.quantityBase);
   assert.ok([...totals.values()].every(n=>Math.abs(n)<1e-8));
   const modal=render('showInvoice',invoice);
-  assert.match(modal.body,/Movimentações históricas corrigidas \(32\)/);
+  assert.match(modal.body,/Corrected historical movements \(32\)/);
   assert.match(modal.body,/estornadas\/corrigidas/);
 });
 test('all real operation detail views render without undefined or NaN',()=>{

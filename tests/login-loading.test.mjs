@@ -20,7 +20,7 @@ test('failed calculation is reported independently and retried with backoff',asy
 });
 test('login shows loading progress and prevents duplicate submissions',async()=>{
  const oldFetch=globalThis.fetch,oldDocument=globalThis.document;let finish,count=0;const feedback={};
- const button={disabled:false,innerHTML:'Entrar'},form={id:'login-form',reportValidity:()=>true,dataset:{loginMode:'login'},email:{value:'test@example.invalid'},password:{value:'test-only'},querySelector:()=>button};
+ const button={disabled:false,innerHTML:'Sign in'},form={id:'login-form',reportValidity:()=>true,dataset:{loginMode:'login'},email:{value:'test@example.invalid'},password:{value:'test-only'},querySelector:()=>button};
  globalThis.document={querySelector:()=>feedback};globalThis.fetch=async()=>{count++;return {ok:true,json:async()=>({user:{email:'test@example.invalid'}})};};
- try{const ui=createLoginUI({onLogin:()=>new Promise(r=>finish=r)});const waiting=ui.submit(form);await new Promise(r=>setImmediate(r));assert.equal(button.textContent,'Abrindo operação…');assert.match(feedback.textContent,/Acesso confirmado/);await ui.submit(form);assert.equal(count,1);finish();await waiting;assert.equal(button.disabled,false);}finally{globalThis.fetch=oldFetch;globalThis.document=oldDocument;}
+ try{const ui=createLoginUI({onLogin:()=>new Promise(r=>finish=r)});const waiting=ui.submit(form);await new Promise(r=>setImmediate(r));assert.equal(button.textContent,'Opening your workspace…');assert.match(feedback.textContent,/You’re signed in/);await ui.submit(form);assert.equal(count,1);finish();await waiting;assert.equal(button.disabled,false);}finally{globalThis.fetch=oldFetch;globalThis.document=oldDocument;}
 });

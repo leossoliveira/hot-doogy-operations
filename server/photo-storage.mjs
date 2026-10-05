@@ -42,23 +42,23 @@ export function createPhotoHandler(storage,catalog,port){
  const token=randomBytes(32).toString('hex'),hosts=new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
  const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'});res.end(JSON.stringify(data));};
  return async(req,res,url)=>{
-  if(!hosts.has(req.headers.host)||req.headers['sec-fetch-site']==='cross-site')return json(res,403,{error:'Acesso permitido somente pela aplicação local.'});
+  if(!hosts.has(req.headers.host)||req.headers['sec-fetch-site']==='cross-site')return json(res,403,{error:"Access is allowed only through the application."});
   const origin=`http://${req.headers.host}`;
-  if(req.headers.origin&&req.headers.origin!==origin)return json(res,403,{error:'Origem não permitida.'});
-  if(!storage)return json(res,503,{error:'Storage não configurado no servidor. A foto não foi salva.'});
+  if(req.headers.origin&&req.headers.origin!==origin)return json(res,403,{error:"Origin not allowed."});
+  if(!storage)return json(res,503,{error:"Storage is not configured on the server. The photo was not saved."});
   try{
    if(url.pathname==='/api/photos'&&req.method==='GET')return json(res,200,{...(await storage.list()),token});
    const match=url.pathname.match(/^\/api\/photos\/(items|recipes)\/([0-9a-f-]{36})$/);
-   if(!match||!catalog[match[1]].has(match[2]))return json(res,404,{error:'Item não encontrado.'});
+   if(!match||!catalog[match[1]].has(match[2]))return json(res,404,{error:"Item not found."});
    const [,kind,id]=match;
-   if(req.method==='GET'){const body=await storage.read(kind,id);if(!body)return json(res,404,{error:'Foto não encontrada.'});res.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'});return res.end(body);}
-   if(!['PUT','DELETE'].includes(req.method))return json(res,405,{error:'Método não permitido.'});
-   if(req.headers.origin!==origin||req.headers['x-photo-token']!==token)return json(res,403,{error:'Recarregue a página para autorizar o upload.'});
+   if(req.method==='GET'){const body=await storage.read(kind,id);if(!body)return json(res,404,{error:"Photo not found."});res.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin'});return res.end(body);}
+   if(!['PUT','DELETE'].includes(req.method))return json(res,405,{error:"Method not allowed."});
+   if(req.headers.origin!==origin||req.headers['x-photo-token']!==token)return json(res,403,{error:"Reload the page to authorize the upload."});
    if(req.method==='DELETE'){await storage.remove(kind,id);return json(res,200,{removed:true});}
-   if(req.headers['content-type']!=='image/jpeg')return json(res,415,{error:'Formato de imagem inválido.'});
-   let length=0;const chunks=[];for await(const chunk of req){length+=chunk.length;if(length>5*1024*1024)return json(res,413,{error:'A foto excede 5 MB.'});chunks.push(chunk);}
-   const body=Buffer.concat(chunks);if(body.length<4||body[0]!==255||body[1]!==216||body[2]!==255)return json(res,415,{error:'Imagem JPEG inválida.'});
+   if(req.headers['content-type']!=='image/jpeg')return json(res,415,{error:"Invalid image format."});
+   let length=0;const chunks=[];for await(const chunk of req){length+=chunk.length;if(length>5*1024*1024)return json(res,413,{error:"Photo exceeds 5 MB."});chunks.push(chunk);}
+   const body=Buffer.concat(chunks);if(body.length<4||body[0]!==255||body[1]!==216||body[2]!==255)return json(res,415,{error:"Invalid JPEG image."});
    return json(res,200,await storage.save(kind,id,body));
-  }catch{return json(res,502,{error:'Não foi possível concluir a operação no Storage. Tente novamente; a foto não foi confirmada.'});}
+  }catch{return json(res,502,{error:"Unable to complete the storage operation. Try again; the photo was not verified."});}
  };
 }

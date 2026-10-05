@@ -1,4 +1,4 @@
-const statuses={draft:'Draft',approved:'Approved',dispatched:'Dispatched',in_progress:'In progress',completed:'Completed',received:'Received',cancelled:'Cancelled'};
+const statuses={draft:'Draft',approved:'Approved',dispatched:'Dispatched',in_progress:'In progress',completed:'Completed',received:'Received',cancelled:"Canceled"};
 const present=value=>value!==null&&value!==undefined&&value!=='';
 export const transferReference=x=>String(x.number||String(x.id||'').slice(0,7).toUpperCase()||'Transfer');
 export const transferFilename=x=>`Hot-Doogy-Transfer-${transferReference(x).replace(/[^a-z0-9_-]/gi,'-')}.pdf`;
@@ -13,7 +13,7 @@ function formatDate(value,withTime=false){
   if(!value)return 'Not provided';
   const date=new Date(String(value).length===10?value+'T12:00:00Z':value);
   if(!Number.isFinite(date.getTime()))return 'Not provided';
-  return new Intl.DateTimeFormat('en-GB',{timeZone:'America/New_York',day:'2-digit',month:'short',year:'numeric',...(withTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(date);
+  return new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'short',year:'numeric',...(withTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(date);
 }
 
 // Generated in the browser; no upload, database write or inventory movement.
@@ -21,7 +21,7 @@ export async function createTransferPdf(transfer,{logoBytes,items=[],locations=[
   const {PDFDocument,StandardFonts,rgb}=await import('./vendor/pdf-lib.esm.min.js');
   const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   const logo=await pdf.embedPng(logoBytes);
-  const W=595.28,H=841.89,M=36,bottom=H-43,width=W-M*2;
+  const W=612,H=792,M=36,bottom=H-43,width=W-M*2;
   const ink=rgb(.13,.14,.13),gray=rgb(.36,.38,.37),lineColor=rgb(.81,.82,.81),yellow=rgb(.996,.808,.027);
   let page,y;
   const printable=value=>Array.from(String(value??'').normalize('NFC')).map(c=>{if(c==='\n')return c;if(c==='\t')return ' ';try{font.encodeText(c);return c;}catch{return '?';}}).join('');
@@ -83,7 +83,7 @@ export async function createTransferPdf(transfer,{logoBytes,items=[],locations=[
   y+=6;
   callout('Delivery Date','Please deliver on '+formatDate(transfer.date||transfer.neededOn),gray);
   if(transfer.notes)callout('Note',transfer.notes,yellow);
-  const widths=[62,55,66,265,75.28],headers=['Code','Quantity','UOM','Product Description','Brand'];
+  const widths=[62,55,66,280,77],headers=['Code','Quantity','UOM','Product Description','Brand'];
   function tableHeader(){
     ensure(46);draw('Order Items',M,y,12,font,ink);y+=19;
     let x=M;
@@ -120,7 +120,7 @@ export async function createTransferPdf(transfer,{logoBytes,items=[],locations=[
 
 export async function downloadTransferPdf(transfer,options={}){
   const response=await fetch('/brand/hot-doogy-print.png');
-  if(!response.ok)throw Error('Logo indisponível.');
+  if(!response.ok)throw Error("Logo unavailable.");
   const bytes=await createTransferPdf(transfer,{...options,logoBytes:await response.arrayBuffer()});
   const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
   const a=document.createElement('a');a.href=url;a.download=transferFilename(transfer);

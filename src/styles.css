@@ -31,3 +31,6 @@
 .period-date-grid{display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:18px 16px}.period-date-grid input[readonly]{background:#f6f7f2;color:#667358;cursor:default}.period-date-grid .field{min-width:0}@media(max-width:480px){.period-date-grid{grid-template-columns:minmax(0,1fr) 105px;gap:16px 10px}}
 
 .prep-sort{display:inline-flex;align-items:center;gap:12px;padding:5px 0;border:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;cursor:pointer}.prep-sort span{font-size:10px;color:#647151}.prep-sort:hover{color:#303d25}.prep-sort:focus-visible{outline:2px solid #d5af08;outline-offset:4px;border-radius:3px}
+
+@page{size:letter;margin:0.5in}
+#count-rows select{max-width:180px;padding:8px;border:1px solid #dce3d2;border-radius:7px;background:#fff;color:#334326;font:inherit}

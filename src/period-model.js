@@ -44,10 +44,10 @@ export function parseLocalDateTime(value) {
 }
 
 export function validatePeriodRange(range) {
-  if (!range?.start || !range?.end) return 'Escolha a data e a hora de início e de fim.';
+  if (!range?.start || !range?.end) return "Choose a start and end date and time.";
   const start = parseLocalDateTime(range.start), end = parseLocalDateTime(range.end);
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return 'Informe datas e horários válidos em Nova York. Horários repetidos ou inexistentes na mudança de horário de verão não são aceitos.';
-  if (end <= start) return 'O fim do período deve ser posterior ao início.';
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return "Enter valid dates and times in New York. Ambiguous or nonexistent times during daylight saving transitions are not accepted.";
+  if (end <= start) return "The end must be after the start.";
   return null;
 }
 
@@ -96,7 +96,7 @@ export function calculateSalesPeriod(data, store = 'all', range) {
   if (transactional) {
     const facts = source.facts.filter(matchesStore).map(fact => {
       const at = Date.parse(fact.occurredAt ?? fact.periodStart);
-      if (!Number.isFinite(at)) throw new Error('Há uma venda sem horário válido no extrato. Recarregue os dados antes de filtrar.');
+      if (!Number.isFinite(at)) throw new Error("A sale in this export has an invalid time. Reload the data before filtering.");
       return { ...fact, at, date: toLocalDateTime(at).slice(0, 10), factCount: 1 };
     });
     current = aggregate(facts.filter(fact => fact.at >= start && fact.at < end));
@@ -109,7 +109,7 @@ export function calculateSalesPeriod(data, store = 'all', range) {
       return bounds.every(Number.isFinite) && covers([bounds], from, to);
     });
   } else {
-    if (!range.start.endsWith('T00:00') || !range.end.endsWith('T00:00')) throw new Error('Este extrato contém apenas totais diários. Selecione dias completos, de 00:00 até 00:00, para não estimar vendas por horário.');
+    if (!range.start.endsWith('T00:00') || !range.end.endsWith('T00:00')) throw new Error("This export contains daily totals only. Select full days, from midnight to midnight, to avoid estimating hourly sales.");
     const rows = (data.salesDaily || []).filter(matchesStore).map(row => ({ ...row, at: parseLocalDateTime(`${row.date}T00:00`) }));
     current = aggregate(rows.filter(row => row.at >= start && row.at < end));
     previousCanBeExact = toLocalDateTime(previousStart).endsWith('T00:00');
@@ -123,10 +123,10 @@ export function calculateSalesPeriod(data, store = 'all', range) {
   const previousTotal = previous.reduce((value, row) => value + row.netSales, 0);
   const currentComplete = coverage(start, end), previousComplete = previousCanBeExact && coverage(previousStart, previousEnd);
   const notices = [];
-  if (!currentComplete) notices.push('O período selecionado não está totalmente coberto pelas importações. Os totais mostram apenas as vendas disponíveis.');
-  if (!previousCanBeExact) notices.push('A comparação de mesma duração atravessa a mudança de horário de verão e exige horários que o extrato diário não contém.');
-  else if (!previousComplete) notices.push('Não há cobertura completa do período anterior para calcular a variação.');
-  if (previousTotal < 0) notices.push('Variação percentual indisponível: o período anterior tem vendas líquidas negativas.');
+  if (!currentComplete) notices.push("Imports do not cover the full selected period. Totals include only available sales.");
+  if (!previousCanBeExact) notices.push("The comparison period crosses a daylight saving transition and requires timestamps that are not included in the daily export.");
+  else if (!previousComplete) notices.push("The previous period is not fully covered, so a percentage change cannot be calculated.");
+  if (previousTotal < 0) notices.push("Percentage change is unavailable because the previous period has negative net sales.");
   return {
     current, previous, total, previousTotal,
     quantity: current.reduce((value, row) => value + row.quantity, 0),
@@ -140,8 +140,8 @@ export function calculateSalesPeriod(data, store = 'all', range) {
 
 // UI dates are inclusive; the internal upper bound includes the entire 11:59 PM minute.
 export function fullDayRange(startDate,endDate){
-  if(!Number.isFinite(parseLocalDateTime(`${startDate}T00:00`))||!Number.isFinite(parseLocalDateTime(`${endDate}T00:00`)))throw new Error('Informe datas válidas.');
-  if(endDate<startDate)throw new Error('A data de fim deve ser igual ou posterior à data de início.');
+  if(!Number.isFinite(parseLocalDateTime(`${startDate}T00:00`))||!Number.isFinite(parseLocalDateTime(`${endDate}T00:00`)))throw new Error("Enter valid dates.");
+  if(endDate<startDate)throw new Error("The end date must be on or after the start date.");
   return {start:`${startDate}T00:00`,end:`${nextDate(endDate)}T00:00`};
 }
 export function inclusivePeriodDates(range){

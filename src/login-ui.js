@@ -5,44 +5,44 @@ export function createLoginUI({icon,goto,icons,onLogin}){
   function page(mode='login'){
     const login=mode==='login',recovery=mode==='recover';
     return `<main class="login-page">
-      <section class="login-content" aria-label="Acesso ao workspace">
+      <section class="login-content" aria-label="Workspace access">
         <header class="login-brand"><img src="/brand/hot-doogy-wordmark.svg" alt="HOT DOOGY"><span>OPERATIONS</span></header>
         <div class="login-form-wrap">
-          ${!login?'<button class="login-back" data-action="login-back">'+icon('arrow-left')+' Voltar ao login</button>':''}
-          <span class="login-eyebrow">SEU WORKSPACE</span>
-          <h1>${login?'Bom ter você<br>de volta.':recovery?'Esqueceu sua senha?':'Faça parte da operação.'}</h1>
-          <p class="login-subtitle">${login?'Tudo pronto para mais um dia de Hot Doogy.':recovery?'Recupere o acesso ao seu workspace.':'O acesso é destinado à equipe Hot Doogy.'}</p>
-          ${false?`<button type="button" class="login-google" data-action="login-google">${google}<span>Continuar com Google</span></button><div class="login-divider"><span>ou entre com seu e-mail</span></div>`:''}
+          ${!login?'<button class="login-back" data-action="login-back">'+icon('arrow-left')+" Back to sign in</button>":''}
+          <span class="login-eyebrow">YOUR WORKSPACE</span>
+          <h1>${login?"Welcome<br>back.":recovery?"Forgot your password?":"Join the team."}</h1>
+          <p class="login-subtitle">${login?"Ready for another day at Hot Doogy.":recovery?"Recover access to your workspace.":"Access is for Hot Doogy team members."}</p>
+          ${false?`<button type="button" class="login-google" data-action="login-google">${google}<span>Continue with Google</span></button><div class="login-divider"><span>or sign in with your email</span></div>`:''}
           <form id="login-form" data-login-mode="${mode}">
-            <label for="login-email">E-mail</label>
-            <div class="login-input">${icon('mail')}<input id="login-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="voce@hotdoogy.com" required></div>
-            ${login?`<div class="login-password-label"><label for="login-password">Senha</label><button type="button" class="login-text-button" data-action="login-recover">Esqueci minha senha</button></div><div class="login-input">${icon('lock-keyhole')}<input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="login-eye" data-action="login-toggle-password" aria-label="Mostrar senha" aria-pressed="false">${icon('eye')}</button></div>`:''}
+            <label for="login-email">Email</label>
+            <div class="login-input">${icon('mail')}<input id="login-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="you@hotdoogy.com" required></div>
+            ${login?`<div class="login-password-label"><label for="login-password">Password</label><button type="button" class="login-text-button" data-action="login-recover">Forgot password?</button></div><div class="login-input">${icon('lock-keyhole')}<input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button type="button" class="login-eye" data-action="login-toggle-password" aria-label="Show password" aria-pressed="false">${icon('eye')}</button></div>`:''}
             <p id="login-feedback" class="login-feedback" role="status" aria-live="polite" hidden></p>
-            <button type="submit" class="login-submit">${login?'Entrar':recovery?'Recuperar acesso':'Solicitar acesso'}${icon('arrow-right')}</button>
+            <button type="submit" class="login-submit">${login?"Sign in":recovery?"Recover access":"Request access"}${icon('arrow-right')}</button>
           </form>
-          ${login?'<p class="login-access">Ainda não tem acesso? <button class="login-text-button" data-action="login-request">Solicitar acesso</button></p>':''}
+          ${login?"<p class=\"login-access\">Don’t have access yet? <button class=\"login-text-button\" data-action=\"login-request\">Request access</button></p>":''}
           
         </div>
-        <footer class="login-footer"><span>© ${new Date().getFullYear()} Hot Doogy</span><span>Feito para a nossa operação.</span></footer>
+        <footer class="login-footer"><span>© ${new Date().getFullYear()} Hot Doogy</span><span>Built for our team.</span></footer>
       </section>
       <aside class="login-visual" aria-label="Hot Doogy Operations">
         <div class="login-visual-top"><span><i></i> HOT DOOGY OPERATIONS</span>${icon('sparkles')}</div>
-        <div class="login-visual-heading"><h2>Sua operação.<br><em>No ponto.</em></h2><p>Da preparação à venda,<br>cada detalhe no seu lugar.</p></div>
+        <div class="login-visual-heading"><h2>Your operations.<br><em>Right on point.</em></h2><p>From prep to sale,<br>every detail in place.</p></div>
         <div class="login-orbit" aria-hidden="true"></div>
-        <img class="login-product" src="/brand/hot-dog-cutout.png" alt="Hot dog Hot Doogy com mostarda">
-        <div class="login-floating-note">${icon('chef-hat')}<div><strong>Feito com cuidado.</strong><span>Gerenciado com clareza.</span></div></div>
-        <div class="login-visual-footer"><div>${icon('store')} Sherwood Plaza <span>·</span> Natick Mall</div><span>UM TIME. UMA OPERAÇÃO.</span></div>
+        <img class="login-product" src="/brand/hot-dog-cutout.png" alt="Hot Doogy hot dog with mustard">
+        <div class="login-floating-note">${icon('chef-hat')}<div><strong>Made with care.</strong><span>Managed with clarity.</span></div></div>
+        <div class="login-visual-footer"><div>${icon('store')} Sherwood Plaza <span>·</span> Natick Mall</div><span>ONE TEAM. ONE OPERATION.</span></div>
       </aside>
     </main>`;
   }
   function feedback(text){const el=document.querySelector('#login-feedback');if(el){el.hidden=false;el.textContent=text;}}
   async function submit(form){
     if(form.id!=='login-form'||!form.reportValidity())return false;
-    const button=form.querySelector('[type="submit"]');if(button.disabled)return false;button.disabled=true;const label=button.innerHTML;button.textContent='Entrando…';feedback('Verificando seu acesso…');
+    const button=form.querySelector('[type="submit"]');if(button.disabled)return false;button.disabled=true;const label=button.innerHTML;button.textContent="Signing in…";feedback("Checking your access…");
     try{
-      if(form.dataset.loginMode!=='login'){feedback('Fale com o administrador da equipe para recuperar ou solicitar acesso.');return true;}
+      if(form.dataset.loginMode!=='login'){feedback("Contact your team administrator to recover or request access.");return true;}
       const session=await api('/api/auth/login',{email:form.email.value,password:form.password.value});
-      form.password.value='';button.textContent='Abrindo operação…';feedback('Acesso confirmado. Carregando os dados da operação…');await onLogin(session);
+      form.password.value='';button.textContent="Opening your workspace…";feedback("You’re signed in. Loading your workspace data…");await onLogin(session);
     }catch(error){feedback(error.message);}finally{button.disabled=false;button.innerHTML=label;}
     return true;
   }
@@ -51,8 +51,8 @@ export function createLoginUI({icon,goto,icons,onLogin}){
     'login-recover':()=>goto('recover'),
     'login-request':()=>goto('request-access'),
     
-    'login-google':()=>feedback('O acesso com Google ainda não está conectado. Use “Explorar demonstração” para conhecer o workspace.'),
-    'login-toggle-password':el=>{const input=document.querySelector('#login-password'),show=input.type==='password';input.type=show?'text':'password';el.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');el.setAttribute('aria-pressed',String(show));el.innerHTML=icon(show?'eye-off':'eye');icons();}
+    'login-google':()=>feedback("Google sign-in is not available. Sign in with your email and password."),
+    'login-toggle-password':el=>{const input=document.querySelector('#login-password'),show=input.type==='password';input.type=show?'text':'password';el.setAttribute('aria-label',show?"Hide password":"Show password");el.setAttribute('aria-pressed',String(show));el.innerHTML=icon(show?'eye-off':'eye');icons();}
   };
   return {page,submit,actions};
 }

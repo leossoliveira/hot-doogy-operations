@@ -94,13 +94,13 @@ test('database timestamps render in New York time without invalid-date failures'
   for (const row of snapshot.orders) {
     for (const key of ['orderedAt', 'expectedAt', 'createdAt']) {
       assert.doesNotThrow(() => date(row[key]));
-      if (row[key]) assert.notEqual(date(row[key]), 'A definir');
+      if (row[key]) assert.notEqual(date(row[key]), 'Not set');
     }
   }
   assert.equal(date('2026-10-04 01:00:00.123456+00'), date('2026-10-03'));
   assert.equal(date('2026-10-03'), date('2026-10-03T12:00:00-04:00'));
-  assert.equal(date(null), 'A definir');
-  assert.equal(date('invalid'), 'A definir');
+  assert.equal(date(null), 'Not set');
+  assert.equal(date('invalid'), 'Not set');
 });
 
 test('CSV neutralizes formulas including leading whitespace and control characters', () => {
@@ -113,7 +113,7 @@ test('CSV preserves numeric credits and escapes embedded quotes, separators, and
   const csv = safeCsv([{ name: 'A; "B"\nC', total: -67.9, empty: null }], [
     { label: 'Name', value: 'name' }, { label: 'Total', value: row => row.total }, { label: 'Empty', value: 'empty' },
   ]);
-  assert.equal(csv, '\ufeff"Name";"Total";"Empty"\r\n"A; ""B""\nC";"-67.9";""');
+  assert.equal(csv, '\ufeff"Name","Total","Empty"\r\n"A; ""B""\nC","-67.9",""');
 });
 
 test('local state survives persistence without touching the source snapshot or other storage keys', () => {
@@ -208,15 +208,15 @@ test('legacy counts use their creation day in New York and compare timestamps ac
 });
 
 test('quantity formatter retains six decimal places and never rounds tiny nonzero factors to zero', () => {
-  assert.equal(preciseNumber(0.002834), '0,002834');
-  assert.equal(preciseNumber(0.000001), '0,000001');
-  assert.equal(preciseNumber('1234.567891'), '1.234,567891');
-  assert.equal(preciseNumber(1.23456789), '1,234568');
+  assert.equal(preciseNumber(0.002834), '0.002834');
+  assert.equal(preciseNumber(0.000001), '0.000001');
+  assert.equal(preciseNumber('1234.567891'), '1,234.567891');
+  assert.equal(preciseNumber(1.23456789), '1.234568');
   assert.equal(preciseNumber(0), '0');
   assert.equal(preciseNumber(0.0000001), '1E-7');
   assert.equal(preciseNumber(-0.0000001), '-1E-7');
   assert.equal(preciseNumber(NaN), '—');
   assert.equal(preciseNumber(Infinity), '—');
-  assert.equal(number(1.234567), '1,23');
+  assert.equal(number(1.234567), '1.23');
   assert.equal(money(1.234567), '$1.23');
 });

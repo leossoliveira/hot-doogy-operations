@@ -10,13 +10,13 @@ function momentRank(moment){
   return null;
 }
 const warningLabels={
-  mixed_count_dates:'Contagens de datas diferentes.',
-  areas_without_count:'Há áreas cadastradas sem contagem concluída.',
-  no_completed_count:'Ainda não há inventário concluído para este item nesta loja.',
-  area_not_in_current_assignment:'A área desta contagem histórica não tem vínculo atual com o item.',
-  historical_base_differs_from_current_conversion:'A conversão foi corrigida após a contagem; a quantidade original foi preservada.',
-  stocktake_unit_missing:'Unidade de contagem não cadastrada.',
-  multiple_stocktake_units:'Mais de uma unidade de contagem cadastrada.',
+  mixed_count_dates:"Counts from different dates.",
+  areas_without_count:"Some assigned areas have no completed count.",
+  no_completed_count:"No completed inventory count for this item at this location yet.",
+  area_not_in_current_assignment:"This historical count’s area is no longer assigned to the item.",
+  historical_base_differs_from_current_conversion:"The conversion was corrected after the count; the original quantity was preserved.",
+  stocktake_unit_missing:"No count unit is configured.",
+  multiple_stocktake_units:"More than one count unit is configured.",
 };
 const warningsFor=values=>[...new Set(values||[])].map(value=>warningLabels[value]||value);
 function stocktakeUnit(item){

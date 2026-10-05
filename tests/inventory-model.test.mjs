@@ -48,7 +48,7 @@ test('mixed-date areas retain a marked subtotal without presenting it as one com
   const record=counts.rows.find(row=>row.mixedDates);
   const source=snapshot.items.find(row=>row.id===record.itemId&&row.locationId===record.locationId);
   const result=latestInventoryFor(source,{},counts);
-  assert.equal(result.qty,null);assert.equal(result.baseQty,null);assert.equal(result.partial,true);assert.ok(result.knownSubtotal>0);assert.equal(result.areas.length,2);assert.ok(result.warnings.includes('Contagens de datas diferentes.'));
+  assert.equal(result.qty,null);assert.equal(result.baseQty,null);assert.equal(result.partial,true);assert.ok(result.knownSubtotal>0);assert.equal(result.areas.length,2);assert.ok(result.warnings.includes('Counts from different dates.'));
   assert.equal(new Set(result.areas.map(area=>area.date)).size,2);
 });
 

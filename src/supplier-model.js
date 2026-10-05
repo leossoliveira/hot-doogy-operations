@@ -53,7 +53,7 @@ export function supplierItemWithEdits(row, local = {}) {
 export function filterSupplierItems(rows, { supplierId, storeId = 'all', query = '', status = 'active', sortKey = 'name', direction = 'asc' } = {}) {
   const search = norm(query).trim();
   const directionFactor = direction === 'desc' ? -1 : 1;
-  const compare = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+  const compare = new Intl.Collator("en-US", { sensitivity: 'base', numeric: true });
   return rows.map((row, index) => ({ row, index })).filter(({ row }) => {
     if (supplierId && supplierId !== 'all' && row.supplierId !== supplierId) return false;
     if (storeId !== 'all' && !row.stores?.some(store => store.id === storeId && store.active !== false && store.locationActive !== false)) return false;
@@ -106,40 +106,40 @@ export function resolveSupplierPrice(row, scope = 'all') {
 }
 
 export function validateSupplierDraft(draft, original, catalog) {
-  if (!draft || typeof draft.name !== 'string' || !draft.name.trim()) return 'Informe o nome do item.';
-  if (!blank(original.catalogName) && (typeof draft.catalogName !== 'string' || !draft.catalogName.trim())) return 'Informe o nome do item no catálogo.';
-  if (text(draft.baseUnitId) !== text(original.baseUnitId)) return 'A unidade base do item não pode ser alterada.';
-  if (!Array.isArray(draft.units)) return 'As unidades do item são inválidas.';
+  if (!draft || typeof draft.name !== 'string' || !draft.name.trim()) return "Enter the item name.";
+  if (!blank(original.catalogName) && (typeof draft.catalogName !== 'string' || !draft.catalogName.trim())) return "Enter the item’s catalog name.";
+  if (text(draft.baseUnitId) !== text(original.baseUnitId)) return "The item’s base unit cannot be changed.";
+  if (!Array.isArray(draft.units)) return "The item’s units are invalid.";
   const sku = norm(draft.sku).trim();
-  if (sku && (catalog.items || []).some(item => item.supplierId === original.supplierId && item.supplierItemId !== original.supplierItemId && norm(item.sku).trim() === sku)) return 'Este SKU já está cadastrado para outro item deste fornecedor.';
-  if (!blank(draft.categoryId) && !(catalog.categories || []).some(category => category.id === draft.categoryId)) return 'Escolha uma categoria cadastrada.';
-  if (!blank(draft.price) && (!numeric(draft.price) || Number(draft.price) < 0)) return 'Informe um preço igual ou maior que zero, ou deixe em branco.';
-  if (!blank(draft.yieldPercent) && (!numeric(draft.yieldPercent) || Number(draft.yieldPercent) < 0 || Number(draft.yieldPercent) > 100)) return 'O rendimento deve ficar entre 0 e 100%.';
+  if (sku && (catalog.items || []).some(item => item.supplierId === original.supplierId && item.supplierItemId !== original.supplierItemId && norm(item.sku).trim() === sku)) return "This SKU is already assigned to another item from this supplier.";
+  if (!blank(draft.categoryId) && !(catalog.categories || []).some(category => category.id === draft.categoryId)) return "Choose a saved category.";
+  if (!blank(draft.price) && (!numeric(draft.price) || Number(draft.price) < 0)) return "Enter a price of zero or more, or leave it blank.";
+  if (!blank(draft.yieldPercent) && (!numeric(draft.yieldPercent) || Number(draft.yieldPercent) < 0 || Number(draft.yieldPercent) > 100)) return "Yield must be between 0% and 100%.";
   const globalUnits = new Set((catalog.units || []).map(unit => unit.id));
   const unitIds = new Set();
   for (const unit of draft.units) {
-    if (!unit?.id || unitIds.has(unit.id)) return 'Cada unidade pode aparecer apenas uma vez no item.';
+    if (!unit?.id || unitIds.has(unit.id)) return "Each unit can appear only once per item.";
     unitIds.add(unit.id);
-    if (!numeric(unit.factor) || Number(unit.factor) <= 0) return 'Informe uma conversão maior que zero para cada unidade.';
-    if ((unit.id === draft.baseUnitId || unit.base) && Number(unit.factor) !== 1) return 'A conversão da unidade base deve ser igual a 1.';
+    if (!numeric(unit.factor) || Number(unit.factor) <= 0) return "Enter a conversion factor greater than zero for each unit.";
+    if ((unit.id === draft.baseUnitId || unit.base) && Number(unit.factor) !== 1) return "The base unit’s conversion factor must be 1.";
     const existing = original.units?.find(existing => existing.id === unit.id);
     const unchangedLegacy = existing && existing.itemUnitId === unit.itemUnitId && Number(existing.factor) === Number(unit.factor);
-    if (!globalUnits.has(unit.id) && !unchangedLegacy) return 'Escolha unidades cadastradas no catálogo.';
+    if (!globalUnits.has(unit.id) && !unchangedLegacy) return "Choose units from the catalog.";
   }
   for (const field of ['baseUnitId', 'orderingUnitId', 'receivingUnitId', 'stocktakeUnitId', 'priceUnitId']) {
     const id = draft[field];
     if (blank(id)) continue;
     const unchangedMissing = id === original[field] && !original.units?.some(unit => unit.id === id);
-    if ((!globalUnits.has(id) || !unitIds.has(id)) && !unchangedMissing && !(unitIds.has(id) && id === original[field])) return 'Escolha uma unidade cadastrada no item para compra, recebimento, conferência e preço.';
+    if ((!globalUnits.has(id) || !unitIds.has(id)) && !unchangedMissing && !(unitIds.has(id) && id === original[field])) return "Choose saved item units for ordering, receiving, counting, and pricing.";
   }
   const removedUnits = new Set((original.units || []).filter(unit => !unitIds.has(unit.id)).map(unit => unit.id));
-  if ((catalog.items || []).some(item => item.itemId === original.itemId && item.supplierItemId !== original.supplierItemId && vendorUnitReferences(item).some(id => removedUnits.has(id)))) return 'Uma unidade removida ainda é usada para compra, recebimento ou preço local em outro fornecedor deste item.';
+  if ((catalog.items || []).some(item => item.itemId === original.itemId && item.supplierItemId !== original.supplierItemId && vendorUnitReferences(item).some(id => removedUnits.has(id)))) return "A removed unit is still used for ordering, receiving, or local pricing by another supplier of this item.";
   if (own(draft, 'stocktakeUnitIds') && draft.stocktakeUnitId === original.stocktakeUnitId) {
-    if (!Array.isArray(draft.stocktakeUnitIds)) return 'As unidades de conferência são inválidas.';
-    if (new Set(draft.stocktakeUnitIds).size !== draft.stocktakeUnitIds.length || draft.stocktakeUnitIds.some(id => !unitIds.has(id) && !(original.stocktakeUnitIds?.includes(id) && !original.units?.some(unit => unit.id === id)))) return 'Escolha unidades cadastradas no item para conferência.';
+    if (!Array.isArray(draft.stocktakeUnitIds)) return "Invalid count units.";
+    if (new Set(draft.stocktakeUnitIds).size !== draft.stocktakeUnitIds.length || draft.stocktakeUnitIds.some(id => !unitIds.has(id) && !(original.stocktakeUnitIds?.includes(id) && !original.units?.some(unit => unit.id === id)))) return "Choose saved item units for counting.";
   }
   const priceChanged = (blank(draft.price) ? null : Number(draft.price)) !== (blank(original.price) ? null : Number(original.price)) || text(draft.priceUnitId) !== text(original.priceUnitId);
-  if (priceChanged && !blank(draft.price) && blank(draft.priceUnitId)) return 'Escolha a unidade à qual o preço se refere.';
+  if (priceChanged && !blank(draft.price) && blank(draft.priceUnitId)) return "Choose the unit the price applies to.";
   return null;
 }
 
@@ -188,7 +188,7 @@ export function saveSupplierDraft(local, original, draft, catalog, { storage, no
     ...local,
     itemEdits: { ...local.itemEdits, [original.itemId]: pick(item, commonFields) },
     supplierItemEdits: { ...local.supplierItemEdits, [original.supplierItemId]: vendor },
-    audit: [{ id: `supplier-item-${original.supplierItemId}-${at}`, text: `Item ${item.name} atualizado localmente em ${original.supplierName || 'fornecedor'}`, at }, ...(local.audit || [])],
+    audit: [{ id: `supplier-item-${original.supplierItemId}-${at}`, text: `Item ${item.name} updated locally at ${original.supplierName || 'supplier'}`, at }, ...(local.audit || [])],
   };
   // Do not expose a new state until browser persistence has succeeded.
   saveLocal(next, storage);
@@ -200,14 +200,14 @@ export function restoreSupplierDraft(local, row, { storage, now, catalog } = {})
   const removedUnits = new Set((local.itemEdits?.[row.itemId]?.units || []).filter(unit => !originalUnits.has(unit.id)).map(unit => unit.id));
   const aliases = new Set((catalog?.items || []).filter(item => item.itemId === row.itemId).map(item => item.supplierItemId));
   const wouldOrphanAlias = Object.entries(local.supplierItemEdits || {}).some(([id, edit]) => id !== row.supplierItemId && (edit.itemId === row.itemId || aliases.has(id)) && vendorUnitReferences(edit).some(unitId => removedUnits.has(unitId)));
-  if (wouldOrphanAlias) throw new Error('Não é possível restaurar: uma conversão local ainda é usada por outro fornecedor deste item. Ajuste primeiro a unidade de compra, recebimento ou preço local nesse fornecedor.');
+  if (wouldOrphanAlias) throw new Error("Unable to restore: another supplier of this item still uses a local conversion. Update that supplier’s ordering, receiving, or local price unit first.");
   const itemEdits = { ...local.itemEdits }, supplierItemEdits = { ...local.supplierItemEdits };
   delete itemEdits[row.itemId];
   delete supplierItemEdits[row.supplierItemId];
   const at = timestamp(now);
   const next = {
     ...local, itemEdits, supplierItemEdits,
-    audit: [{ id: `supplier-item-restore-${row.supplierItemId}-${at}`, text: `Cadastro original de ${row.name} restaurado localmente`, at }, ...(local.audit || [])],
+    audit: [{ id: `supplier-item-restore-${row.supplierItemId}-${at}`, text: `Original details for ${row.name} restored locally`, at }, ...(local.audit || [])],
   };
   saveLocal(next, storage);
   return { local: next, item: supplierItemWithEdits(row, next) };

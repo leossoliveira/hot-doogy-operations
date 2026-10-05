@@ -12,26 +12,26 @@ export function recipeCost(recipe, locationId, data, local = {}, path = new Set(
   const r = recipeWithEdits(recipe, local.recipeEdits);
   const issues = [];
   let ingredients = 0, packaging = 0;
-  if (path.has(r.id)) return {total: null, issues: ['Ciclo entre preparações.']};
+  if (path.has(r.id)) return {total: null, issues: ["Circular prep item reference."]};
   const nextPath = new Set(path).add(r.id);
   const scope = r.type === 'prep' && r.productionLocationId || locationId;
   const items = ingredientItemsWithEdits(data.ingredientItems || [], local);
   const lines = r.components.filter(c => !c.locationId || c.locationId === scope);
-  if (!r.componentsLoaded || !lines.length) issues.push('Composição não disponível para esta loja.');
+  if (!r.componentsLoaded || !lines.length) issues.push("Ingredients are unavailable for this location.");
   for (const c of lines) {
     const item = items.find(i => i.id === c.itemId);
-    const name = item?.internalName || c.internalName || c.name || 'Ingrediente';
+    const name = item?.internalName || c.internalName || c.name || "Ingredient";
     const unit = item?.units?.find(u => u.itemUnitId === c.itemUnitId && u.id === c.uomId);
-    if (!item || !positive(unit?.factor) || !positive(c.quantity)) {issues.push(`${name}: quantidade ou conversão ausente.`); continue;}
+    if (!item || !positive(unit?.factor) || !positive(c.quantity)) {issues.push(`${name}: quantity or conversion is missing.`); continue;}
     const waste = c.wastePercent ?? 0;
-    if (!valid(waste) || waste < 0 || waste >= 1) {issues.push(`${name}: perda inválida.`); continue;}
+    if (!valid(waste) || waste < 0 || waste >= 1) {issues.push(`${name}: invalid waste value.`); continue;}
     const qty = Number(c.quantity) * Number(unit.factor) / (1 - Number(waste));
     const childId = c.subRecipeId || item.subRecipeId;
     if (childId || item.type === 'prepared') {
       const child = data.recipes.find(x => x.id === childId && (!c.subRecipeVersionId || x.versionId === c.subRecipeVersionId));
       const output = items.find(i => i.id === child?.outputItemId);
       const yieldUnit = output?.units?.find(u => u.itemUnitId === child.yieldItemUnitId);
-      if (!child || child.outputItemId !== item.id || !positive(child.yieldQuantity) || !positive(yieldUnit?.factor)) {issues.push(`${name}: receita ou rendimento sem conversão válida.`); continue;}
+      if (!child || child.outputItemId !== item.id || !positive(child.yieldQuantity) || !positive(yieldUnit?.factor)) {issues.push(`${name}: recipe or yield has no valid conversion.`); continue;}
       const cost = recipeCost(child, scope, data, local, nextPath);
       if (cost.total == null) {issues.push(...cost.issues.map(issue => `${name} → ${issue}`)); continue;}
       const scale = qty / (Number(child.yieldQuantity) * Number(yieldUnit.factor));
@@ -45,9 +45,9 @@ export function recipeCost(recipe, locationId, data, local = {}, path = new Set(
         return valid(price.amount) && price.amount >= 0 && positive(priceUnit?.factor) ? price.amount / Number(priceUnit.factor) : null;
       });
       const baseCost = uniqueValue(costs);
-      if (baseCost == null) {issues.push(`${name}: preço aprovado/conversão ausente ou fornecedores com custos diferentes.`); continue;}
+      if (baseCost == null) {issues.push(`${name}: missing approved price or conversion, or supplier costs differ.`); continue;}
       const yieldRatio = item.yieldPercent == null ? 1 : Number(item.yieldPercent) / 100;
-      if (!(yieldRatio > 0 && yieldRatio <= 1)) {issues.push(`${name}: rendimento do ingrediente inválido.`); continue;}
+      if (!(yieldRatio > 0 && yieldRatio <= 1)) {issues.push(`${name}: invalid ingredient yield.`); continue;}
       const cost = qty * baseCost / yieldRatio;
       if (c.kind === 'packaging') packaging += cost; else ingredients += cost;
     }
@@ -87,6 +87,6 @@ export function costInfo(recipe, locationId, data, local = {}) {
     grossProfit: comparable ? sellingPrice - cost.total : null,
     grossMargin: comparable && sellingPrice > 0 ? (sellingPrice - cost.total) / sellingPrice * 100 : null,
     netProfit: null, netMargin: null,
-    priceNote: sellingPrice == null ? 'Preço não cadastrado ou variável conforme o menu.' : recipe.type === 'modifier' ? 'Preço adicional cadastrado no vínculo com o menu.' : 'Preço de venda cadastrado nesta loja.',
+    priceNote: sellingPrice == null ? "Price is not set or varies by menu." : recipe.type === 'modifier' ? "Additional price set in the menu mapping." : "Selling price set for this location.",
   };
 }

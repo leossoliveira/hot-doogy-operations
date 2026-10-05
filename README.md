@@ -36,3 +36,11 @@ A automação valida cada atualização de `main`. Quando as verificações pass
 Pull requests recebem verificações, mas não criam versões. A VPS verifica novas versões a cada aproximadamente dois minutos, executa os testes e instala a versão aprovada. A troca reinicia o sistema e exige novo login. Alterações locais só são enviadas ao GitHub com autorização do usuário, conforme `AGENTS.md`.
 
 O repositório deve ser privado. Exportações do banco, auditorias, capturas de tela, documentos de operações e segredos locais estão excluídos do controle de versão.
+
+## Idioma e unidades
+
+A interface, mensagens da API, relatórios e PDFs usam inglês americano. Números usam ponto decimal e vírgula de milhar; datas seguem o padrão dos EUA e horários operacionais continuam em `America/New_York`. CSVs usam vírgulas e PDFs de transferência usam papel US Letter.
+
+Unidades americanas aparecem primeiro nos seletores; as métricas permanecem disponíveis no catálogo. Cada item precisa ter a conversão cadastrada para utilizar uma unidade. As quantidades de receitas e contagens são convertidas ao trocar a unidade. Contagens são enviadas na unidade de contagem já autorizada pelo banco. Nenhuma conversão, unidade-base ou registro existente é reescrito pela preferência de exibição.
+
+Os rótulos de momento de contagem estão em inglês, mantendo os valores legados aceitos pelo banco. Validações do banco são traduzidas na API, sem migração de dados. `tests/localization.test.mjs` verifica essas regras e participa de `npm run test:ci`.

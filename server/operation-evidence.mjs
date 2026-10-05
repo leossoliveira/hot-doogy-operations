@@ -10,7 +10,7 @@ export function enrichOperations({orders,invoices,receipts,transfers,t,base,loc,
  const attach=(record,rs,linkedInvoices=[])=>{
   const ids=new Set([record.id,...record.lines.map(x=>x.id),...rs.flatMap(r=>[r.id,...r.lines.map(l=>l.id)]),...linkedInvoices.flatMap(i=>[i.id,...i.lines.map(l=>l.id)])]);
   const matching=movements.filter(m=>ids.has(m.sourceId));record.transactions=matching.filter(m=>m.locationId===record.locationId);record.historicalCorrections=matching.filter(m=>m.locationId!==record.locationId);
-  record.timeline=[{at:record.createdAt,text:'Registro criado'},{at:record.orderedAt,text:'Pedido realizado'},...rs.map(r=>({at:r.receivedAt,text:r.historicalConfirmation?'Recebimento histórico confirmado, sem entrada de estoque':'Recebimento registrado',dateOnly:r.receivedDateOnly}))].filter(x=>x.at).sort((a,b)=>a.at.localeCompare(b.at));
+  record.timeline=[{at:record.createdAt,text:"Record created"},{at:record.orderedAt,text:"Ordered"},...rs.map(r=>({at:r.receivedAt,text:r.historicalConfirmation?"Historical receipt confirmed without adding stock":"Receipt recorded",dateOnly:r.receivedDateOnly}))].filter(x=>x.at).sort((a,b)=>a.at.localeCompare(b.at));
  };
  for(const o of orders){
   let comparable=0,full=0,any=false;

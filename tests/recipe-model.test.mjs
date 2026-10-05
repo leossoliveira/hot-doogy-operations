@@ -103,7 +103,7 @@ test('unit membership requires the registered itemUnitId and uomId pair', () => 
     { itemUnitId: gram.itemUnitId, uomId: 'Gram' },
     { itemUnitId: null, uomId: gram.id },
   ]) {
-    assert.match(validateRecipeComponents(recipe, [{ ...component, ...changes }], catalog), /unidade cadastrada/);
+    assert.match(validateRecipeComponents(recipe, [{ ...component, ...changes }], catalog), /saved unit/);
   }
   assert.equal(validateRecipeComponents(recipe, [{ ...component, quantity: 2 }], catalog), null);
 });
@@ -112,8 +112,8 @@ test('legacy units remain editable without permitting another item to borrow the
   const { recipe, catalog, component, box } = fixture();
   const withoutLegacyUnit = catalog.map(item => ({ ...item, units: item.id === component.itemId ? [] : item.units }));
   assert.equal(validateRecipeComponents(recipe, [{ ...component, quantity: 3 }], withoutLegacyUnit), null);
-  assert.match(validateRecipeComponents(recipe, [{ ...component, itemId: box.id }], withoutLegacyUnit), /unidade cadastrada/);
-  assert.match(validateRecipeComponents(recipe, [{ ...component, id: uuid(999) }], withoutLegacyUnit), /unidade cadastrada/);
+  assert.match(validateRecipeComponents(recipe, [{ ...component, itemId: box.id }], withoutLegacyUnit), /saved unit/);
+  assert.match(validateRecipeComponents(recipe, [{ ...component, id: uuid(999) }], withoutLegacyUnit), /saved unit/);
 });
 
 test('invalid items, duplicate rows and inactive new items never reach persistence', () => {
@@ -131,14 +131,14 @@ test('invalid items, duplicate rows and inactive new items never reach persisten
   }
   const inactiveCatalog = catalog.map(item => ({ ...item, active: false }));
   assert.equal(validateRecipeComponents(recipe, [component], inactiveCatalog), null);
-  assert.match(validateRecipeComponents(recipe, [componentFromItem(box, each, { id: uuid(303) })], inactiveCatalog), /inativos/);
+  assert.match(validateRecipeComponents(recipe, [componentFromItem(box, each, { id: uuid(303) })], inactiveCatalog), /Inactive/);
   assert.equal(persisted, 0);
 });
 
 test('editing is blocked until a version and its components have been loaded', () => {
   const { recipe, catalog, component } = fixture();
   for (const changes of [{ versionId: null }, { versionId: '' }, { componentsLoaded: false }, { componentsLoaded: undefined }]) {
-    assert.match(validateRecipeComponents({ ...recipe, ...changes }, [component], catalog), /composição desta versão/);
+    assert.match(validateRecipeComponents({ ...recipe, ...changes }, [component], catalog), /version’s ingredients/);
   }
 });
 

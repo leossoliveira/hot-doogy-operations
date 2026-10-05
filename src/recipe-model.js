@@ -23,25 +23,25 @@ export function componentFromItem(item, unit, {id, locationId = null} = {}) {
 }
 
 export function validateRecipeComponents(recipe, components, catalog, recipes = [], edits = {}) {
-  if (!recipe.componentsLoaded || !recipe.versionId) return 'A composição desta versão precisa estar carregada antes de editar.';
-  if (!Array.isArray(components)) return 'A lista de ingredientes é inválida.';
+  if (!recipe.componentsLoaded || !recipe.versionId) return "Load this version’s ingredients before editing.";
+  if (!Array.isArray(components)) return "The ingredient list is invalid.";
   const existing = new Map((recipe.components || []).map(c => [c.id, c]));
   const ids = new Set();
   for (const c of components) {
-    if (!c?.id || ids.has(c.id)) return 'Há uma linha duplicada na receita.';
+    if (!c?.id || ids.has(c.id)) return "The recipe has a duplicate line.";
     ids.add(c.id);
     if (!['number', 'string'].includes(typeof c.quantity) || String(c.quantity).trim() === '' || !Number.isFinite(Number(c.quantity)) || Number(c.quantity) <= 0) {
-      return 'Informe uma quantidade maior que zero para cada item.';
+      return "Enter a quantity greater than zero for each item.";
     }
     const item = catalog.find(i => i.id === c.itemId);
-    if (!item) return 'Um dos itens não foi encontrado no catálogo.';
+    if (!item) return "An item was not found in the catalog.";
     const unit = item.units?.find(u => u.itemUnitId === c.itemUnitId && u.id === c.uomId);
     const original = existing.get(c.id);
     // Preserve legacy units when unchanged; do not invent or silently replace conversions.
     const legacyUnit = original && original.itemId === c.itemId && original.itemUnitId === c.itemUnitId && original.uomId === c.uomId;
-    if (!unit && !legacyUnit) return `Escolha uma unidade cadastrada para ${item.name}.`;
-    if (!original && !item.active) return 'Itens inativos não podem ser adicionados à receita.';
-    if (!['ingredient', 'packaging'].includes(c.kind) && c.kind !== original?.kind) return 'O tipo do componente é inválido.';
+    if (!unit && !legacyUnit) return `Choose a saved unit for ${item.name}.`;
+    if (!original && !item.active) return "Inactive items cannot be added to the recipe.";
+    if (!['ingredient', 'packaging'].includes(c.kind) && c.kind !== original?.kind) return "Invalid component type.";
   }
   const byOutput = new Map(recipes.filter(r => r.outputItemId).map(r => [r.outputItemId, r]));
   const visit = (r, path) => {
@@ -53,7 +53,7 @@ export function validateRecipeComponents(recipe, components, catalog, recipes = 
       return child ? visit(child, nextPath) : false;
     });
   };
-  if (visit(recipe, new Set())) return 'Essa composição cria uma referência circular entre preparações. Remova o item que retorna à própria receita.';
+  if (visit(recipe, new Set())) return "These ingredients create a circular reference between prep items. Remove the item that refers back to this recipe.";
   return null;
 }
 
@@ -64,7 +64,7 @@ export function saveRecipeDraft(local, recipe, components, catalog, recipes, sto
   const next = {
     ...local,
     recipeEdits: {...(local.recipeEdits || {}), [recipe.id]: {recipeId: recipe.id, versionId: recipe.versionId, updatedAt: at, components: normalized}},
-    audit: [{id: `recipe-${recipe.id}-${at}`, text: `Ingredientes de ${recipe.name} atualizados localmente`, at}, ...(local.audit || [])],
+    audit: [{id: `recipe-${recipe.id}-${at}`, text: `Ingredients for ${recipe.name} updated locally`, at}, ...(local.audit || [])],
   };
   // Commit state only after persistence succeeds, so a quota error cannot pretend to save.
   storage(next);

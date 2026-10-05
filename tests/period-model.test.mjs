@@ -70,7 +70,7 @@ test('a negative or zero previous total cannot produce a misleading positive gro
   assert.equal(result.currentComplete, true);
   assert.equal(result.previousComplete, true);
   assert.equal(result.growth, null);
-  assert.match(result.coverageNotice, /Variação percentual indisponível: o período anterior tem vendas líquidas negativas\./);
+  assert.match(result.coverageNotice, /Percentage change is unavailable because the previous period has negative net sales\./);
   source.salesPeriods.facts[0].netSales = 0;
   assert.equal(calculateSalesPeriod(source, 'a', range).growth, null);
   source.salesPeriods.facts[0].netSales = 10;
@@ -97,7 +97,7 @@ test('daily fallback supports complete local days and refuses to estimate partia
   assert.equal(result.previousTotal, 50);
   assert.equal(result.growth, 100);
   assert.equal(result.current[0].locationName, 'Store A');
-  assert.throws(() => calculateSalesPeriod(source, 'a', { start: '2026-10-02T08:00', end: '2026-10-02T17:00' }), /apenas totais diários/);
+  assert.throws(() => calculateSalesPeriod(source, 'a', { start: '2026-10-02T08:00', end: '2026-10-02T17:00' }), /daily totals only/);
 });
 
 test('a daily source cannot fabricate the prior 23-hour comparison across spring DST', () => {
@@ -108,7 +108,7 @@ test('a daily source cannot fabricate the prior 23-hour comparison across spring
   assert.equal(result.total, 100);
   assert.equal(result.growth, null);
   assert.deepEqual(result.previous, []);
-  assert.match(result.coverageNotice, /horário de verão/);
+  assert.match(result.coverageNotice, /daylight saving transition/);
 });
 
 test('batch coverage detects gaps per store and suppresses incomplete comparisons', () => {
@@ -122,7 +122,7 @@ test('batch coverage detects gaps per store and suppresses incomplete comparison
   assert.equal(result.currentComplete, false);
   assert.equal(result.previousComplete, true);
   assert.equal(result.growth, null);
-  assert.match(result.coverageNotice, /não está totalmente coberto/);
+  assert.match(result.coverageNotice, /do not cover the full selected period/);
   assert.equal(calculateSalesPeriod(source, 'a', { start: '2026-10-02T12:00', end: '2026-10-02T13:00' }).currentComplete, true);
 });
 

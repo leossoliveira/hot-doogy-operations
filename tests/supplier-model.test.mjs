@@ -114,18 +114,18 @@ test('SKU uniqueness is scoped to supplier and excludes the current supplier ite
   assert.match(validateSupplierDraft({ ...row, sku: ' abc-2 ' }, row, catalog), /SKU/);
   assert.equal(validateSupplierDraft({ ...row, sku: alias.sku }, row, catalog), null);
   assert.equal(validateSupplierDraft({ ...row, sku: ' ' }, row, catalog), null);
-  assert.match(validateSupplierDraft({ ...row, name: '  ' }, row, catalog), /nome/);
-  assert.match(validateSupplierDraft({ ...row, catalogName: '  ' }, row, catalog), /catálogo/);
-  assert.match(validateSupplierDraft({ ...row, categoryId: uuid(999) }, row, catalog), /categoria/);
+  assert.match(validateSupplierDraft({ ...row, name: '  ' }, row, catalog), /name/);
+  assert.match(validateSupplierDraft({ ...row, catalogName: '  ' }, row, catalog), /catalog/);
+  assert.match(validateSupplierDraft({ ...row, categoryId: uuid(999) }, row, catalog), /category/);
 });
 
 test('price allows unknown or zero but rejects coercion, negative and nonfinite amounts', () => {
   const { row, catalog } = fixture();
   for (const price of ['', '  ', null, 0, '0', '12.345678']) assert.equal(validateSupplierDraft({ ...row, price }, row, catalog), null, String(price));
-  for (const price of [-1, '-0.1', '1,25', NaN, Infinity, true, false, [], [1], {}, 'bad']) assert.match(validateSupplierDraft({ ...row, price }, row, catalog), /preço/, String(price));
-  assert.match(validateSupplierDraft({ ...row, price: 30, priceUnitId: null }, row, catalog), /unidade/);
+  for (const price of [-1, '-0.1', '1,25', NaN, Infinity, true, false, [], [1], {}, 'bad']) assert.match(validateSupplierDraft({ ...row, price }, row, catalog), /price/, String(price));
+  assert.match(validateSupplierDraft({ ...row, price: 30, priceUnitId: null }, row, catalog), /unit/);
   for (const yieldPercent of [0, '0', 100, '99.25', null, '']) assert.equal(validateSupplierDraft({ ...row, yieldPercent }, row, catalog), null);
-  for (const yieldPercent of [-1, 101, Infinity, true]) assert.match(validateSupplierDraft({ ...row, yieldPercent }, row, catalog), /rendimento/);
+  for (const yieldPercent of [-1, 101, Infinity, true]) assert.match(validateSupplierDraft({ ...row, yieldPercent }, row, catalog), /Yield/);
 });
 
 test('unit conversions require registered identities, unique units, positive factors and base factor one', () => {
@@ -133,15 +133,15 @@ test('unit conversions require registered identities, unique units, positive fac
   for (const factor of [0, -1, NaN, Infinity, '', true, [1]]) {
     const draft = createSupplierDraft(row);
     draft.units[1].factor = factor;
-    assert.match(validateSupplierDraft(draft, row, catalog), /conversão/);
+    assert.match(validateSupplierDraft(draft, row, catalog), /conversion/);
   }
   const wrongBase = createSupplierDraft(row);
   wrongBase.units[0].factor = 2;
   assert.match(validateSupplierDraft(wrongBase, row, catalog), /base/);
-  assert.match(validateSupplierDraft({ ...row, units: [...row.units, row.units[0]] }, row, catalog), /uma vez/);
-  assert.match(validateSupplierDraft({ ...row, units: [...row.units, { id: uuid(999), factor: 1 }] }, row, catalog), /cadastradas/);
-  assert.match(validateSupplierDraft({ ...row, orderingUnitId: catalog.units[2].id }, row, catalog), /unidade cadastrada/);
-  assert.match(validateSupplierDraft({ ...row, units: row.units.slice(0, 1) }, row, catalog), /unidade cadastrada/);
+  assert.match(validateSupplierDraft({ ...row, units: [...row.units, row.units[0]] }, row, catalog), /only once/);
+  assert.match(validateSupplierDraft({ ...row, units: [...row.units, { id: uuid(999), factor: 1 }] }, row, catalog), /catalog/);
+  assert.match(validateSupplierDraft({ ...row, orderingUnitId: catalog.units[2].id }, row, catalog), /saved item units/);
+  assert.match(validateSupplierDraft({ ...row, units: row.units.slice(0, 1) }, row, catalog), /saved item units/);
   assert.match(validateSupplierDraft({ ...row, baseUnitId: null }, row, catalog), /base/);
   assert.match(validateSupplierDraft({ ...row, baseUnitId: catalog.units[1].id }, row, catalog), /base/);
 });
@@ -151,10 +151,10 @@ test('missing original units remain untouched when editing an unrelated field', 
   row.receivingUnitId = uuid(998);
   const missingDefinition = { ...catalog, units: catalog.units.filter(unit => unit.id !== row.units[1].id) };
   assert.equal(validateSupplierDraft({ ...row, name: 'Renamed' }, row, missingDefinition), null);
-  assert.match(validateSupplierDraft({ ...row, receivingUnitId: uuid(999) }, row, missingDefinition), /unidade cadastrada/);
+  assert.match(validateSupplierDraft({ ...row, receivingUnitId: uuid(999) }, row, missingDefinition), /saved item units/);
   const changedLegacy = createSupplierDraft(row);
   changedLegacy.units[1].factor = 13;
-  assert.match(validateSupplierDraft(changedLegacy, row, missingDefinition), /unidades cadastradas/);
+  assert.match(validateSupplierDraft(changedLegacy, row, missingDefinition), /units from the catalog/);
 });
 
 test('save normalizes text, numeric strings and booleans without changing source or read-only type', () => {
@@ -290,7 +290,7 @@ test('registered conversions can be added and removed unless another supplier st
   const second = saveSupplierDraft(first.local, first.item, { ...createSupplierDraft(first.item), units: first.item.units.slice(0, 2) }, catalog, { storage: storage(), now });
   assert.equal(second.item.units.length, 2);
   const removal = { ...createSupplierDraft(row), units: row.units.slice(0, 1), orderingUnitId: row.baseUnitId, receivingUnitId: row.baseUnitId, stocktakeUnitId: row.baseUnitId, priceUnitId: row.baseUnitId, price: 2 };
-  assert.match(validateSupplierDraft(removal, row, catalog), /outro fornecedor/);
+  assert.match(validateSupplierDraft(removal, row, catalog), /another supplier/);
   const effectiveCatalog = { ...catalog, items: catalog.items.map(item => item.supplierItemId === alias.supplierItemId ? { ...item, orderingUnitId: row.baseUnitId, receivingUnitId: row.baseUnitId } : item) };
   assert.equal(validateSupplierDraft(removal, row, effectiveCatalog), null);
 });
@@ -422,11 +422,11 @@ test('restoring one supplier cannot orphan another supplier using a shared local
   const saved = saveSupplierDraft({}, row, draft, catalog, { storage: storage(), now });
   const before = structuredClone(saved.local);
   let persisted = false;
-  assert.throws(() => restoreSupplierDraft(saved.local, alias, { catalog, storage: { setItem() { persisted = true; } }, now }), /outro fornecedor/);
+  assert.throws(() => restoreSupplierDraft(saved.local, alias, { catalog, storage: { setItem() { persisted = true; } }, now }), /another supplier/);
   assert.deepEqual(saved.local, before);
   assert.equal(persisted, false);
   // Stored itemId also protects restores when the caller has no catalog at hand.
-  assert.throws(() => restoreSupplierDraft(saved.local, alias, { storage: storage(), now }), /outro fornecedor/);
+  assert.throws(() => restoreSupplierDraft(saved.local, alias, { storage: storage(), now }), /another supplier/);
   const restoredOwner = restoreSupplierDraft(saved.local, row, { catalog, storage: storage(), now });
   assert.equal(restoredOwner.item.orderingUnitId, row.orderingUnitId);
   assert.equal(restoredOwner.local.itemEdits[row.itemId], undefined);
@@ -444,8 +444,8 @@ test('removing or restoring shared conversions preserves other supplier price re
   const effectiveAlias = effectiveCatalog.items.find(item => item.supplierItemId === alias.supplierItemId);
   const removal = createSupplierDraft(effectiveAlias);
   removal.units = removal.units.filter(unit => unit.id !== catalog.units[2].id);
-  assert.match(validateSupplierDraft(removal, effectiveAlias, effectiveCatalog), /preço local em outro fornecedor/);
-  assert.throws(() => restoreSupplierDraft(saved.local, alias, { catalog, storage: storage(), now }), /preço local/);
+  assert.match(validateSupplierDraft(removal, effectiveAlias, effectiveCatalog), /local pricing by another supplier/);
+  assert.throws(() => restoreSupplierDraft(saved.local, alias, { catalog, storage: storage(), now }), /local price/);
   const restoredOwner = restoreSupplierDraft(saved.local, row, { catalog, storage: storage(), now });
   assert.equal(restoredOwner.local.supplierItemEdits[row.supplierItemId], undefined);
   assert.equal(restoredOwner.item.units.some(unit => unit.id === catalog.units[2].id), false);
