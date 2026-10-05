@@ -1,0 +1,42 @@
+name: Validar e versionar
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm run check
+      - run: npm run test:ci
+  version:
+    if: github.event_name == 'push'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Criar versão desta atualização
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_NUMBER: ${{ github.run_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="v0.1.${RUN_NUMBER}"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "A versão $VERSION já existe; nenhuma duplicata foi criada."
+          else
+            gh release create "$VERSION" --target "$COMMIT_SHA" --title "$VERSION" --generate-notes
+          fi

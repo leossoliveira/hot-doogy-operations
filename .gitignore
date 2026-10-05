@@ -1,0 +1,28 @@
+node_modules/
+.DS_Store
+.env*
+test-results/
+
+# Dados operacionais e arquivos locais: nunca enviar ao GitHub.
+public/data/
+audits/
+output/
+outputs/
+tmp/
+preview*.png
+preview*.jpg
+*.log
+.secrets/
+**/.secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+DATA-NOTES.md
+INVENTORY-DATA-NOTES.md
+OPERATIONS-DATA-NOTES.md
+RECIPE-DATA-NOTES.md
+SALES-PERIOD-NOTES.md
+SUPPLIER-DATA-NOTES.md
+VALIDATION.md
+Abrir HOT DOOGY.command
