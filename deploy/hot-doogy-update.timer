@@ -1,0 +1,11 @@
+[Unit]
+Description=Check HOT DOOGY versions on GitHub
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+RandomizedDelaySec=15s
+Unit=hot-doogy-update.service
+
+[Install]
+WantedBy=timers.target

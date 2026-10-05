@@ -10,7 +10,7 @@ Requer Node.js 24. Não há dependências de instalação nem etapa de build.
 npm start
 ```
 
-O endereço local é http://127.0.0.1:4173. O acesso requer uma conta ativa vinculada à organização no banco. A hospedagem pública na VPS ainda precisa ser configurada.
+O endereço local é http://127.0.0.1:4173. O acesso requer uma conta ativa vinculada à organização no banco. O sistema também está hospedado na VPS; nesta etapa, o acesso à VPS é por túnel SSH. Subdomínio e HTTPS ficam para a próxima etapa. Consulte [a documentação da hospedagem](deploy/README.md).
 
 ## Configuração
 
@@ -31,6 +31,6 @@ Cada conjunto de alterações concluído deve ser registrado em um commit e envi
 
 A automação valida cada atualização de `main`. Quando as verificações passam, cria uma tag e uma GitHub Release com o formato `v0.1.N`, onde N é o número da execução. Cada versão aponta para o commit exato; números podem ter intervalos quando uma execução falha ou valida uma pull request. Reexecutar a mesma execução não cria uma segunda versão.
 
-Pull requests recebem verificações, mas não criam versões. A atualização da VPS será configurada em uma etapa posterior; criar uma versão no GitHub não altera automaticamente a aplicação em produção.
+Pull requests recebem verificações, mas não criam versões. A VPS verifica novas versões a cada aproximadamente dois minutos, executa os testes e instala a versão aprovada. A troca reinicia o sistema e exige novo login. Alterações locais só são enviadas ao GitHub com autorização do usuário, conforme `AGENTS.md`.
 
 O repositório deve ser privado. Exportações do banco, auditorias, capturas de tela, documentos de operações e segredos locais estão excluídos do controle de versão.
