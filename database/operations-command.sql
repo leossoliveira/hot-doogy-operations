@@ -205,12 +205,12 @@ begin
  ), usage as (
  select fact_date,location_id,(u->>'item_id')::uuid item_id,sum((u->>'quantity_base')::numeric) quantity
  from evaluated cross join lateral jsonb_array_elements(value->'usage') u
- where exists(select 1 from public.inventory_items i where i.id=(u->>'item_id')::uuid and i.item_type='prepared')
  group by 1,2,3
  ), days as (select fact_date,location_id,count(*) total,count(*) filter(where jsonb_array_length(value->'issues')>0) incomplete from evaluated group by 1,2),
  issues as (select i->>'code' code,location_id,count(*) occurrences from evaluated cross join lateral jsonb_array_elements(value->'issues') i group by 1,2)
  select jsonb_build_object('meta',jsonb_build_object('extractedAt',now(),'source','Supabase recipe calculation','readOnly',true),
- 'rows',coalesce((select jsonb_agg(jsonb_build_object('date',fact_date,'locationId',location_id,'itemId',item_id,'baseQty',quantity)) from usage),'[]'),
+ 'rows',coalesce((select jsonb_agg(jsonb_build_object('date',fact_date,'locationId',location_id,'itemId',item_id,'baseQty',quantity)) from usage where exists(select 1 from public.inventory_items i where i.id=usage.item_id and i.item_type='prepared')),'[]'),
+ 'itemRows',coalesce((select jsonb_agg(jsonb_build_object('date',fact_date,'locationId',location_id,'itemId',item_id,'baseQty',quantity)) from usage),'[]'),
  'days',coalesce((select jsonb_agg(jsonb_build_object('date',fact_date,'locationId',location_id,'totalLines',total,'incompleteLines',incomplete)) from days),'[]'),
  'issues',coalesce((select jsonb_agg(jsonb_build_object('code',code,'locationId',location_id,'occurrences',occurrences)) from issues),'[]')) into result;
  return result;

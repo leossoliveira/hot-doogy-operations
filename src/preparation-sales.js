@@ -35,7 +35,7 @@ export function expandPreparationSales(source,recipes){
   return {...source,rows:[...result.values()],expansionWarnings:[...warnings]};
 }
 function covers(intervals,from,to){let cursor=from;for(const [a,b] of intervals.sort((a,b)=>a[0]-b[0])){if(a>cursor)return false;cursor=Math.max(cursor,b);if(cursor>=to)return true;}return false;}
-function measure(item,locations,window,source,batches){
+export function measure(item,locations,window,source,batches){
   if(!source)return {qty:null,reason:"Sales usage calculation is unavailable.",partial:false};
   const unit=countUnit(item);if(!unit)return {qty:null,reason:"Count unit conversion needs review.",partial:false};
   let base=0,incompleteLines=0;
