@@ -1,18 +1,39 @@
 import {api} from './cloud.js';
-export const loginRoutes=['login','recover','request-access'];
+export const loginRoutes=['login','recover','request-access','mfa'];
+const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createLoginUI({icon,goto,icons,onLogin}){
-  const google='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.6h3.3c1.9-1.8 2.9-4.3 2.9-7.5Z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.3l-3.3-2.6c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3v2.7A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-4V7.3H3a10 10 0 0 0 0 9.4L6.4 14Z"/><path fill="#EA4335" d="M12 5.9c1.5 0 2.9.5 3.9 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2a10 10 0 0 0-9 5.3L6.4 10C7.2 7.7 9.4 5.9 12 5.9Z"/></svg>';
+  let pending=null,enrollment=null,generation=0,busy=false;
+  async function accept(value,route){
+    generation++;enrollment=null;
+    if(value?.mfa?.required){pending=value;goto('mfa');return;}
+    pending=null;await onLogin(value,route);
+  }
+  function mfaForm(){
+    const setup=pending.mfa.step==='enroll',factors=pending.mfa.factors||[];
+    return `<div class="mfa-intro"><p>Owners and administrators must use two-step verification to access this workspace.</p></div>
+      ${setup&&!enrollment?`<p class="mfa-help">Use an authenticator app, such as Google Authenticator, Microsoft Authenticator, or 1Password.</p><button type="button" class="login-submit" data-action="mfa-enroll">Set up authenticator ${icon('arrow-right')}</button>`:''}
+      ${enrollment?`<div class="mfa-enrollment"><p>1. Scan this QR code with your authenticator app.</p><img class="mfa-qr" src="${escape(enrollment.qrCode)}" alt="Scan to set up your HOT DOOGY authenticator"><details><summary>Can’t scan the code?</summary><p>Enter this setup key in your authenticator app:</p><code class="mfa-secret">${escape(enrollment.secret)}</code></details><p>2. Enter the six-digit code from the app.</p></div>`:''}
+      ${!setup||enrollment?`<form id="mfa-form">
+        ${factors.length>1?`<label for="mfa-factor">Authenticator</label><select id="mfa-factor" name="factorId" class="mfa-factor">${factors.map(f=>`<option value="${escape(f.id)}">${escape(f.name)}</option>`).join('')}</select>`:''}
+        ${!setup&&!factors.length?'<p class="mfa-help">No supported authenticator is available. Contact your administrator to recover access.</p>':`<label for="mfa-code">Verification code</label><div class="login-input">${icon('lock-keyhole')}<input id="mfa-code" name="code" inputmode="numeric" autocomplete="one-time-code" type="text" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" aria-describedby="mfa-code-help" required></div><p id="mfa-code-help" class="mfa-help">Codes refresh every 30 seconds.</p><button type="submit" class="login-submit">${setup?'Verify and enable':'Verify and sign in'} ${icon('arrow-right')}</button>`}
+      </form>`:''}
+      <p id="login-feedback" class="login-feedback" role="status" aria-live="polite" hidden></p>
+      <details class="mfa-recovery"><summary>Lost access to your authenticator?</summary><p>Contact your workspace administrator. They must verify your identity before resetting your authenticator. Your password alone cannot bypass this step.</p></details>
+      <button type="button" class="login-back" data-action="mfa-cancel">${icon('arrow-left')} Back to sign in</button>`;
+  }
   function page(mode='login'){
+    const mfa=mode==='mfa'&&pending;
+    if(mode==='mfa'&&!pending)mode='login';
     const login=mode==='login',recovery=mode==='recover';
     return `<main class="login-page">
       <section class="login-content" aria-label="Workspace access">
         <header class="login-brand"><img src="/brand/hot-doogy-wordmark.svg" alt="HOT DOOGY"><span>OPERATIONS</span></header>
         <div class="login-form-wrap">
-          ${!login?'<button class="login-back" data-action="login-back">'+icon('arrow-left')+" Back to sign in</button>":''}
+          ${!login&&!mfa?'<button class="login-back" data-action="login-back">'+icon('arrow-left')+" Back to sign in</button>":''}
           <span class="login-eyebrow">YOUR WORKSPACE</span>
-          <h1>${login?"Welcome<br>back.":recovery?"Forgot your password?":"Join the team."}</h1>
-          <p class="login-subtitle">${login?"Ready for another day at Hot Doogy.":recovery?"Recover access to your workspace.":"Access is for Hot Doogy team members."}</p>
-          ${false?`<button type="button" class="login-google" data-action="login-google">${google}<span>Continue with Google</span></button><div class="login-divider"><span>or sign in with your email</span></div>`:''}
+          <h1>${mfa?(pending.mfa.step==='enroll'?"Secure your<br>account.":"Verify it’s<br>you."):login?"Welcome<br>back.":recovery?"Forgot your password?":"Join the team."}</h1>
+          <p class="login-subtitle">${mfa?escape(pending.user.email):login?"Ready for another day at Hot Doogy.":recovery?"Recover access to your workspace.":"Access is for Hot Doogy team members."}</p>
+          ${mfa?mfaForm():`
           <form id="login-form" data-login-mode="${mode}">
             <label for="login-email">Email</label>
             <div class="login-input">${icon('mail')}<input id="login-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="you@hotdoogy.com" required></div>
@@ -20,6 +41,7 @@ export function createLoginUI({icon,goto,icons,onLogin}){
             <p id="login-feedback" class="login-feedback" role="status" aria-live="polite" hidden></p>
             <button type="submit" class="login-submit">${login?"Sign in":recovery?"Recover access":"Request access"}${icon('arrow-right')}</button>
           </form>
+          `}
           ${login?"<p class=\"login-access\">Don’t have access yet? <button class=\"login-text-button\" data-action=\"login-request\">Request access</button></p>":''}
           
         </div>
@@ -37,16 +59,38 @@ export function createLoginUI({icon,goto,icons,onLogin}){
   }
   function feedback(text){const el=document.querySelector('#login-feedback');if(el){el.hidden=false;el.textContent=text;}}
   async function submit(form){
-    if(form.id!=='login-form'||!form.reportValidity())return false;
-    const button=form.querySelector('[type="submit"]');if(button.disabled)return false;button.disabled=true;const label=button.innerHTML;button.textContent="Signing in…";feedback("Checking your access…");
+    if(!['login-form','mfa-form'].includes(form.id)||!form.reportValidity()||busy)return false;
+    const button=form.querySelector('[type="submit"]');if(button.disabled)return false;
+    busy=true;button.disabled=true;const label=button.innerHTML,version=generation;
+    button.textContent=form.id==='mfa-form'?"Verifying…":"Signing in…";feedback("Checking your access…");
     try{
+      if(form.id==='mfa-form'){
+        const factorId=form.elements.factorId?.value||pending.mfa.factors?.[0]?.id||enrollment?.id;
+        const value=await api('/api/auth/mfa/verify',{factorId,code:form.elements.code.value});
+        form.elements.code.value='';if(version===generation)await accept(value);return true;
+      }
       if(form.dataset.loginMode!=='login'){feedback("Contact your team administrator to recover or request access.");return true;}
-      const session=await api('/api/auth/login',{email:form.email.value,password:form.password.value});
-      form.password.value='';button.textContent="Opening your workspace…";feedback("You’re signed in. Loading your workspace data…");await onLogin(session);
-    }catch(error){feedback(error.message);}finally{button.disabled=false;button.innerHTML=label;}
+      const value=await api('/api/auth/login',{email:form.email.value,password:form.password.value});
+      form.password.value='';
+      if(version!==generation)return true;
+      if(!value.mfa?.required){button.textContent="Opening your workspace…";feedback("You’re signed in. Loading your workspace data…");}
+      await accept(value);
+    }catch(error){
+      if(version===generation){
+        if(form.id==='mfa-form'&&error.status===401){pending=null;enrollment=null;generation++;goto('login');}
+        feedback(error.message);
+      }
+    }finally{busy=false;button.disabled=false;button.innerHTML=label;}
     return true;
   }
   const actions={
+    'mfa-enroll':async el=>{
+      if(busy||!pending)return;busy=true;el.disabled=true;const version=generation;
+      try{const value=await api('/api/auth/mfa/enroll',{});if(version===generation){enrollment=value;goto('mfa');}}
+      catch(error){if(version===generation){if(error.status===401){pending=null;enrollment=null;generation++;goto('login');}feedback(error.message);}}
+      finally{busy=false;el.disabled=false;}
+    },
+    'mfa-cancel':async()=>{generation++;pending=null;enrollment=null;try{await api('/api/auth/logout',{});}finally{goto('login');}},
     'login-back':()=>goto('login'),
     'login-recover':()=>goto('recover'),
     'login-request':()=>goto('request-access'),
@@ -54,5 +98,5 @@ export function createLoginUI({icon,goto,icons,onLogin}){
     'login-google':()=>feedback("Google sign-in is not available. Sign in with your email and password."),
     'login-toggle-password':el=>{const input=document.querySelector('#login-password'),show=input.type==='password';input.type=show?'text':'password';el.setAttribute('aria-label',show?"Hide password":"Show password");el.setAttribute('aria-pressed',String(show));el.innerHTML=icon(show?'eye-off':'eye');icons();}
   };
-  return {page,submit,actions};
+  return {page,submit,actions,accept,get pending(){return !!pending;}};
 }
