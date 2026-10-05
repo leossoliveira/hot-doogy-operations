@@ -10,6 +10,17 @@ O atualizador escolhe a versão numericamente mais recente que pertença ao hist
 
 Alterações locais continuam exigindo autorização antes do envio ao GitHub. Uma vez enviada e aprovada nos testes, a versão é instalada automaticamente na VPS. Reiniciar o aplicativo encerra as sessões em memória: os usuários precisam entrar novamente. O banco permanece no Supabase.
 
+## Instalar em outra VPS sem arquivos do Mac
+
+Requer Linux com systemd, Node.js 24 ou superior em `/usr/bin/node`, npm, Git, OpenSSH, curl e util-linux. O projeto Supabase existente precisa permanecer ativo; estas instruções reinstalam o aplicativo, não recriam o banco de dados.
+
+1. No novo servidor, crie `/etc/hot-doogy` com permissão 700 e gere uma chave SSH exclusiva em `/etc/hot-doogy/github_deploy_key`. Cadastre somente a chave pública como **Deploy key de leitura** em `leossoliveira/hot-doogy-operations`. Não copie chaves pessoais nem dê permissão de escrita.
+2. Configure a identidade SSH do GitHub usando [a chave pública oficial](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints). Clone o repositório com essa chave de implantação e a verificação de host habilitada.
+3. Use `deploy/supabase-s3.env.example` como modelo para `/etc/hot-doogy/supabase-s3.env`. Obtenha as credenciais S3 do projeto Supabase ou do cofre de segredos da operação. Proteja o arquivo com permissão 600 até a instalação. Não envie o arquivo preenchido ao GitHub.
+4. Na pasta clonada, execute como root `bash deploy/install.sh`. O instalador configura as permissões, instala os serviços e baixa a versão aprovada diretamente do GitHub. Ele não requer exportações, imagens originais, backups ou outras pastas do Mac.
+
+A configuração S3 existente já está na VPS atual. Mantenha uma cópia das credenciais em um cofre de segredos ou um procedimento para recriá-las no Supabase. O GitHub é o backup do código, não das credenciais nem do banco.
+
 ## Acesso temporário
 
 No computador, abra um túnel e mantenha-o conectado:

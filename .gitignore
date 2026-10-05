@@ -1,6 +1,7 @@
 node_modules/
 .DS_Store
 .env*
+*.env
 test-results/
 
 # Dados operacionais e arquivos locais: nunca enviar ao GitHub.

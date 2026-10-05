@@ -1,16 +1,16 @@
 import {readFile} from 'node:fs/promises';
 import {createHash,createHmac,randomBytes} from 'node:crypto';
-import os from 'node:os';
-import path from 'node:path';
 export const ORG='6013ed02-626a-497c-b951-619069035532',BUCKET='supplier-item-images';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const hmac=(k,v)=>createHmac('sha256',k).update(v).digest();
 const encode=s=>encodeURIComponent(s).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export function photoKey(kind,id,supplierId){if(!['items','recipes'].includes(kind)||!uuid.test(id))throw Error('Invalid photo identity');if(kind==='items'&&supplierId){if(!uuid.test(supplierId))throw Error('Invalid supplier identity');return `${ORG}/${supplierId}/photo.jpg`;}return `${ORG}/${kind}/${id}/photo.jpg`;}
-export async function loadS3Config(){
- const file=process.env.HOT_DOOGY_S3_CONFIG||path.join(os.homedir(),'Documents/Codex/2026-09-12/referenced-chatgpt-conversation-this-is-an/.secrets/supabase-s3.env');
- const env={};for(const line of (await readFile(file,'utf8')).split('\n')){if(!line.includes('=')||line.trim().startsWith('#'))continue;const i=line.indexOf('=');env[line.slice(0,i).trim()]=line.slice(i+1).trim().replace(/^['"]|['"]$/g,'');}
+export async function loadS3Config(settings=process.env){
+ const env={},file=settings.HOT_DOOGY_S3_CONFIG;
+ if(file)for(const line of (await readFile(file,'utf8')).split('\n')){if(!line.includes('=')||line.trim().startsWith('#'))continue;const i=line.indexOf('=');env[line.slice(0,i).trim()]=line.slice(i+1).trim().replace(/^['"]|['"]$/g,'');}
+ for(const name of ['SUPABASE_S3_ENDPOINT','SUPABASE_S3_REGION','SUPABASE_S3_ACCESS_KEY_ID','SUPABASE_S3_SECRET_ACCESS_KEY'])if(settings[name]!==undefined)env[name]=settings[name];
+ if(!env.SUPABASE_S3_ENDPOINT)throw Error('Configure HOT_DOOGY_S3_CONFIG or the SUPABASE_S3 environment variables');
  const endpoint=new URL(env.SUPABASE_S3_ENDPOINT);
  if(endpoint.protocol!=='https:'||!['kfnsfnytnnpwptklmbip.supabase.co','kfnsfnytnnpwptklmbip.storage.supabase.co'].includes(endpoint.hostname)||endpoint.port||endpoint.username||endpoint.password||endpoint.search||endpoint.hash||endpoint.pathname.replace(/\/$/,'')!=='/storage/v1/s3')throw Error('Invalid S3 endpoint');
  if(!env.SUPABASE_S3_REGION||!env.SUPABASE_S3_ACCESS_KEY_ID||!env.SUPABASE_S3_SECRET_ACCESS_KEY)throw Error('Missing S3 credentials');return env;

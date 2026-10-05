@@ -14,7 +14,9 @@ O endereço local é http://127.0.0.1:4173. O acesso requer uma conta ativa vinc
 
 ## Configuração
 
-O servidor aceita `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. As credenciais privadas de armazenamento devem ficar fora do repositório. Na configuração local atual, `HOT_DOOGY_S3_CONFIG` indica o arquivo privado com as variáveis S3. Nunca coloque credenciais no código, em commits ou nos arquivos públicos.
+O servidor aceita `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. Para o armazenamento, configure as variáveis `SUPABASE_S3_*` no servidor ou indique o arquivo privado em `HOT_DOOGY_S3_CONFIG`. O [modelo de configuração](deploy/supabase-s3.env.example) contém apenas os nomes e valores públicos. Não há caminhos para pastas de um computador específico. Nunca coloque credenciais no código, em commits ou nos arquivos públicos.
+
+O GitHub contém o código, as imagens da marca, as bibliotecas da interface, os testes independentes e os arquivos de instalação. Dados do negócio, usuários, fotos dos produtos e documentos permanecem no Supabase; a VPS possui sua própria configuração privada. Exportações, auditorias, capturas de tela e os scripts históricos de importação em `scripts/` não são necessários para executar o aplicativo. Os scripts de importação e os testes históricos podem exigir esses arquivos de referência, mas não são usados pelo serviço nem pela publicação automática.
 
 ## Verificação
 

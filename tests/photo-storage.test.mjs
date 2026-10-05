@@ -1,8 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPhotoStorage,createPhotoHandler,photoKey,ORG} from '../server/photo-storage.mjs';
+import {mkdtemp,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {createPhotoStorage,createPhotoHandler,loadS3Config,photoKey,ORG} from '../server/photo-storage.mjs';
 const id='b57ffa74-932e-4398-a914-b7552c9255c3',supplier='ff2690af-a657-4bf3-be45-610ce5c06a4f';
 const env={SUPABASE_S3_ENDPOINT:'https://kfnsfnytnnpwptklmbip.storage.supabase.co/storage/v1/s3',SUPABASE_S3_REGION:'us-west-2',SUPABASE_S3_ACCESS_KEY_ID:'test',SUPABASE_S3_SECRET_ACCESS_KEY:'test'};
+test('Storage can be configured only with server environment variables',async()=>{assert.deepEqual(await loadS3Config(env),env);});
+test('Storage reads an explicitly configured private file and allows environment overrides',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'hot-doogy-storage-'));
+ try{const file=path.join(dir,'storage.env');await writeFile(file,'# synthetic test configuration\n'+Object.entries(env).map(([k,v])=>`${k}="${v}"`).join('\n'),{mode:0o600});assert.deepEqual(await loadS3Config({HOT_DOOGY_S3_CONFIG:file,SUPABASE_S3_REGION:'override-region'}),{...env,SUPABASE_S3_REGION:'override-region'});}finally{await rm(dir,{recursive:true,force:true});}
+});
+test('Storage without configuration fails explicitly instead of using a developer machine path',async()=>{await assert.rejects(()=>loadS3Config({}),/Configure HOT_DOOGY_S3_CONFIG/);});
+test('Portable configuration still rejects foreign endpoints and incomplete credentials',async()=>{await assert.rejects(()=>loadS3Config({...env,SUPABASE_S3_ENDPOINT:'https://example.invalid/storage/v1/s3'}),/Invalid S3 endpoint/);await assert.rejects(()=>loadS3Config({...env,SUPABASE_S3_SECRET_ACCESS_KEY:''}),/Missing S3 credentials/);});
 test('S3 keys stay scoped to organization and registered identity',()=>{assert.equal(photoKey('items',id,supplier),`${ORG}/${supplier}/photo.jpg`);assert.throws(()=>photoKey('invoices',id));assert.throws(()=>photoKey('items','../secrets'));});
 test('Upload must reread matching bytes before success',async()=>{const bytes=Buffer.from([255,216,255,1]);let methods=[];const storage=createPhotoStorage(env,async(url,opts)=>{methods.push(opts.method);assert.ok(url.includes('supplier-item-images'));return new Response(opts.method==='PUT'?'':bytes,{status:200});},{[id]:supplier});assert.equal((await storage.save('items',id,bytes)).size,4);assert.deepEqual(methods,['PUT','GET']);const failed=createPhotoStorage(env,async()=>new Response('different'));await assert.rejects(()=>failed.save('items',id,bytes),/verification/);});
 test('Catalog listing maps supplier photo back to the shared inventory item',async()=>{const storage=createPhotoStorage(env,async()=>new Response(`<ListBucketResult><Contents><Key>${ORG}/${supplier}/photo.jpg</Key><ETag>&quot;abc&quot;</ETag><LastModified>2026-10-04</LastModified></Contents><IsTruncated>false</IsTruncated></ListBucketResult>`),{[id]:supplier});assert.equal((await storage.list()).items[id].storage,'s3');});
