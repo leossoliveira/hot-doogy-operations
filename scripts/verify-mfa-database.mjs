@@ -40,6 +40,10 @@ try{
  `);
  const migration=await readFile(new URL('../database/security-mfa.sql',import.meta.url),'utf8');
  await db.exec(migration);await db.exec(migration); // Applying twice must retain the same restrictions.
+ const performance=await readFile(new URL('../database/security-mfa-read-performance.sql',import.meta.url),'utf8');
+ // Real scope helper bodies; privileged production RPC schemas are checked after migration.
+ const helpers=performance.split('-- MFA checks at RPC entry points.')[0]+'commit;';
+ await db.exec(helpers);await db.exec(helpers);
  await db.exec(`
  create policy test_member_read on public.organization_members for select to authenticated using(user_id=auth.uid() or private.has_org_role(organization_id,array['owner','admin']::public.member_role[]));
  create policy test_records_access on public.mfa_test_records for all to authenticated using(private.is_org_member(organization_id)) with check(private.is_org_member(organization_id));
@@ -47,6 +51,7 @@ try{
  create view public.mfa_test_view with(security_invoker=true) as select * from public.mfa_test_records;
  grant select on public.mfa_test_view to authenticated;
  create function private.mfa_test_rpc() returns int language plpgsql security definer set search_path='' as $$begin
+ if not private.mfa_authorized() then raise exception 'Forbidden' using errcode='42501';end if;
  if not private.has_org_role('${org}',array['owner','admin','manager']::public.member_role[]) then raise exception 'Forbidden' using errcode='42501';end if;
  return (select count(*) from public.mfa_test_records where organization_id='${org}');end $$;
  revoke all on function private.mfa_test_rpc() from public;
