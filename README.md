@@ -10,7 +10,7 @@ Requer Node.js 24. Não há dependências de instalação nem etapa de build.
 npm start
 ```
 
-O endereço local é http://127.0.0.1:4173. O acesso requer uma conta ativa vinculada à organização no banco. O sistema também está hospedado na VPS; nesta etapa, o acesso à VPS é por túnel SSH. Subdomínio e HTTPS ficam para a próxima etapa. Consulte [a documentação da hospedagem](deploy/README.md).
+O endereço local é http://127.0.0.1:4173. Em produção, acesse https://management.hotdoogy.com sem túnel SSH. O subdomínio exige uma senha de entrada (usuário `management`), seguida do login individual de uma conta ativa vinculada à organização no banco. Consulte [a documentação da hospedagem](deploy/README.md).
 
 ## Configuração
 
