@@ -47,3 +47,12 @@
 .status.orange{background:#fff0df;color:#a34e08}.status.red{background:#fde9e7;color:#b42318}
 
 .btn.invoice-paid-button{background:#23804b;border-color:#23804b;color:#fff}.btn.invoice-paid-button:hover{background:#19643a;border-color:#19643a}.btn.invoice-paid-button:disabled{opacity:.65}
+
+.invoice-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:22px}.invoice-summary{padding:22px}.invoice-summary h2{font-size:14px;margin:0 0 18px}.invoice-summary>div{display:grid;grid-template-columns:1fr 1fr;gap:16px}.invoice-summary section{min-width:0;display:flex;flex-direction:column;gap:10px}.invoice-summary section>span{font-size:11px;color:#737e67}.invoice-summary strong{font-size:25px;overflow-wrap:anywhere}.invoice-search{flex:1 1 230px;min-width:0}.invoice-search input{width:100%}.invoice-sort{display:inline-flex;align-items:center;gap:6px;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left}.invoice-sort .icon{width:13px;height:13px}@media(max-width:600px){.invoice-summary-grid{grid-template-columns:1fr}.invoice-summary{padding:18px}.invoice-summary strong{font-size:22px}.invoice-search{flex-basis:100%}}
+.invoice-search input{border:0;background:transparent;box-shadow:none;min-width:0}.invoice-search:focus-within{outline:2px solid #b59b30;outline-offset:2px}.invoice-search input:focus{outline:0}
+
+.invoice-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:1000px){.invoice-summary-grid{grid-template-columns:1fr}}
+/* Keep invoice counts and currency intact, with more room for the total. */
+.invoice-summary>div{grid-template-columns:minmax(0,1fr) max-content;column-gap:24px}.invoice-summary strong{white-space:nowrap;overflow-wrap:normal}.invoice-summary section:last-child{text-align:right}
+@media(min-width:1001px) and (max-width:1350px){.invoice-summary-grid{gap:12px}.invoice-summary{padding:16px}.invoice-summary>div{column-gap:16px}.invoice-summary strong{font-size:20px}}
+@media(max-width:380px){.invoice-summary>div{column-gap:16px}.invoice-summary strong{font-size:20px}}
