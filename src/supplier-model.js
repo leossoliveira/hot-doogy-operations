@@ -1,6 +1,6 @@
 import { norm, saveLocal } from './model.js';
 
-const commonFields = ['catalogName', 'internalName', 'description', 'categoryId', 'categoryName', 'active', 'trackInventory', 'baseUnitId', 'baseUnitName', 'stocktakeUnitId', 'stocktakeUnitIds', 'units', 'yieldPercent'];
+const commonFields = ['internalName', 'description', 'categoryId', 'categoryName', 'active', 'trackInventory', 'baseUnitId', 'baseUnitName', 'stocktakeUnitId', 'stocktakeUnitIds', 'units', 'yieldPercent'];
 const vendorFields = ['name', 'productDescription', 'sku', 'brand', 'supplierActive', 'orderingUnitId', 'orderingItemUnitId', 'receivingUnitId', 'receivingItemUnitId'];
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object || {}, key);
 const blank = value => value == null || typeof value === 'string' && value.trim() === '';
@@ -107,7 +107,7 @@ export function resolveSupplierPrice(row, scope = 'all') {
 
 export function validateSupplierDraft(draft, original, catalog) {
   if (!draft || typeof draft.name !== 'string' || !draft.name.trim()) return "Enter the item name.";
-  if (!blank(original.catalogName) && (typeof draft.catalogName !== 'string' || !draft.catalogName.trim())) return "Enter the item’s catalog name.";
+  if (blank(draft.internalName)) return "Enter the internal name.";
   if (text(draft.baseUnitId) !== text(original.baseUnitId)) return "The item’s base unit cannot be changed.";
   if (!Array.isArray(draft.units)) return "The item’s units are invalid.";
   const sku = norm(draft.sku).trim();
@@ -147,7 +147,7 @@ function normalizedDraft(draft, original, catalog) {
   const result = structuredClone(draft);
   result.name = draft.name.trim();
   result.productDescription = result.name;
-  for (const field of ['catalogName', 'internalName', 'description', 'sku', 'brand']) if (own(result, field)) result[field] = text(result[field]);
+  for (const field of ['internalName', 'description', 'sku', 'brand']) if (own(result, field)) result[field] = text(result[field]);
   for (const field of ['active', 'supplierActive', 'trackInventory']) if (own(result, field)) result[field] = boolean(result[field]);
   if (own(result, 'categoryId')) {
     result.categoryId = text(result.categoryId);

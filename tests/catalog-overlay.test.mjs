@@ -25,7 +25,7 @@ test('unmodified catalog rows retain object identity',()=>{
 test('shared inventory edits still load when the supplier catalog could not be fetched',()=>{
   const f=fixture();
   f.inventory[0].category='Other';
-  const local={itemEdits:{item:{catalogName:'Offline edit',categoryName:'Food',units:f.units,stocktakeUnitId:'case',stocktakeUnitIds:['case']}}};
+  const local={itemEdits:{item:{internalName:'Offline edit',categoryName:'Food',units:f.units,stocktakeUnitId:'case',stocktakeUnitIds:['case']}}};
   const [row]=inventoryWithEdits(f.inventory,null,local);
   assert.equal(row.name,'Offline edit');assert.equal(row.category,'Food');assert.equal(row.stocktakeUom,'Case');assert.equal(row.units[0].id,'item-each');assert.equal(row.rowId,'item-sherwood');
   assert.deepEqual(supplierOrderItems(null,f.inventory,local,{locationId:'sherwood',supplierId:'a'}),[]);
@@ -33,9 +33,9 @@ test('shared inventory edits still load when the supplier catalog could not be f
 
 test('shared edits propagate name, activity and conversions without changing inventory identity or location',()=>{
   const f=fixture(),before=JSON.stringify(f);
-  const local={itemEdits:{item:{catalogName:'New catalog name',internalName:'New internal name',categoryName:'Food',active:false,stocktakeUnitId:'case',stocktakeUnitIds:['case'],units:f.units.map(u=>({...u,factor:u.id==='case'?24:u.factor}))}}};
+  const local={itemEdits:{item:{internalName:'New internal name',categoryName:'Food',active:false,stocktakeUnitId:'case',stocktakeUnitIds:['case'],units:f.units.map(u=>({...u,factor:u.id==='case'?24:u.factor}))}}};
   const [row]=inventoryWithEdits(f.inventory,f.catalog,local);
-  assert.equal(row.id,'item');assert.equal(row.rowId,'item-sherwood');assert.equal(row.name,'New catalog name');assert.equal(row.internalName,'New internal name');assert.equal(row.active,false);assert.equal(row.categoryName,'Food');
+  assert.equal(row.id,'item');assert.equal(row.rowId,'item-sherwood');assert.equal(row.name,'New internal name');assert.equal(row.internalName,'New internal name');assert.equal(row.active,false);assert.equal(row.categoryName,'Food');
   assert.equal(row.stockQty,null);assert.equal(row.locationId,'sherwood');assert.equal(row.areaName,'Shelf');
   assert.equal(row.units.find(u=>u.id==='item-case').factor,24);assert.equal(row.units.find(u=>u.id==='item-case').unitId,'case');assert.equal(row.stocktakeUom,'Case');
   assert.equal(JSON.stringify(f),before);
@@ -45,7 +45,7 @@ test('shared edits propagate name, activity and conversions without changing inv
 
 test('recipe ingredients apply shared fields with global unit IDs and preserve recipe SKU',()=>{
   const f=fixture();
-  const local={itemEdits:{item:{catalogName:'New name',active:false,baseUnitId:'each',units:f.units.map(u=>({...u,factor:u.id==='case'?30:u.factor})),stocktakeUnitId:'case',stocktakeUnitIds:['case']}},supplierItemEdits:{'vendor-a':{name:'Vendor-only name',sku:'CHANGED',orderingUnitId:'each'}}};
+  const local={itemEdits:{item:{internalName:'New name',active:false,baseUnitId:'each',units:f.units.map(u=>({...u,factor:u.id==='case'?30:u.factor})),stocktakeUnitId:'case',stocktakeUnitIds:['case']}},supplierItemEdits:{'vendor-a':{name:'Vendor-only name',sku:'CHANGED',orderingUnitId:'each'}}};
   const [row]=ingredientItemsWithEdits(f.ingredients,local);
   assert.equal(row.name,'New name');assert.equal(row.active,false);assert.equal(row.sku,'recipe-sku');assert.equal(row.baseUomId,'each');
   assert.equal(row.units.find(u=>u.id==='case').factor,30);assert.equal(row.units.find(u=>u.id==='case').itemUnitId,'item-case');assert.equal(row.stocktakeUom,'Case');

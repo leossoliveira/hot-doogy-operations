@@ -72,3 +72,5 @@
 .prep-plan-notes{margin:20px 24px}.prep-plan-notes textarea{width:100%;box-sizing:border-box;min-height:100px;resize:vertical}@media(max-width:700px){.prep-plan-notes{margin:16px 14px}}
 
 .transfer-detail-modal #dialog-title{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.transfer-detail-modal .transfer-title-number{overflow-wrap:anywhere;min-width:0}.transfer-detail-modal #dialog-title .status{flex-shrink:0;font-size:11px;line-height:1.4;font-weight:600;letter-spacing:normal}
+
+.catalog-link-group p{overflow-wrap:anywhere;font-size:12px;line-height:1.6}.supplier-location-create{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:10px 0}.supplier-location-create input{width:18px;height:18px}.supplier-location-create select{flex:1;min-width:160px}

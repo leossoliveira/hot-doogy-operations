@@ -21,7 +21,7 @@ export function inventoryWithEdits(rows,catalog,local={}){
     let units=edited?.units;
     if(!units&&shared?.units)units=sharedUnits(shared.units,shared);
     const result={...row,...commonPatch(shared),editedLocally:true};
-    if(own(shared,'catalogName'))result.name=shared.catalogName??row.name;
+    if(own(shared,'internalName'))result.name=shared.internalName??row.name;
     if(own(shared,'categoryName')&&own(row,'category'))result.category=shared.categoryName;
     if(units){
       result.units=inventoryUnits(units);
@@ -42,7 +42,7 @@ export function ingredientItemsWithEdits(rows,local={}){
     const shared=local.itemEdits?.[row.id];
     if(!shared)return row;
     const result={...row,...commonPatch(shared),editedLocally:true};
-    if(own(shared,'catalogName'))result.name=shared.catalogName??row.name;
+    if(own(shared,'internalName'))result.name=shared.internalName??row.name;
     const originalUnits=row.units||[];
     result.units=sharedUnits(shared.units??originalUnits,shared).map(unit=>{
       const original=originalUnits.find(existing=>existing.id===unit.id);
@@ -63,7 +63,7 @@ export function supplierOrderItems(catalog,inventoryRows,local={}, {locationId,s
     const row=inventory.find(candidate=>candidate.id===item.itemId&&candidate.locationId===locationId&&candidate.active!==false&&candidate.locationActive!==false);
     if(!row)return [];
     const units=inventoryUnits(item.units||[]);
-    return [{...row,id:item.itemId,name:item.name||item.catalogName||row.name,supplierItemId:item.supplierItemId,
+    return [{...row,id:item.itemId,name:item.name||item.internalName||row.name,supplierItemId:item.supplierItemId,
       supplierId:item.supplierId,supplierName:item.supplierName,sku:item.sku,brand:item.brand,
       supplierActive:item.supplierActive,supplierBusinessActive:item.supplierBusinessActive,
       orderingUnitId:item.orderingUnitId,orderingItemUnitId:item.orderingItemUnitId,

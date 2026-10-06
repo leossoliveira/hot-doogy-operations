@@ -52,7 +52,7 @@ begin
     insert into public.inventory_item_units(organization_id,inventory_item_id,unit_id,quantity_in_base_unit,is_base_unit,is_count_unit) values(org,item,(x->>'id')::uuid,quantity,false,coalesce((x->>'stocktake')::boolean,false));
    end if;
   end loop;
-  update public.inventory_items set name=sh->>'catalogName',internal_name=sh->>'internalName',description=sh->>'description',category_id=(sh->>'categoryId')::uuid,active=(sh->>'active')::boolean,track_inventory=(sh->>'trackInventory')::boolean,yield_percent=(sh->>'yieldPercent')::numeric where inventory_items.id=item;
+  update public.inventory_items set internal_name=sh->>'internalName',description=sh->>'description',category_id=(sh->>'categoryId')::uuid,active=(sh->>'active')::boolean,track_inventory=(sh->>'trackInventory')::boolean,yield_percent=(sh->>'yieldPercent')::numeric where inventory_items.id=item;
   if not exists(select 1 from public.inventory_item_units where inventory_item_id=item and unit_id=(v->>'orderingUnitId')::uuid) or not exists(select 1 from public.inventory_item_units where inventory_item_id=item and unit_id=(v->>'receivingUnitId')::uuid) then raise exception 'Unidades de compra e recebimento inválidas.';end if;
   update public.supplier_items set supplier_product_name=v->>'name',sku=v->>'sku',brand=v->>'brand',active=(v->>'supplierActive')::boolean,
    purchase_item_unit_id=(select inventory_item_units.id from public.inventory_item_units where inventory_item_id=item and unit_id=(v->>'orderingUnitId')::uuid),
