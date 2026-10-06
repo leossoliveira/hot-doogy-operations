@@ -39,3 +39,19 @@ test('document and conflict errors explain how to recover without leaking databa
  assert.match(databaseErrorMessage({message:'INVOICE_S3_REQUIRED: internal detail'}),/Upload and verify/);
  assert.match(databaseErrorMessage({code:'40001'}),/Reload its status/);
 });
+
+import {deleteInvoice} from '../server/invoice-status.mjs';
+const deleteUrl=new URL('http://localhost/api/invoices/'+id+'/delete');
+test('deletion requires explicit confirmation, valid version and financial permissions',async()=>{
+ const noDatabase={request:()=>assert.fail('Must not mutate')};
+ for(const payload of [{},{confirmed:false,expectedUpdatedAt:body.expectedUpdatedAt},{confirmed:true,expectedUpdatedAt:'bad'}])
+  await assert.rejects(deleteInvoice(req(payload),res(),deleteUrl,noDatabase,{member:{role:'admin'}}),e=>e.status===400);
+ await assert.rejects(deleteInvoice(req({confirmed:true,expectedUpdatedAt:body.expectedUpdatedAt}),res(),deleteUrl,noDatabase,{member:{role:'employee'}}),e=>e.status===403);
+});
+test('confirmed deletion uses scoped RPC and propagates failures without success',async()=>{
+ const payload={confirmed:true,expectedUpdatedAt:body.expectedUpdatedAt,organizationId:'fake'};let call;
+ const response=res();
+ await deleteInvoice(req(payload),response,deleteUrl,{request:async(path,options)=>{call={path,...options};return {id,deleted:true};}},{member:{role:'admin'},token:'user-token'});
+ assert.equal(response.body.deleted,true);assert.equal(call.path,'/rest/v1/rpc/delete_invoice');assert.equal(call.token,'user-token');assert.equal(call.body.p_invoice_id,id);assert.notEqual(call.body.p_organization_id,'fake');
+ const failed=res();await assert.rejects(deleteInvoice(req(payload),failed,deleteUrl,{request:async()=>{throw Error('conflict');}},{member:{role:'admin'}}),/conflict/);assert.equal(failed.status,undefined);
+});

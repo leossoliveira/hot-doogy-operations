@@ -1,5 +1,5 @@
 import {invoiceDownload} from './server/invoice-download.mjs';
-import {updateInvoiceStatus} from './server/invoice-status.mjs';
+import {updateInvoiceStatus,deleteInvoice} from './server/invoice-status.mjs';
 import {replyData} from './server/compressed-json.mjs';
 import {queueSalesSummary} from './server/sales-summary.mjs';
 import {invoiceUpload} from './server/invoice-api.mjs';
@@ -21,6 +21,7 @@ http.createServer(async(req,res)=>{
   if(await auth.handle(req,res,url))return;
   if(url.pathname.startsWith('/api/')){
    const session=await auth.requireSession(req);
+   if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/documents\/[^/]+\/download$/.test(url.pathname))return await invoiceDownload(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/invoices/'))return await invoiceUpload(req,res,url,auth,session);

@@ -60,13 +60,13 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   const linkedButton=(label,action,id)=>btn(label,action,'arrow-up-right','sm','data-id="'+e(id)+'"');
   function showInvoice(x,footer=''){
     const stored=financialStatus(x),paid=(x.dbStatus??x.status)==='paid';
-    let body=intro(x)+grid([["INVOICE DATE",when(x.date,true)],["Due Date",when(x.dueDate,true)],["Status",status(stored)]]);
+    let body=intro(x)+grid([["INVOICE DATE",when(x.date,true)],["Due Date",when(x.dueDate,true)]]);
     body+=section("Invoice amounts",grid([['Subtotal',amount(x.subtotal)],["Tax",amount(x.tax)],["Fees",amount(x.fees)],['Total',amount(x.total)]]));
     if(paid&&!x.paymentRecordedAt)body+="<p class=\"operation-help\">This invoice is marked as paid in the database. The historical payment date was not recorded.</p>";
     body+=section("Invoice items",(list(x.lines).length?table(["Product / SKU","Quantity","Unit","Unit price","Total"],x.lines.map(l=>row([product(l),number(l.quantity??l.qty),text(l.uom),amount(l.catalogUnitPrice),amount(l.lineTotal)])))+'<p class="operation-help">Unit prices reflect the current item catalog. Totals remain as recorded on the invoice.</p>':emptyLines())+'<p class="invoice-item-count">Total items <strong>'+number(x.lineCount??list(x.lines).length)+'</strong></p>');
     body+=section("Receipts",list(x.receipts).length?x.receipts.map(r=>grid([["Received on",(r.dbStatus??r.status)==='completed'?when(r.receivedAt,r.receivedDateOnly):text("Not recorded")],["Received by",text(r.receiverName||r.receivedByName||"Not recorded")],["Status",status((r.dbStatus??r.status)==='completed'?'received':'awaiting_receipt')]])).join(''):grid([["Received on",text("Not recorded")],["Received by",text("Not recorded")],["Status",status("awaiting_receipt")]]));
     body+=notes(x.notes)+timelineView(x);
-    openModal('Invoice '+e(ref(x)),body,footer||btn("Close",'close'),{wide:true,className:'operation-modal',kind:'invoice-detail'});
+    openModal('<span class="invoice-title-number">Invoice '+e(ref(x))+'</span>'+status(stored),body,footer||btn("Close",'close'),{wide:true,className:'operation-modal invoice-detail-modal',kind:'invoice-detail'});
   }
   function showOrder(x,footer=''){
     const evidence=x.receiptEvidence||{},labels={confirmed_received:"Received quantities — user confirmation",fully_received:"Fully received on linked lines",partially_received:"Partially received on linked lines",receipt_recorded:"Receipt recorded",no_receipt_recorded:"No linked receipt"};
