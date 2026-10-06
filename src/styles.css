@@ -64,3 +64,5 @@
 .invoice-detail-modal #dialog-title{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.invoice-detail-modal .invoice-title-number{overflow-wrap:anywhere;min-width:0}.invoice-detail-modal #dialog-title .status{flex-shrink:0;font-size:11px;line-height:1.4;font-weight:600;letter-spacing:normal}
 
 .prep-usage-filters{align-items:center}.prep-usage-filters [data-action="prep-items-filter"],.prep-usage-filters .hd-date-trigger{min-height:42px;box-sizing:border-box}
+
+.prep-route select,.prep-route .hd-date-trigger{height:42px;min-height:42px;width:100%;box-sizing:border-box}.prep-route .hd-date-field{width:100%}

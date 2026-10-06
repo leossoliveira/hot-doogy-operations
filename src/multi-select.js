@@ -2,12 +2,12 @@ import {escape as e,norm} from './model.js';
 const chevron='<svg class="hd-date-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>';
 
 // Reuses the compact Date trigger and the searchable checkbox popover styling.
-export function createMultiSelect({action,label,rows,current,onChange,beforeOpen=()=>{}}){
+export function createMultiSelect({action,label,rows,current,onChange,allSummary='',beforeOpen=()=>{}}){
  let panel=null,query='';
  const anchor=()=>document.querySelector(`[data-action="${action}"]`);
  const selected=()=>current()==='all'?rows().map(x=>x.id):current();
  function trigger(){
-  const ids=selected(),all=current()==='all',summary=all?'':ids.length===0?'None':ids.length===1?rows().find(x=>x.id===ids[0])?.name||'1 selected':`${ids.length} selected`;
+  const ids=selected(),all=current()==='all',summary=all?allSummary:ids.length===0?'None':ids.length===1?rows().find(x=>x.id===ids[0])?.name||'1 selected':`${ids.length} selected`;
   return `<button type="button" class="hd-date-trigger" data-action="${action}" aria-haspopup="dialog" aria-expanded="${!!panel}" aria-label="${e(label)}: ${e(summary||'All')}"><span class="hd-date-caption">${e(label)}</span>${summary?`<span class="hd-date-value">${e(summary)}</span>`:''}${chevron}</button>`;
  }
  function position(){
