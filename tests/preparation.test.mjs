@@ -58,3 +58,5 @@ test('Prep jobs are independent per date/location and never return another range
  assert.equal(queuePreparationUsage({},session,range,{calculate}).result.rows[0].locationId,'a');
  assert.equal(queuePreparationUsage({},session,{...range,location:'b'},{calculate}).status,'loading');
 });
+
+test('prep order preserves multiline notes on the transfer',()=>{const notes='Please add:\n1 bag - Oreo\n\nUS Foods';const result=createPreparationPlan(empty(),{...plan,notes},items,recipes,locations,'notes-plan',now);assert.equal(result.transfers[0].notes,notes);assert.equal(createPreparationPlan(empty(),plan,items,recipes,locations,'blank',now).transfers[0].notes,'');});

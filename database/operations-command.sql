@@ -166,7 +166,7 @@ begin
  elsif p_action='transfers' then
   if p->>'status'<>'draft' then raise exception 'Use a conferência de expedição e recebimento para avançar transferências.';end if;
   select jsonb_agg(jsonb_build_object('inventory_item_id',value->>'itemId','item_unit_id',value->>'itemUnitId','quantity',value->'qty')) into x from jsonb_array_elements(p->'lines');
-  return private.internal_request_command((p->>'id')::uuid,'create',jsonb_build_object('requesting_location_id',p->>'toLocationId','fulfilling_location_id',p->>'fromLocationId','needed_on',p->>'date','notes',p->>'number','lines',x));
+  return private.internal_request_command((p->>'id')::uuid,'create',jsonb_build_object('requesting_location_id',p->>'toLocationId','fulfilling_location_id',p->>'fromLocationId','needed_on',p->>'date','notes',coalesce(nullif(btrim(p->>'notes'),''),p->>'number'),'lines',x));
  else raise exception 'Operação ainda não conectada: %',p_action;
  end if;
  insert into public.audit_logs(organization_id,user_id,action,entity_type,entity_id,new_data) values(org,actor,'web_save',p_action,id,jsonb_build_object('saved_at',now()));

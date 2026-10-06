@@ -21,7 +21,7 @@ export function batchPreparedBy(batch){
   return batch.notes?.match(/\bPrepared by\s+([^.;,\n]+?)(?=\s+(?:at|overriding)\b|[.;,\n]|$)/i)?.[1]?.trim()||null;
 }
 export function outputRecipe(itemId,recipes){const rows=recipes.map(r=>r.activeVersionId?{...r,versionId:r.activeVersionId,status:r.activeVersionStatus}:r).filter(r=>r.type==='prep'&&r.outputItemId===itemId&&['active','published'].includes(r.status)&&r.versionId);return rows.length===1?rows[0]:null;}
-export function createPreparationPlan(local,{rows,fromLocationId,toLocationId,date,referencePeriod},items,recipes,locations,id,now){
+export function createPreparationPlan(local,{rows,fromLocationId,toLocationId,date,referencePeriod,notes=''},items,recipes,locations,id,now){
   if(!fromLocationId||!toLocationId||fromLocationId===toLocationId)throw Error("Choose different production and destination locations.");
   if(!locations.some(l=>l.id===fromLocationId)||!locations.some(l=>l.id===toLocationId))throw Error("Invalid location.");
   periodWindow(date,date);
@@ -40,7 +40,7 @@ export function createPreparationPlan(local,{rows,fromLocationId,toLocationId,da
     batches.push(batch);lines.push({itemId:row.itemId,name:batch.name,qty:batch.qty,uom:batch.uom,batchId:batch.id,itemUnitId:unit.itemUnitId});
   });
   next.production.unshift(...batches);
-  next.transfers.unshift({id,planId:id,number:`PREP-${date.replaceAll('-','')}-${id.slice(0,5).toUpperCase()}`,local:true,status:'draft',date,createdAt:now,fromLocationId,toLocationId,fromLocationName:locations.find(l=>l.id===fromLocationId).name,toLocationName:locations.find(l=>l.id===toLocationId).name,lines,lineCount:lines.length,referencePeriod,notes:"Transfer created from a prep plan. Quantities set manually; awaiting production and approval.",history:[{at:now,text:"Draft created from a prep plan"}]});
+  next.transfers.unshift({id,planId:id,number:`PREP-${date.replaceAll('-','')}-${id.slice(0,5).toUpperCase()}`,local:true,status:'draft',date,createdAt:now,fromLocationId,toLocationId,fromLocationName:locations.find(l=>l.id===fromLocationId).name,toLocationName:locations.find(l=>l.id===toLocationId).name,lines,lineCount:lines.length,referencePeriod,notes:String(notes).trim(),history:[{at:now,text:"Draft created from a prep plan"}]});
   return next;
 }
 export function completeProduction(local,batch,actualQty,completedAt,count,now){
