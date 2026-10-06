@@ -1,5 +1,4 @@
 import {norm} from './model.js';
-import {isUnpaidInvoice} from './invoice-status.js';
 import {resolveSupplierPrice,supplierItemWithEdits} from './supplier-model.js';
 
 // Display current catalog prices in the invoice line's unit without rewriting historical totals.
@@ -18,11 +17,11 @@ export function invoiceCatalogPrice(line,invoice,catalog,local={}){
 }
 
 export function filterInvoices(invoices,{status='all',supplier='all',start='',end='',query=''}={}){
- const search=norm(query);
+ const search=norm(query),statuses=Array.isArray(status)?status:[status],suppliers=Array.isArray(supplier)?supplier:[supplier];
  return invoices.filter(invoice=>{
   const day=String(invoice.date||'').slice(0,10);
-  return (status==='all'||(status==='unpaid'?isUnpaidInvoice(invoice):invoice.status===status))
-   && (supplier==='all'||invoice.supplierId===supplier)
+  return (statuses.includes('all')||statuses.some(value=>invoice.status===value))
+   && (suppliers.includes('all')||suppliers.includes(invoice.supplierId))
    && (!start||(day&&day>=start))&&(!end||(day&&day<=end))
    && norm(`${invoice.supplierName||''} ${invoice.number||''}`).includes(search);
  });

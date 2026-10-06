@@ -4,7 +4,7 @@ export const INVOICE_STATUSES = Object.freeze([
 ]);
 export const canEditInvoiceStatus = role => ['owner', 'admin', 'manager'].includes(role);
 export const invoiceStatusLabel = value => INVOICE_STATUSES.find(([id]) => id === value)?.[1] || value;
-export const isUnpaidInvoice = invoice => !['paid', 'cancelled'].includes(invoice.status);
+export const isUnpaidInvoice = invoice => !['paid', 'cancelled', 'credit'].includes(invoice.status);
 export function validInvoiceStatusChange(body) {
   return body && INVOICE_STATUSES.some(([id]) => id === body.status)
     && INVOICE_STATUSES.some(([id]) => id === body.expectedStatus)

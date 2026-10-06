@@ -72,17 +72,52 @@ test('unavailable receiver lookup does not prevent other workspace data from loa
 
 test('invoice filters combine supplier, status, search and inclusive invoice dates',()=>{
  const rows=[
-  {number:'1',supplierId:'a',supplierName:'Acme',status:'approved',date:'2026-10-01'},
-  {number:'2',supplierId:'a',supplierName:'Acme',status:'approved',date:'2026-10-02'},
-  {number:'3',supplierId:'b',supplierName:'Other',status:'approved',date:'2026-10-02'},
+  {number:'1',supplierId:'a',supplierName:'Acme',status:'unpaid',date:'2026-10-01'},
+  {number:'2',supplierId:'a',supplierName:'Acme',status:'unpaid',date:'2026-10-02'},
+  {number:'3',supplierId:'b',supplierName:'Other',status:'unpaid',date:'2026-10-02'},
   {number:'4',supplierId:'a',supplierName:'Acme',status:'paid',date:'2026-10-02'},
   {number:'5',supplierId:'a',supplierName:'Acme',status:'cancelled',date:'2026-10-03'},
-  {number:'6',supplierId:'a',supplierName:'Acme',status:'review',date:null},
+  {number:'6',supplierId:'a',supplierName:'Acme',status:'unpaid',date:null},
  ];
  assert.equal(filterInvoices(rows).length,6);
- assert.deepEqual(filterInvoices(rows,{supplier:'a',status:'approved',start:'2026-10-01',end:'2026-10-02',query:'ACME'}).map(x=>x.number),['1','2']);
+ assert.deepEqual(filterInvoices(rows,{supplier:'a',status:'unpaid',start:'2026-10-01',end:'2026-10-02',query:'ACME'}).map(x=>x.number),['1','2']);
  assert.deepEqual(filterInvoices(rows,{start:'2026-10-02',end:'2026-10-02'}).map(x=>x.number),['2','3','4']);
  assert.deepEqual(filterInvoices(rows,{status:'unpaid'}).map(x=>x.number),['1','2','3','6']);
  assert.deepEqual(filterInvoices(rows,{status:'paid',supplier:'b'}),[]);
  assert.equal(filterInvoices(rows,{query:'2'})[0].number,'2');
+});
+
+test('multiple invoice suppliers and statuses use OR within each filter and AND across filters',()=>{
+ const rows=[
+  {number:'1',supplierId:'a',supplierName:'Alpha',status:'unpaid',date:'2026-10-01'},
+  {number:'2',supplierId:'b',supplierName:'Beta',status:'paid',date:'2026-10-02'},
+  {number:'3',supplierId:'c',supplierName:'Gamma',status:'paid',date:'2026-10-02'},
+  {number:'4',supplierId:'b',supplierName:'Beta',status:'cancelled',date:'2026-10-02'},
+  {number:'5',supplierId:'a',supplierName:'Alpha',status:'overdue',date:'2026-09-30'},
+ ];
+ const ids=filters=>filterInvoices(rows,filters).map(x=>x.number);
+ assert.deepEqual(ids({supplier:['a','b'],status:['unpaid','paid']}),['1','2']);
+ assert.deepEqual(ids({supplier:['a','b'],status:['unpaid','paid'],start:'2026-10-01',end:'2026-10-02'}),['1','2']);
+ assert.deepEqual(ids({supplier:['a','b'],status:['unpaid','paid'],query:'beta'}),['2']);
+ assert.deepEqual(ids({supplier:[]}),[]);
+ assert.deepEqual(ids({status:[]}),[]);
+ assert.deepEqual(ids({supplier:'all',status:'all'}),['1','2','3','4','5']);
+});
+
+import {financialStatus,invoiceHistory} from '../src/invoice-financial.js';
+test('financial statuses respect New York due-day boundary and preserve paid, credit, canceled',()=>{
+ const i={status:'approved',total:100,dueDate:'2026-10-05'};
+ assert.equal(financialStatus(i,new Date('2026-10-06T03:59:59Z')),'unpaid');
+ assert.equal(financialStatus(i,new Date('2026-10-06T04:00:00Z')),'overdue');
+ assert.equal(financialStatus({...i,status:'paid'}),'paid');
+ assert.equal(financialStatus({...i,status:'paid',total:-1}),'credit');
+ assert.equal(financialStatus({...i,status:'cancelled',total:-1}),'cancelled');
+ assert.equal(financialStatus({status:'review'}),'unpaid');
+});
+test('invoice history uses order and completed receipts, never invents a payment date',()=>{
+ const events=invoiceHistory({status:'paid',createdAt:'invoice-date',updatedAt:'not-payment-date'},{createdAt:'order-date'},[
+ {status:'receiving',receivedAt:'pending-date'},{status:'completed',receivedAt:'2026-10-02'},{status:'completed',receivedAt:'2026-10-01'}]);
+ assert.deepEqual(events.map(e=>e.text),['Order created','Received','Received','Invoice paid']);
+ assert.deepEqual(events.map(e=>e.at),['order-date','2026-10-01','2026-10-02',undefined]);
+ assert.equal(invoiceHistory({status:'approved'},null,[]).length,0);
 });

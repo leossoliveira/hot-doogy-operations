@@ -7,7 +7,7 @@ begin
   or not private.has_org_role(p_organization_id,array['owner','admin','manager']::public.member_role[]) then
   raise exception 'Receipt access denied.' using errcode='42501';
  end if;
- return query select r.id,coalesce(nullif(btrim(p.full_name),''),nullif(btrim(u.raw_user_meta_data->>'full_name'),''),nullif(btrim(u.raw_user_meta_data->>'name'),''),u.email)::text
+ return query select r.id,r.receiver_name::text
  from public.purchase_receipts r
  join auth.users u on u.id=r.received_by
  left join public.profiles p on p.id=u.id

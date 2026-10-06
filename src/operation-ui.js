@@ -1,3 +1,4 @@
+import {financialStatus} from './invoice-financial.js';
 export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,notice,btn,openModal}){
   const list=x=>Array.isArray(x)?x:[];
   const absent="<span class=\"muted\">Not specified</span>";
@@ -44,7 +45,7 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   }
   function timelineView(x){
     const events=list(x.timeline).length?x.timeline:list(x.history);
-    return events.length?section("Saved history",'<ol class="operation-timeline">'+events.map(t=>'<li><time>'+when(t.at,t.dateOnly)+'</time><div><strong>'+text(t.text||t.action)+'</strong>'+(t.number?"<small>Note "+e(t.number)+'</small>':'')+(t.fileName?'<small>'+e(t.fileName)+'</small>':'')+(t.newStatus?"<small>Recorded status: "+e(t.newStatus)+'</small>':'')+'</div></li>').join('')+'</ol>'):'';
+    return events.length?section("Saved history",'<ol class="operation-timeline">'+events.map(t=>'<li><time>'+(t.at?when(t.at,t.dateOnly):'Date not recorded')+'</time><div><strong>'+text(t.text||t.action)+'</strong>'+(t.number?"<small>Note "+e(t.number)+'</small>':'')+(t.fileName?'<small>'+e(t.fileName)+'</small>':'')+(t.newStatus?"<small>Recorded status: "+e(t.newStatus)+'</small>':'')+'</div></li>').join('')+'</ol>'):'';
   }
   function transactionsView(x){
     const transactions=list(x.transactions),labels={purchase_receipt:"Purchase receipt",transfer_out:"Transfer out",transfer_in:"Transfer in",manual_adjustment:"Inventory adjustment"};
@@ -58,12 +59,12 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   const ending=x=>notes(x.notes)+timelineView(x)+transactionsView(x)+references(x);
   const linkedButton=(label,action,id)=>btn(label,action,'arrow-up-right','sm','data-id="'+e(id)+'"');
   function showInvoice(x,footer=''){
-    const stored=x.dbStatus??x.status,paid=stored==='paid';
-    let body=intro(x)+grid([["Invoice Date",when(x.date,true)],["Due Date",when(x.dueDate,true)],["Status",status(stored)],["Payment",paid?status('paid'):"<span class=\"muted\">No payment confirmation</span>"]]);
+    const stored=financialStatus(x),paid=(x.dbStatus??x.status)==='paid';
+    let body=intro(x)+grid([["INVOICE DATE",when(x.date,true)],["Due Date",when(x.dueDate,true)],["Status",status(stored)]]);
     body+=section("Invoice amounts",grid([['Subtotal',amount(x.subtotal)],["Tax",amount(x.tax)],["Fees",amount(x.fees)],['Total',amount(x.total)]]));
-    if(paid)body+="<p class=\"operation-help\">This invoice is marked as paid in the database. Payment date, method, and amount are not recorded separately.</p>";
+    if(paid&&!x.paymentRecordedAt)body+="<p class=\"operation-help\">This invoice is marked as paid in the database. The historical payment date was not recorded.</p>";
     body+=section("Invoice items",(list(x.lines).length?table(["Product / SKU","Quantity","Unit","Unit price","Total"],x.lines.map(l=>row([product(l),number(l.quantity??l.qty),text(l.uom),amount(l.catalogUnitPrice),amount(l.lineTotal)])))+'<p class="operation-help">Unit prices reflect the current item catalog. Totals remain as recorded on the invoice.</p>':emptyLines())+'<p class="invoice-item-count">Total items <strong>'+number(x.lineCount??list(x.lines).length)+'</strong></p>');
-    body+=section("Receipts",list(x.receipts).length?x.receipts.map(r=>grid([["Received on",when(r.receivedAt,r.receivedDateOnly)],["Received by",text(r.receivedByName||(r.receivedBy?"Not available":"Not recorded"))],["Status",status(r.dbStatus??r.status)]])).join(''):notice("No linked receipt.",true));
+    body+=section("Receipts",list(x.receipts).length?x.receipts.map(r=>grid([["Received on",(r.dbStatus??r.status)==='completed'?when(r.receivedAt,r.receivedDateOnly):text("Not recorded")],["Received by",text(r.receiverName||r.receivedByName||"Not recorded")],["Status",status((r.dbStatus??r.status)==='completed'?'received':'awaiting_receipt')]])).join(''):grid([["Received on",text("Not recorded")],["Received by",text("Not recorded")],["Status",status("awaiting_receipt")]]));
     body+=notes(x.notes)+timelineView(x);
     openModal('Invoice '+e(ref(x)),body,footer||btn("Close",'close'),{wide:true,className:'operation-modal',kind:'invoice-detail'});
   }

@@ -1,3 +1,4 @@
+import {invoiceHistory} from '../src/invoice-financial.js';
 // Derive evidence only from explicit relationships; never infer payment or stock.
 export function enrichOperations({orders,invoices,receipts,transfers,t,base,loc,area}){
  const movements=t.inventory_transactions.map(x=>({...x,itemName:base.get(x.inventoryItemId)?.name,internalName:base.get(x.inventoryItemId)?.internalName,baseUom:base.get(x.inventoryItemId)?.baseUom,locationName:loc.get(x.locationId)?.name}));
@@ -21,7 +22,7 @@ export function enrichOperations({orders,invoices,receipts,transfers,t,base,loc,
  for(const i of invoices){
   i.receipts=receipts.filter(r=>r.id===i.receiptId||r.confirmedInvoiceId===i.id);const order=orders.find(o=>o.id===i.purchaseOrderId);i.linkedOrder=order?{id:order.id,number:order.number,supplierName:order.supplierName,status:order.status}:null;i.receiptStatus=i.receipts[0]?.status;i.lineCount=i.lines.length;
   for(const l of i.lines){l.name=l.description||l.name;l.unitPrice=l.unitCost;l.qty=l.quantity;}
-  attach(i,i.receipts);
+  attach(i,i.receipts);i.timeline=invoiceHistory(i,order,i.receipts);
  }
  for(const x of transfers){for(const l of x.lines){l.inTransitQuantity=Number(l.dispatchedQuantity)-Number(l.receivedQuantity);l.remainingToDispatch=Math.max(0,Number(l.approvedQuantity??l.requestedQuantity)-Number(l.dispatchedQuantity));}x.receipts=x.dispatches.flatMap(d=>d.receipts);}
 }

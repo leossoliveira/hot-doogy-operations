@@ -40,4 +40,10 @@
 @media(max-width:700px){.panel-head:has(.purchasing-page-size){flex-wrap:wrap;gap:16px}}
 
 .invoice-item-count{display:flex;justify-content:space-between;gap:16px;padding-top:14px;border-top:1px solid #e4e9dd;margin:14px 0 0;font-size:12px;color:#66775a}.invoice-item-count strong{font-variant-numeric:tabular-nums}
-@media(max-width:700px){.invoice-filters>.prep-select{flex:1 0 100%;width:100%;min-width:0}}
+ .invoice-filters{align-items:center;gap:12px}.invoice-multi-popover footer{display:flex;justify-content:flex-end;padding-top:10px;border-top:1px solid #eff0ed}.invoice-multi-popover .location-option>span{overflow-wrap:anywhere}
+@media(max-width:700px){.invoice-filters .hd-date-trigger{max-width:100%;flex:0 1 auto}.invoice-filters .hd-date-value{min-width:0}.invoice-multi-popover footer .btn{min-height:44px}}
+.invoice-multi-popover .location-list{padding-right:14px;scrollbar-gutter:stable}
+
+.status.orange{background:#fff0df;color:#a34e08}.status.red{background:#fde9e7;color:#b42318}
+
+.btn.invoice-paid-button{background:#23804b;border-color:#23804b;color:#fff}.btn.invoice-paid-button:hover{background:#19643a;border-color:#19643a}.btn.invoice-paid-button:disabled{opacity:.65}
