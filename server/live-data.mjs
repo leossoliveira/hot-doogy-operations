@@ -17,7 +17,16 @@ export async function readTables(auth,token){
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
   result[table]=await readPages(url=>auth.request(url,{token}),url,{concurrency:table==='sales_item_facts'?4:1});
- }}));return result;
+ }}));
+ const receiptIds=(result.purchase_receipts||[]).filter(r=>r.received_by).map(r=>r.id);
+ if(receiptIds.length){
+  try{
+   const names=await auth.request('/rest/v1/rpc/invoice_receipt_receivers',{token,method:'POST',body:{p_organization_id:ORGANIZATION_ID,p_receipt_ids:receiptIds}});
+   const byReceipt=new Map(names.map(r=>[r.receipt_id,r.received_by_name]));
+   for(const receipt of result.purchase_receipts)receipt.received_by_name=byReceipt.get(receipt.id)||null;
+  }catch{/* An unavailable receiver name must not block the workspace. */}
+ }
+ return result;
 }
 export function projectData(raw){
  const t=Object.fromEntries(TABLES.map(k=>[k,(raw[k]||[]).map(x=>row(k==='sales_item_facts'?compactFact(x):x))]));

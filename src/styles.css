@@ -38,3 +38,6 @@
 .purchasing-search{margin:14px 0;max-width:500px}.purchasing-history-controls{display:flex;justify-content:space-between;align-items:end;gap:16px;padding:20px 24px;flex-wrap:wrap}.purchasing-history-controls .input-wrap{flex:1;min-width:200px}.purchasing-page-size{display:flex;align-items:center;gap:12px;font-size:12px;color:#738163}.purchasing-page-size select{padding:10px;border:1px solid #dce3d2;border-radius:7px;background:white;font:inherit}
 
 @media(max-width:700px){.panel-head:has(.purchasing-page-size){flex-wrap:wrap;gap:16px}}
+
+.invoice-item-count{display:flex;justify-content:space-between;gap:16px;padding-top:14px;border-top:1px solid #e4e9dd;margin:14px 0 0;font-size:12px;color:#66775a}.invoice-item-count strong{font-variant-numeric:tabular-nums}
+@media(max-width:700px){.invoice-filters>.prep-select{flex:1 0 100%;width:100%;min-width:0}}

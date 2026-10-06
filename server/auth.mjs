@@ -18,7 +18,7 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
     if(r.status===401)throw new ApiError(401,"Your session has expired. Sign in again.");
     throw new ApiError(r.status>=500?502:400,"Unable to verify your authenticator. Try again, or contact your administrator.");
    }
-   throw new ApiError([401,403,429].includes(r.status)?r.status:502,route.startsWith('/auth/')?"Invalid email or password, or your session has expired.":databaseErrorMessage(data));
+   throw new ApiError(data?.code==='40001'?409:[401,403,429].includes(r.status)?r.status:502,route.startsWith('/auth/')?"Invalid email or password, or your session has expired.":databaseErrorMessage(data));
   }
   return data;
  }
