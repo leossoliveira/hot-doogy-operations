@@ -66,3 +66,5 @@
 .prep-usage-filters{align-items:center}.prep-usage-filters [data-action="prep-items-filter"],.prep-usage-filters .hd-date-trigger{min-height:42px;box-sizing:border-box}
 
 .prep-route select,.prep-route .hd-date-trigger{height:42px;min-height:42px;width:100%;box-sizing:border-box}.prep-route .hd-date-field{width:100%}
+
+.prep-pdf-columns{display:grid;gap:12px;margin:20px 0}.prep-pdf-columns label{display:flex;align-items:center;gap:10px;font-size:13px}.prep-pdf-columns input{width:18px;height:18px;accent-color:#d7b728}
