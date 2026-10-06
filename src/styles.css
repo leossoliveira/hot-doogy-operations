@@ -62,3 +62,5 @@
 .invoice-summary-filter{font:inherit;font-weight:inherit;color:inherit;background:none;border:0;padding:6px 0;cursor:pointer;text-align:left}.invoice-summary-filter:hover{text-decoration:underline}.invoice-summary-filter[aria-pressed="true"]{color:#796200;text-decoration:underline;text-underline-offset:5px}.invoice-summary-filter:focus-visible{outline:2px solid #b59b30;outline-offset:4px;border-radius:3px}
 
 .invoice-detail-modal #dialog-title{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.invoice-detail-modal .invoice-title-number{overflow-wrap:anywhere;min-width:0}.invoice-detail-modal #dialog-title .status{flex-shrink:0;font-size:11px;line-height:1.4;font-weight:600;letter-spacing:normal}
+
+.prep-usage-filters{align-items:center}.prep-usage-filters [data-action="prep-items-filter"],.prep-usage-filters .hd-date-trigger{min-height:42px;box-sizing:border-box}

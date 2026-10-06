@@ -51,7 +51,7 @@ export function measure(item,locations,window,source,batches){
 }
 export function salesConsumptionRows(items,source,batches,{start,end,locationId='all',itemId='all'}){
   const window=periodWindow(start,end),previous=periodWindow(window.previousStart,window.previousEnd);
-  const selected=items.filter(i=>i.type==='prepared'&&i.active!==false&&i.locationActive!==false&&(locationId==='all'||i.locationId===locationId)&&(itemId==='all'||i.id===itemId));
+  const selected=items.filter(i=>i.type==='prepared'&&i.active!==false&&i.locationActive!==false&&(locationId==='all'||i.locationId===locationId)&&(itemId==='all'||(Array.isArray(itemId)?itemId.includes(i.id):i.id===itemId)));
   return [...new Map(selected.map(i=>[i.id,i])).values()].map(item=>{
     const locations=[...new Set(selected.filter(i=>i.id===item.id).map(i=>i.locationId))];
     const current=measure(item,locations,window,source,batches),prior=measure(item,locations,previous,source,batches);
