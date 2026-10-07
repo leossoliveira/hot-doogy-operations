@@ -93,3 +93,5 @@
 
 /* Keep Purchasing controls aligned across Usage, Planning, and History. */
 .purchasing-filters{align-items:center}.purchasing-filters .hd-date-filter .hd-date-trigger,.purchasing-filters>.hd-date-trigger,.purchasing-filters>.btn{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center}
+
+.prep-usage-filters .hd-date-filter .hd-date-trigger,.prep-usage-filters>[data-action="prep-items-filter"]{min-height:44px;box-sizing:border-box}

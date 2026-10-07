@@ -44,12 +44,13 @@ export function orderHistoryDate(order){
  if(/^\d{4}-\d{2}-\d{2}$/.test(value))return value;
  return new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
 }
-export function purchaseHistory(orders,{status='all',locationId='all',supplierId='all',start='',end='',query='',page=1,pageSize='25'}={}){
+export function purchaseHistory(orders,{status='all',locationId='all',supplierId='all',start='',end='',query='',page=1,pageSize='25',deliverySort=null}={}){
  validateOrderDates(start,end);
  const filtered=orders.filter(o=>{
   const day=start||end?orderHistoryDate(o):null;
   return (locationId==='all'||o.locationId===locationId)&&(supplierId==='all'||(Array.isArray(supplierId)?supplierId.includes(o.supplierId):o.supplierId===supplierId))&&(!start||(day&&day>=start))&&(!end||(day&&day<=end))&&(status==='all'||(Array.isArray(status)?status:[status]).some(value=>value==='awaiting_receipt'?['ordered','partially_received'].includes(o.status):o.status===value))&&norm([o.supplierName,o.number,o.id].join(' ')).includes(norm(query));
  });
+ if(deliverySort)filtered.sort((a,b)=>{const av=a.expectedAt,bv=b.expectedAt;if(!av)return bv?1:0;if(!bv)return -1;return (deliverySort==='asc'?1:-1)*String(av).localeCompare(String(bv))||String(a.id).localeCompare(String(b.id));});
  return paginatePurchasingRows(filtered,{page,pageSize});
 }
 export function paginatePurchasingRows(rows,{page=1,pageSize='25'}={}){

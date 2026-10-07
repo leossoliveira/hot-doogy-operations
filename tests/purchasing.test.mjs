@@ -111,3 +111,9 @@ test('history supports multiple statuses including partial receipts and empty se
  assert.equal(purchaseHistory(orders,{status:['received']}).total,1);
  assert.equal(purchaseHistory(orders,{status:[]}).total,0);
 });
+
+test('delivery sorting is chronological before pagination and keeps missing dates last',()=>{
+ const orders=[{id:'none'},{id:'new',expectedAt:'2026-10-05'},{id:'old',expectedAt:'2025-12-31'}];
+ assert.deepEqual(purchaseHistory(orders,{deliverySort:'asc'}).rows.map(x=>x.id),['old','new','none']);
+ assert.deepEqual(purchaseHistory(orders,{deliverySort:'desc'}).rows.map(x=>x.id),['new','old','none']);
+});
