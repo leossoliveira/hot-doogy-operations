@@ -90,3 +90,6 @@
 .sidebar .sidebar-bottom{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .sidebar-settings{display:flex;align-items:center;justify-content:center;width:36px;height:40px;flex-shrink:0;border-radius:8px;color:#acb3a8}
 .sidebar-settings:hover{background:#252b24;color:#fff}.sidebar-settings.active{background:transparent;color:#acb3a8}.sidebar-settings:hover,.sidebar-settings.active:hover{background:#252b24;color:#fff}.sidebar-settings:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}.sidebar-settings .icon{width:18px;height:18px}
+
+/* Keep Purchasing controls aligned across Usage, Planning, and History. */
+.purchasing-filters{align-items:center}.purchasing-filters .hd-date-filter .hd-date-trigger,.purchasing-filters>.hd-date-trigger,.purchasing-filters>.btn{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center}

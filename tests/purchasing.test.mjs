@@ -82,13 +82,13 @@ test('Planning works first and retains its own dates, supplier and entered quant
   const ui=createPurchasingUI({data:()=>data,local:()=>local,state:()=>state,render:()=>{},toast:m=>messages.push(m),heading:()=>'',icon:()=>'',orderTable:()=>'',newOrder:value=>{plan=value;}});
   ui.actions['purchase-tab']({dataset:{tab:'planning'}});
   assert.match(ui.page(),/id="purchase-start" type="date" value=""/);
-  ui.actions['purchase-filter']();ui.changed({dataset:{purchaseChange:'supplier'},value:'a'});
+  ui.changed({id:'purchase-start',dataset:{}});ui.changed({dataset:{purchaseChange:'supplier'},value:'a'});
   ui.input({dataset:{purchaseQty:'v1'},value:'2'});ui.actions['purchase-review']();
   assert.equal(plan.supplierId,'a');assert.equal(plan.lines[0].qty,2);assert.match(plan.notes,/09\/20\/2026/);
   ui.actions['purchase-tab']({dataset:{tab:'usage'}});
   assert.match(ui.page(),/id="purchase-start" type="date" value=""/);
   assert.match(ui.page(),/aria-label="Supplier: All"/);
-  inputs['#purchase-start'].value='2026-09-13';inputs['#purchase-end'].value='2026-09-13';ui.actions['purchase-filter']();ui.changed({dataset:{purchaseChange:'supplier'},value:'b'});
+  inputs['#purchase-start'].value='2026-09-13';inputs['#purchase-end'].value='2026-09-13';ui.changed({id:'purchase-start',dataset:{}});ui.changed({dataset:{purchaseChange:'supplier'},value:'b'});
   ui.actions['purchase-tab']({dataset:{tab:'planning'}});
   assert.match(ui.page(),/id="purchase-start" type="date" value="2026-09-20"/);
   ui.actions['purchase-review']();assert.equal(plan.supplierId,'a');assert.equal(plan.lines[0].qty,2);assert.match(plan.notes,/09\/20\/2026/);assert.deepEqual(messages,[]);
