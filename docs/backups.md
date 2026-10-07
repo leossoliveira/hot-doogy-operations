@@ -1,6 +1,6 @@
 # Source backups
 
-After a verified local commit, run `npm run backup` (Python 3 required). It creates `../../backups/<UTC timestamp>-<commit>/app.zip`, `SHA256.txt` and `manifest.json`. UTC makes timestamps consistent across computers. Existing backups are never overwritten.
+After a verified local commit, run `npm run backup` (Python 3 required). From the `app/` directory, it creates `../backups/<UTC timestamp>-<commit>/app.zip`, `SHA256.txt` and `manifest.json`. UTC makes timestamps consistent across computers. Existing backups are never overwritten.
 
 The archive contains exactly the committed source, not the current uncommitted working tree. The script compares each archived file against Git, verifies ZIP integrity and records any pending edits in the manifest. Review those edits separately; they are not protected by this source archive. No push or deployment occurs.
 

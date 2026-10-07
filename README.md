@@ -4,7 +4,7 @@ Aplicativo de gestão da HOT DOOGY para Sherwood Plaza e Natick Mall. Interface 
 
 ## Project structure
 
-See [the workspace map](docs/workspace-structure.md) for the current layout. Application code, technical documentation and migrations are versioned here. Private operational context and historical ZIP backups live outside this repository.
+See [the documentation index](docs/README.md) and [the workspace map](docs/workspace-structure.md) for the current layout. Application code, technical documentation and migrations are versioned here. Private operational context and historical ZIP backups live outside this repository.
 
 ## Executar
 
