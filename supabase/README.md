@@ -6,9 +6,9 @@ Em 7 de outubro de 2026, foram recuperadas 74 migrações do projeto `kfnsfnytnn
 
 Estas migrações já foram aplicadas no Supabase. Importá-las para o Git não as aplica novamente. Não executar reset, push, reparo de histórico ou replay automático no banco publicado.
 
-O histórico não inclui necessariamente o esquema inicial ou alterações feitas fora de migrações. A reconstrução completa em um banco vazio ainda não foi validada. Os scripts de `../database/` são referências anteriores; não constituem uma segunda sequência para executar sobre estas migrações.
+O histórico não inclui necessariamente o esquema inicial ou alterações feitas fora de migrações. A reconstrução das 74 migrações foi validada em Supabase local isolado, usando a base recuperada de `bootstrap/` e dois registros sintéticos. Consulte `tests/README.md` para o alcance e as limitações. Os scripts de `../database/` são referências anteriores; não constituem uma segunda sequência para executar sobre estas migrações.
 
-Este diretório não é backup dos dados, das credenciais ou dos arquivos do Storage. Não foi configurada publicação automática do banco, nem criada uma instância local nesta tarefa.
+Este diretório não é backup dos dados, das credenciais ou dos arquivos do Storage. Não foi configurada publicação automática do banco. A instância local temporária usada na validação não foi vinculada à produção.
 
 ## Novas alterações
 
@@ -23,6 +23,6 @@ A CLI não estava instalada no computador durante a importação histórica. Os 
 
 ## Validation status — October 7, 2026
 
-`npm run check` verifies all 74 imported migration checksums and rejects invalid or duplicate version filenames. This checks history integrity, not SQL execution. The history starts at sections 006–012 and already references `public.organizations`, `public.locations`, and `public.units`; the initial schema is not present in this import. No Supabase CLI, Docker or psql was available during the review.
+The isolated replay passed: recovered initial schema plus all 74 immutable migrations. Catalog comparison matched 85 tables, 816 columns, 210 public policies and 113 function identities. Synthetic tests passed for application table reads, manager store/tenant isolation, admin MFA enforcement and anonymous denial.
 
-Before claiming reproducible database setup: recover a reviewed baseline for the missing initial schema, provision an isolated local Supabase stack, replay the full history there and verify application queries and permissions. Do not fabricate baseline tables or reset production to test this. This validation remains pending; no remote database was changed.
+See [the reproducible procedure and scope](tests/README.md) and [the report](tests/replay-report-2026-10-07.json). `bootstrap/` is a recovered test prerequisite, not an additional production migration. No business data was exported; no production write occurred. `npm run check` continues to verify the original migration checksums.

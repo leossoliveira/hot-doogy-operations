@@ -1,0 +1,341 @@
+{
+  "started_at_utc": "2026-10-07T13:17:46.851293+00:00",
+  "target": "loopback disposable Supabase",
+  "production_modified": false,
+  "migrations": [
+    {
+      "file": "20260912174625_006_012_inventory_suppliers.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912174651_013_018_purchasing_receiving_prices.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912174738_019_026_recipes_menu_modifiers.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912174803_027_033_sales_csv_pos.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912175005_034_040_inventory_ledger_counts.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912175219_041_048_prep_forecasts_ai.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912175246_049_051_triggers_rls_helpers.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912180522_052_access_integrity_indexes.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912213005_inventory_item_yield_percent.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912215706_menu_category_parent_relationship.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912221845_menu_item_location_availability.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912223834_inventory_item_multiple_storage_areas.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260912224410_storage_area_inventory_totals.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260913135321_recipe_central_production_location.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260914000715_recipe_operational_classification.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918003544_invoice_intake_and_approval_workflow.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918003730_revoke_anon_invoice_approval_execution.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918003942_require_invoice_location_separation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918004413_allow_invoice_approval_without_item_mapping.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918004607_require_invoice_due_date.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918004856_add_optional_supplier_item_photos.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918012223_default_invoice_due_date_to_invoice_date.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918112101_invoice_document_canonical_path_functions.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918112121_enforce_invoice_document_storage_paths.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918112150_allow_approved_invoice_document_linking.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918112235_fix_invoice_document_extension_validation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918112540_require_stored_document_for_invoice_approval.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918112722_retain_invoice_documents_across_statuses.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918113639_create_order_for_unlinked_invoices.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918204305_prepare_square_csv_item_sales_importer.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918204600_secure_square_csv_mapping_and_storage.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918205711_add_modifier_recipe_classification.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918205736_modifier_recipe_menu_actions_prices.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260918232608_square_csv_modifier_recipe_links.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260919231911_recipe_component_location_scope.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260920133824_recipe_packaging_and_pass_through_pricing.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923114814_deterministic_sales_and_preparation_planning_v1.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923115034_restaurant_operations_authorized_backend_and_query_execution.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923115153_restaurant_planning_limit_history_scan.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923115351_restaurant_import_auth_role_guard.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923115730_restaurant_calculation_cache_with_catalog_invalidation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923120925_restaurant_timestamp_avoid_repeated_timezone_catalog_scan.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923124125_internal_requests_interstore_dispatch_receiving.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923124237_internal_request_unit_identifier_fix.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260923124316_internal_requests_preparation_link_and_unit_precision.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260924145611_correct_sku_7779093_leaf_conversions_v2.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260924200627_invoice_s3_completion_gate.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260924201553_invoice_s3_administrative_connector.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260925123059_confirm_purchase_receipt_posts_inventory.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260925123134_allow_invoice_approval_after_receipt_confirmation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260927183544_support_informational_modifier_rules.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260927184809_normalize_no_tomatos_modifier_spelling.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260927191016_support_modifier_recipe_by_store_and_order_context.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20260928140113_allow_informational_remove_modifiers.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261004115029_combo_side_drink_selection_validation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261004120243_fountain_soda_modifier_selection_validation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261004123803_fountain_self_service_inventory_reconciliation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005113923_authenticated_web_operations_and_store_counts.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005122747_cache_sales_read_authorization_per_query.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005151230_purchasing_usage_extend_preparation_summary.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005174401_security_revoke_unnecessary_anonymous_access.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005182606_enforce_administrative_mfa.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005183909_optimize_mfa_read_authorization.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261005234057_invoice_status_edit.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006004911_invoice_receipt_receivers.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006104952_invoice_financial_status_and_receipt_names.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006115033_confirmed_invoice_deletion.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006121343_independent_preparation_usage_period.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006121754_preparation_usage_allow_full_comparison_window.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006160147_preserve_preparation_order_notes.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261006183319_unify_item_names_and_enable_supplier_catalog_creation.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261007010134_recipe_create_atomic_registration.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261007011224_recipe_multiple_production_locations.sql",
+      "status": "passed"
+    },
+    {
+      "file": "20261007012945_revert_unpublished_recipe_registration.sql",
+      "status": "passed"
+    }
+  ],
+  "status": "passed",
+  "baseline": "passed",
+  "synthetic_seed": "two records for the historical Fountain Soda prerequisite",
+  "catalog": {
+    "tables": {
+      "expected": 85,
+      "actual": 85,
+      "matches": true
+    },
+    "columns": {
+      "expected": 816,
+      "actual": 816,
+      "matches": true
+    },
+    "policies": {
+      "expected": 210,
+      "actual": 210,
+      "matches": true
+    },
+    "functions": {
+      "expected": 113,
+      "actual": 113,
+      "matches": true
+    }
+  },
+  "access_control": "manager store and tenant isolation; admin MFA requirement; anonymous read denied",
+  "finished_at_utc": "2026-10-07T13:17:54.205109+00:00",
+  "runtime": {
+    "supabase_cli": "2.120.0",
+    "type": "native",
+    "postgres": "17.11",
+    "platform": "macOS arm64"
+  },
+  "nonempty_database_guard": "passed: refused a second replay",
+  "application_tests": {
+    "passed": 186,
+    "failed": 0
+  }
+}

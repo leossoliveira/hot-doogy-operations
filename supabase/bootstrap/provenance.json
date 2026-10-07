@@ -1,0 +1,32 @@
+{
+  "source": "read-only pg_catalog metadata",
+  "captured_on": "2026-10-07",
+  "project_ref": "kfnsfnytnnpwptklmbip",
+  "excluded_objects": {
+    "recipe_classification": "created by recorded migration 20260914000715",
+    "member_supplier_access_supplier_fk": "created by recorded migration 20260912174625",
+    "units_global_code_unique": "created by recorded migration 20260912180522",
+    "units_org_code_unique": "created by recorded migration 20260912180522",
+    "units_scope_check": "created by recorded migration 20260912180522"
+  },
+  "tables": [
+    "departments",
+    "location_settings",
+    "locations",
+    "member_location_access",
+    "member_storage_area_access",
+    "member_supplier_access",
+    "organization_members",
+    "organizations",
+    "profiles",
+    "storage_areas",
+    "units"
+  ],
+  "limitations": "Reconstructed prerequisites, not the exact original manual SQL; no rows included.",
+  "extensions": {
+    "pgcrypto": "extensions",
+    "citext": "public"
+  },
+  "original_execution_evidence": "Archived Restaurant Management 2 README (September 12): sections 001\u2013005 manually executed before migration tracking.",
+  "replay_validated_on": "2026-10-07"
+}

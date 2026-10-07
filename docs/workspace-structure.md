@@ -25,4 +25,4 @@ Use lowercase English names and hyphens for multiword directories. Keep runtime 
 
 Node.js 24 is selected by `.nvmrc`, package engines and CI. `npm run check` discovers JavaScript automatically; `npm test` is the same portable suite as CI. See [tests](../tests/README.md) and [migrations](../supabase/README.md).
 
-Applied migration history is preserved; full reconstruction has not yet been validated. Code backups exclude database contents, secrets and Storage objects. Create a new archive after a verified commit; never overwrite an old backup. See [backup procedures](backups.md).
+Applied migration history is preserved; isolated replay of all 74 migrations has passed with a recovered baseline and synthetic prerequisites (see `supabase/tests/README.md`). Code backups exclude database contents, secrets and Storage objects. Create a new archive after a verified commit; never overwrite an old backup. See [backup procedures](backups.md).
