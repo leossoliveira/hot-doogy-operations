@@ -8,7 +8,7 @@ export const alphabetical=(a,b)=>a.name.localeCompare(b.name,'en-US',{sensitivit
 export function purchasingRows(data,local,{start,end,locationId='all',supplierId='all',query=''}={}){
  const window=start||end?periodWindow(start,end):null,previous=window?periodWindow(window.previousStart,window.previousEnd):null,groups=new Map();
  for(const location of data.locations.filter(l=>locationId==='all'||l.id===locationId)){
-  for(const supplier of data.suppliers.filter(s=>supplierId==='all'||s.id===supplierId)){
+  for(const supplier of data.suppliers.filter(s=>supplierId==='all'||(Array.isArray(supplierId)?supplierId.includes(s.id):s.id===supplierId))){
    for(const item of supplierOrderItems(data.supplierCatalog,data.items,local,{locationId:location.id,supplierId:supplier.id})){
     if(item.type==='prepared'||!norm([item.name,item.internalName,item.sku,supplier.name].join(' ')).includes(norm(query)))continue;
     const key=item.supplierItemId,group=groups.get(key)||{key,item,locations:[],items:[]};group.locations.push(location.id);group.items.push(item);groups.set(key,group);
@@ -48,7 +48,7 @@ export function purchaseHistory(orders,{status='all',locationId='all',supplierId
  validateOrderDates(start,end);
  const filtered=orders.filter(o=>{
   const day=start||end?orderHistoryDate(o):null;
-  return (locationId==='all'||o.locationId===locationId)&&(supplierId==='all'||o.supplierId===supplierId)&&(!start||(day&&day>=start))&&(!end||(day&&day<=end))&&(status==='all'||(status==='awaiting_receipt'?['ordered','partially_received'].includes(o.status):o.status===status))&&norm([o.supplierName,o.number,o.id].join(' ')).includes(norm(query));
+  return (locationId==='all'||o.locationId===locationId)&&(supplierId==='all'||(Array.isArray(supplierId)?supplierId.includes(o.supplierId):o.supplierId===supplierId))&&(!start||(day&&day>=start))&&(!end||(day&&day<=end))&&(status==='all'||(Array.isArray(status)?status:[status]).some(value=>value==='awaiting_receipt'?['ordered','partially_received'].includes(o.status):o.status===value))&&norm([o.supplierName,o.number,o.id].join(' ')).includes(norm(query));
  });
  return paginatePurchasingRows(filtered,{page,pageSize});
 }

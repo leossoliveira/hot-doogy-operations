@@ -87,10 +87,27 @@ test('Planning works first and retains its own dates, supplier and entered quant
   assert.equal(plan.supplierId,'a');assert.equal(plan.lines[0].qty,2);assert.match(plan.notes,/09\/20\/2026/);
   ui.actions['purchase-tab']({dataset:{tab:'usage'}});
   assert.match(ui.page(),/id="purchase-start" type="date" value=""/);
-  assert.match(ui.page(),/value="all" selected>All suppliers/);
+  assert.match(ui.page(),/aria-label="Supplier: All"/);
   inputs['#purchase-start'].value='2026-09-13';inputs['#purchase-end'].value='2026-09-13';ui.actions['purchase-filter']();ui.changed({dataset:{purchaseChange:'supplier'},value:'b'});
   ui.actions['purchase-tab']({dataset:{tab:'planning'}});
   assert.match(ui.page(),/id="purchase-start" type="date" value="2026-09-20"/);
   ui.actions['purchase-review']();assert.equal(plan.supplierId,'a');assert.equal(plan.lines[0].qty,2);assert.match(plan.notes,/09\/20\/2026/);assert.deepEqual(messages,[]);
  }finally{if(previousDocument===undefined)delete globalThis.document;else globalThis.document=previousDocument;}
+});
+
+test('multiple suppliers and empty selection filter usage and history consistently',()=>{
+ const {data,local,filter}=fixture();
+ assert.equal(purchasingRows(data,local,{...filter,supplierId:['a','b']}).length,2);
+ assert.equal(purchasingRows(data,local,{...filter,supplierId:['b']})[0].key,'v2');
+ assert.equal(purchasingRows(data,local,{...filter,supplierId:[]}).length,0);
+ const orders=['a','b','c'].map(supplierId=>({id:supplierId,supplierId,status:'draft'}));
+ assert.equal(purchaseHistory(orders,{supplierId:['a','b']}).total,2);
+ assert.equal(purchaseHistory(orders,{supplierId:[]}).total,0);
+});
+
+test('history supports multiple statuses including partial receipts and empty selection',()=>{
+ const orders=['draft','ordered','partially_received','received'].map(status=>({id:status,status}));
+ assert.equal(purchaseHistory(orders,{status:['awaiting_receipt','draft']}).total,3);
+ assert.equal(purchaseHistory(orders,{status:['received']}).total,1);
+ assert.equal(purchaseHistory(orders,{status:[]}).total,0);
 });
