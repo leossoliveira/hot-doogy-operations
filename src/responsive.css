@@ -241,3 +241,22 @@ select, input, textarea { max-width: 100%; }
   .login-page { grid-template-columns: minmax(0,1fr); }
   .login-visual { display: none; }
 }
+
+/* One type scale for every navigation module, matching Overview. */
+.sidebar nav .nav-item,
+.sidebar nav .nav-module summary {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+}
+@media (max-width: 1200px) {
+  .sidebar nav .nav-item,
+  .sidebar nav .nav-module summary { font-size: 11px; }
+}
+@media (max-width: 1024px), (pointer: coarse) {
+  .sidebar nav .nav-item,
+  .sidebar nav .nav-module summary { font-size: 14px; }
+}
