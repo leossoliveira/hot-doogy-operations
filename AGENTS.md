@@ -1,5 +1,12 @@
 # Preferências de trabalho
 
+## Commits locais
+
+- Ao concluir cada alteração solicitada, verifique o resultado e crie um commit local com uma descrição clara, sem exigir nova confirmação para o commit.
+- Inclua somente os arquivos relativos à alteração concluída. Preserve mudanças anteriores não relacionadas e nunca inclua credenciais.
+- Não crie commits de alterações incompletas ou com verificações necessárias pendentes; informe o impedimento.
+- Criar um commit local não autoriza envio ao GitHub. Não execute push nem publique imediatamente; siga a autorização descrita abaixo.
+
 ## Envio de alterações ao GitHub
 
 - Ao concluir as alterações solicitadas, prepare e verifique o resultado localmente.
