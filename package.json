@@ -9,7 +9,8 @@
     "check": "node scripts/check.mjs && node scripts/check-migrations.mjs",
     "test:ci": "npm test",
     "test:historical": "node scripts/test.mjs --historical",
-    "backup": "python3 scripts/backup.py"
+    "backup": "python3 scripts/backup.py",
+    "test:backup": "python3 -B -m unittest discover -s tests/backup -v"
   },
   "engines": {
     "node": ">=24 <25"

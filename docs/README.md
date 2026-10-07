@@ -6,6 +6,7 @@ This directory is the current source for application documentation. Keep instruc
 - [Workspace structure](workspace-structure.md)
 - [Hosting configuration and maintenance](../deploy/README.md)
 - [Source backups and recovery](backups.md)
+- [Database, Storage and configuration recovery](data-recovery.md)
 - [Automated tests](../tests/README.md)
 - [Database migration history](../supabase/README.md)
 - [Isolated database replay and validation limits](../supabase/tests/README.md)

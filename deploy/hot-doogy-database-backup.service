@@ -1,0 +1,18 @@
+[Unit]
+Description=Encrypted consistent PostgreSQL backup
+Wants=network-online.target
+After=network-online.target hot-doogy-backup.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/hot-doogy-backup/run-database.py
+UMask=0077
+TimeoutStartSec=2h
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/hot-doogy-backup /var/backups/hot-doogy
+Environment=RESTIC_CACHE_DIR=/var/lib/hot-doogy-backup/cache

@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-07",
+  "snapshot": "7d8eb0887ca66e1e4b1e7504acc0a23ca9ed826790fa89d3fdb681def8b8265a",
+  "sql_restore": "passed",
+  "tables_compared": 124,
+  "rows_compared": 56926,
+  "all_table_counts_match": true,
+  "access_control_test_exit": 0,
+  "runtime": "isolated native PostgreSQL 17.11; APIs disabled",
+  "limits": [
+    "Not a hosted-project restore or login email test",
+    "Platform credentials must be regenerated on a new project"
+  ],
+  "reproducible_runner_verified_at": "2026-10-07T14:06:27.554835+00:00"
+}

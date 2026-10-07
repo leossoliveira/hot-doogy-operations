@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily encrypted Storage and configuration backup
+
+[Timer]
+OnCalendar=*-*-* 07:15:00 UTC
+RandomizedDelaySec=5m
+Persistent=true
+Unit=hot-doogy-backup.service
+
+[Install]
+WantedBy=timers.target

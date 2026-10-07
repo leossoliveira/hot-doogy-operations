@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily encrypted PostgreSQL backup
+
+[Timer]
+OnCalendar=*-*-* 07:30:00 UTC
+RandomizedDelaySec=5m
+Persistent=true
+Unit=hot-doogy-database-backup.service
+
+[Install]
+WantedBy=timers.target

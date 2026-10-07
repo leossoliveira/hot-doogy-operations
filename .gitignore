@@ -31,3 +31,9 @@ Abrir HOT DOOGY.command
 # Documentação histórica e capturas locais organizadas.
 /docs/local-notes/
 /docs/screenshots/
+
+# Python tooling caches and private recovery material.
+__pycache__/
+*.py[cod]
+*.pgpass
+*.dump

@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-10-07",
+  "project_ref": "kfnsfnytnnpwptklmbip",
+  "region": "us-west-2",
+  "plan": "free",
+  "managed_backups_dashboard": "No backups",
+  "database": {
+    "engine": "PostgreSQL 17",
+    "connection_pool_size": 15,
+    "ssl_enforcement": false,
+    "backup_client_tls": "verify-full with official Supabase CA",
+    "network_restrictions": "none"
+  },
+  "auth": {
+    "site_url": "http://localhost:3000",
+    "redirect_urls": [],
+    "note": "Observed dashboard values; snapshot is not a recommended production configuration. Password recovery redirects need review before use."
+  },
+  "buckets": [
+    {"id":"invoice-documents","public":false,"file_size_limit":20971520,"allowed_mime_types":["application/pdf","image/jpeg","image/png","image/webp"]},
+    {"id":"sales-imports","public":false,"file_size_limit":20971520,"allowed_mime_types":["text/csv","application/csv","application/vnd.ms-excel","text/plain"]},
+    {"id":"supplier-item-images","public":false,"file_size_limit":5242880,"allowed_mime_types":["image/jpeg","image/png","image/webp"]}
+  ],
+  "external_settings_not_exported": ["Complete Auth service configuration, SMTP and email templates", "API signing keys and managed platform credentials", "Organization billing, members and GitHub integration", "DNS and Hostinger account settings"],
+  "secrets": "Stored privately outside Git; regenerate platform credentials for a replacement project."
+}
