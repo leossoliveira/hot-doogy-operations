@@ -1,13 +1,13 @@
 import {readFile,writeFile} from 'node:fs/promises';
-import {createPhotoStorage,loadS3Config} from '../server/photo-storage.mjs';
-const dir=new URL('../audits/product-photos-mixed-2026-10-04/',import.meta.url);
+import {createPhotoStorage,loadS3Config} from '../../server/photo-storage.mjs';
+const dir=new URL('../../audits/product-photos-2026-10-04/',import.meta.url);
 const manifest=JSON.parse(await readFile(new URL('mapping.json',dir),'utf8'));
 const aliases=Object.fromEntries(manifest.map(x=>[x.itemId,x.id]));
 const storage=createPhotoStorage(await loadS3Config(),fetch,aliases);
 const results=[];
 for(const row of manifest){
  try{
- const body=await readFile(row.file);
+ const body=await readFile(row.sku==='3856496'?'/tmp/3856496-upload.jpg':row.file);
  const photo=await storage.save('items',row.itemId,body);
  results.push({...row,...photo,verified:true});
  console.log(`${results.length}/${manifest.length} SKU ${row.sku}: verificado`);

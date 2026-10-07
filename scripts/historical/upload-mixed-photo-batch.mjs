@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
-import {createPhotoStorage,loadS3Config} from '../server/photo-storage.mjs';
-const dir=new URL('../audits/product-photos-webstaurant-2026-10-04/',import.meta.url);
+import {createPhotoStorage,loadS3Config} from '../../server/photo-storage.mjs';
+const dir=new URL('../../audits/product-photos-mixed-2026-10-04/',import.meta.url);
 const manifest=JSON.parse(await readFile(new URL('mapping.json',dir),'utf8'));
 const aliases=Object.fromEntries(manifest.map(x=>[x.itemId,x.id]));
 const storage=createPhotoStorage(await loadS3Config(),fetch,aliases);

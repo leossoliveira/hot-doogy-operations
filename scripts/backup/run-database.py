@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 import tempfile
 from database import export
-from run import STATE, now, restic
+from common import STATE, now, restic
 
 
 def run():
