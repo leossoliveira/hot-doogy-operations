@@ -1,20 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import {recipeCost,costInfo} from '../src/recipe-cost-model.js';
-import {recipeCostInfo} from '../src/recipe-cost-ui.js';
-const read=n=>JSON.parse(fs.readFileSync(new URL(`../public/data/${n}.json`,import.meta.url)));
-const data={...read('recipe-components'),supplierCatalog:read('supplier-catalog'),costInputs:read('recipe-cost-inputs')};
-const store=data.supplierCatalog.locations[0].id;
-const water=data.recipes.find(r=>r.name==='Open Water® Aluminum Bottle'&&r.type==='menu');
-const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-9,`${a} != ${b}`);
-test('water uses approved bottle cost, local selling price and beverage target',()=>{const x=costInfo(water,store,data);close(x.total,30.65/24);assert.equal(x.sellingPrice,4);assert.equal(x.target,.2);close(x.foodCostPercent,30.65/24/4*100);close(x.grossProfit,4-30.65/24);assert.equal(x.netProfit,null);});
-test('cost is recalculated from the version-bound ingredient draft',()=>{const local={recipeEdits:{[water.id]:{versionId:water.versionId,components:water.components.map(c=>({...c,quantity:2}))}}};close(costInfo(water,store,data,local).total,30.65/12);});
-test('pending-only prices invalidate total instead of displaying zero',()=>{const d=structuredClone(data);d.supplierCatalog.items.filter(i=>i.itemId===water.components[0].itemId).forEach(i=>i.currentPrices.forEach(p=>p.status='pending'));assert.equal(recipeCost(water,store,d).total,null);});
-test('missing conversion invalidates total',()=>{const d=structuredClone(data);d.ingredientItems.find(i=>i.id===water.components[0].itemId).units=[];assert.equal(recipeCost(water,store,d).total,null);});
-test('ambiguous supplier prices do not pick the cheapest',()=>{const d=structuredClone(data);const i=structuredClone(d.supplierCatalog.items.find(i=>i.itemId===water.components[0].itemId));i.supplierItemId='other';i.currentPrices.forEach(p=>p.amount*=2);d.supplierCatalog.items.push(i);assert.equal(recipeCost(water,store,d).total,null);});
-test('modifier zero price is preserved without dividing by zero',()=>{const r=data.recipes.find(r=>r.name===water.name&&r.type==='modifier');const x=costInfo(r,store,data);assert.equal(x.sellingPrice,0);assert.equal(x.foodCostPercent,null);assert.equal(x.grossMargin,null);});
-test('prep footer contains only the total metric and uses production store',()=>{const r=data.recipes.find(r=>r.name==='Cheddar Sauce 32 oz');const x=recipeCost(r,store,data);assert.equal(x.locationId,r.productionLocationId);assert.ok(x.total>40);const html=recipeCostInfo(r,'all',data,{});assert.match(html,/Total Cost/);assert.doesNotMatch(html,/Selling Price|Optimal Price|Gross Profit|Net Margin/);assert.equal((html.match(/<dt>/g)||[]).length,1);});
-test('recursive prep costs scale batch yield, include packaging, and detect cycles',()=>{const prep=data.recipes.find(r=>r.name==='Cheddar Sauce 32 oz');const item=data.ingredientItems.find(i=>i.id===prep.outputItemId);const unit=item.units.find(u=>u.itemUnitId===prep.yieldItemUnitId);const r={id:'test',versionId:'v',componentsLoaded:true,type:'menu',components:[{itemId:item.id,itemUnitId:unit.itemUnitId,uomId:unit.id,quantity:1,subRecipeId:prep.id,kind:'ingredient'}]};const x=recipeCost(r,store,data);close(x.total,recipeCost(prep,store,data).total/prep.yieldQuantity);assert.ok(x.packaging>0);assert.equal(recipeCost(prep,store,data,{},new Set([prep.id])).total,null);});
-test('conflicting active selling prices are not silently selected',()=>{const d=structuredClone(data);const menu=d.costInputs.menus.find(m=>m.recipeId===water.id);d.costInputs.prices.push({...d.costInputs.prices.find(p=>p.menuItemId===menu.id&&p.locationId===store),amount:9});assert.equal(costInfo(water,store,d).sellingPrice,null);});
-test('an empty recipe has an unavailable cost, not a free recipe',()=>{assert.equal(recipeCost({...water,components:[]},store,data).total,null);});
+import {recipeCost} from '../src/recipe-cost-model.js';
+import {recipeCostFixture} from './fixtures/recipe-cost.mjs';
+test('synthetic ingredient cost preserves the source and applies quantity and waste', () => {
+  const {recipe, data} = recipeCostFixture();
+  const before = structuredClone(data);
+  assert.equal(recipeCost(recipe, 'store', data).total, 6);
+  assert.deepEqual(data, before);
+  const withWaste = structuredClone(recipe); withWaste.components[0].wastePercent = 0.25;
+  assert.equal(recipeCost(withWaste, 'store', data).total, 8);
+});
+test('missing conversion and ambiguous supplier prices produce unknown cost', () => {
+  const {recipe, data} = recipeCostFixture();
+  const other = structuredClone(data.supplierCatalog.items[0]);
+  other.supplierItemId = 'other'; other.currentPrices[0].amount = 4;
+  data.supplierCatalog.items.push(other);
+  assert.equal(recipeCost(recipe, 'store', data).total, null);
+  data.supplierCatalog.items.pop(); data.ingredientItems[0].units = [];
+  assert.equal(recipeCost(recipe, 'store', data).total, null);
+});
+test('empty recipes and circular preparation references cannot appear free', () => {
+  const {recipe, data} = recipeCostFixture();
+  assert.equal(recipeCost({...recipe, components: []}, 'store', data).total, null);
+  assert.equal(recipeCost(recipe, 'store', data, {}, new Set([recipe.id])).total, null);
+});

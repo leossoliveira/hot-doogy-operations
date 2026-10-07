@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {inventoryHistoryFor,inventoryHistoryView} from '../../src/inventory-history.js';
+const item={id:'item',rowId:'row',locationId:'mall',locationName:'Natick Mall',baseUnitName:'oz'};
+const count={id:'c',itemId:'item',locationId:'mall',sessionId:'session',completedAt:'2026-10-01T16:00:00Z',baseQty:0,baseUom:'oz',entries:[{qty:0,uom:'Bag'}]};
+const receipt={id:'m',itemId:'item',locationId:'mall',type:'purchase_receipt',baseQty:20,baseUom:'oz',occurredAt:'2026-10-02T12:00:00Z',sourceId:'receipt'};
+const sale={...receipt,id:'s',type:'sale_consumption',baseQty:-3,periodStart:'2026-09-20T04:00:00Z',periodEnd:'2026-09-24T04:00:00Z'};
+const fixture=()=>({inventoryHistory:{meta:{extractedAt:'2026-10-04T12:00:00Z'},counts:[count],movements:[receipt,sale]},invoices:[],orders:[]});
+test('real export preserves all completed count lines and ledger movements',()=>{const raw=JSON.parse(fs.readFileSync(new URL('../../public/data/inventory-history.json',import.meta.url)));assert.equal(raw.counts.length,670);assert.equal(raw.movements.filter(x=>x.type==='sale_consumption').length,130);assert.equal(raw.movements.filter(x=>x.type==='purchase_receipt').length,206);assert.equal(new Set(raw.movements.map(x=>x.id)).size,336);});

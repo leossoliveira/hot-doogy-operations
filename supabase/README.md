@@ -20,3 +20,9 @@ Este diretório não é backup dos dados, das credenciais ou dos arquivos do Sto
 6. Confirmar o resultado e o registro da migração remota. Registrar o procedimento de reversão quando aplicável; migrações não desfazem mudanças automaticamente.
 
 A CLI não estava instalada no computador durante a importação histórica. Os nomes importados vieram diretamente do Supabase, sem criação de novas versões. O manifesto descreve esse lote inicial; novas migrações terão seu histórico no Git e no Supabase quando aplicadas.
+
+## Validation status — October 7, 2026
+
+`npm run check` verifies all 74 imported migration checksums and rejects invalid or duplicate version filenames. This checks history integrity, not SQL execution. The history starts at sections 006–012 and already references `public.organizations`, `public.locations`, and `public.units`; the initial schema is not present in this import. No Supabase CLI, Docker or psql was available during the review.
+
+Before claiming reproducible database setup: recover a reviewed baseline for the missing initial schema, provision an isolated local Supabase stack, replay the full history there and verify application queries and permissions. Do not fabricate baseline tables or reset production to test this. This validation remains pending; no remote database was changed.

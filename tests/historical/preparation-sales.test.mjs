@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {expandPreparationSales,salesConsumptionRows} from '../../src/preparation-sales.js';
+const item={id:'prep',locationId:'mall',name:'Prep',type:'prepared',units:[{name:'Bag',factor:10,stocktake:true}]};
+const batches=[{locationId:'mall',periodStart:'2026-09-01T04:00:00Z',periodEnd:'2026-10-04T04:00:00Z'}];
+const source={days:[{date:'2026-09-20',locationId:'mall',totalLines:2,incompleteLines:0},{date:'2026-09-13',locationId:'mall',totalLines:1,incompleteLines:0}],rows:[{date:'2026-09-20',locationId:'mall',itemId:'prep',baseQty:120},{date:'2026-09-13',locationId:'mall',itemId:'prep',baseQty:100}]};
+const filter={start:'2026-09-20',end:'2026-09-20',locationId:'mall'};
+const measure=(s=source,its=[item],f=filter)=>salesConsumptionRows(its,s,batches,f)[0];
+test('real sales export covers every fact and all store days without duplicated daily usage',()=>{const read=n=>JSON.parse(fs.readFileSync(new URL('../../public/data/'+n+'.json',import.meta.url)));const s=read('preparation-sales'),p=read('sales-periods');assert.equal(s.days.reduce((n,d)=>n+d.totalLines,0),p.facts.length);assert.equal(s.meta.factCount,10504);assert.equal(s.days.length,56);assert.equal(new Set(s.rows.map(r=>`${r.date}|${r.locationId}|${r.itemId}`)).size,s.rows.length);const expanded=expandPreparationSales(s,read('recipe-components').recipes);assert.deepEqual(expanded.expansionWarnings,[]);const rows=salesConsumptionRows(read('snapshot').items,expanded,p.batches,{start:'2026-09-27',end:'2026-10-03',locationId:'d61fa7fe-fbe7-41cd-b45c-6527fae9b6b6'});const beans=rows.find(r=>r.name==='Black Beans 32 oz');assert.equal(beans.current,10);assert.ok(Math.abs(beans.previous-11)<1e-9);assert.ok(rows.find(r=>r.name==='Garlic Paste 32 oz').current>0);});

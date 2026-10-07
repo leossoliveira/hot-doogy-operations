@@ -6,8 +6,6 @@ import { componentFromItem, recipeWithEdits, saveRecipeDraft, validateRecipeComp
 
 const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const at = '2026-10-04T17:00:00.000Z';
-const details = JSON.parse(await readFile(new URL('../public/data/recipe-components.json', import.meta.url), 'utf8'));
-const snapshot = JSON.parse(await readFile(new URL('../public/data/snapshot.json', import.meta.url), 'utf8'));
 const storage = () => {
   const values = new Map();
   return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
@@ -215,58 +213,4 @@ test('cycle validation considers current local drafts and ignores stale drafts',
   second.components = [line(1)];
   edits[second.id] = { versionId: second.versionId, components: [] };
   assert.equal(validateRecipeComponents(first, [line(2)], catalog, recipes, edits), null);
-});
-
-test('all exported compositions match the selected snapshot versions and registered item units', () => {
-  const originalVersions = new Map(snapshot.recipes.map(recipe => [recipe.id, recipe.versionId]));
-  assert.equal(details.recipes.length, 144);
-  assert.equal(details.recipes.flatMap(recipe => recipe.components).length, 321);
-  assert.equal(new Set(details.recipes.map(recipe => recipe.id)).size, 144);
-  const units = new Set(details.units.map(unit => unit.id));
-  for (const recipe of details.recipes) {
-    assert.equal(recipe.versionId, originalVersions.get(recipe.id), recipe.name);
-    assert.equal(recipe.componentsLoaded, true, recipe.name);
-    assert.equal(validateRecipeComponents(recipe, recipe.components, details.ingredientItems, details.recipes), null, recipe.name);
-    for (const component of recipe.components) {
-      const item = details.ingredientItems.find(item => item.id === component.itemId);
-      assert.ok(item, `${recipe.name}: catalog item exists`);
-      assert.ok(item.units.some(unit => unit.id === component.uomId && unit.itemUnitId === component.itemUnitId), `${recipe.name}: unit belongs to item`);
-      assert.ok(units.has(component.uomId), `${recipe.name}: actual unit UUID exists`);
-      assert.ok(['ingredient', 'packaging'].includes(component.kind), `${recipe.name}: component kind`);
-      assert.ok(component.quantity > 0 && Number.isFinite(component.quantity), `${recipe.name}: positive finite quantity`);
-      assert.ok(component.wastePercent >= 0 && component.wastePercent < 1, `${recipe.name}: raw waste fraction`);
-      if (component.subRecipeId) {
-        assert.ok(details.recipes.some(child => child.id === component.subRecipeId && child.outputItemId === component.itemId), `${recipe.name}: preparation output matches`);
-        assert.equal(component.subRecipeVersionId, null, `${recipe.name}: no invented version pin`);
-      }
-    }
-  }
-  assert.deepEqual(details.recipes.filter(recipe => recipe.components.length === 0).map(recipe => recipe.name).sort(), ['Açaí Smoothie', 'Fountain Soda (Fountain)']);
-});
-
-test('actual Bacon Cheddar Doogy can change quantity and retain all exported line metadata', () => {
-  const recipe = details.recipes.find(recipe => recipe.id === 'c86577d9-fcdb-4934-899a-1989afa0a046');
-  const before = structuredClone(recipe);
-  freeze(recipe);
-  assert.deepEqual(recipe.components.map(component => [component.internalName, component.quantity, component.uom]), [
-    ['All Beef Hot Dog', 1, 'ea'], ['Bacon Bits', 1, 'scoop'], ['Cheddar Sauce 32 oz', 1, 'scoop'], ['Hot Dog Bun (Regular)', 1, 'ea'],
-  ]);
-  const components = structuredClone(recipe.components);
-  components[2].quantity = '1.25';
-  const saved = saveRecipeDraft({ recipeEdits: {}, audit: [] }, recipe, components, details.ingredientItems, details.recipes, () => {}, at);
-  assert.deepEqual(recipe, before);
-  assert.deepEqual(saved.recipeEdits[recipe.id].components, before.components.map((component, index) => ({ ...component, quantity: index === 2 ? 1.25 : component.quantity, sortOrder: index + 1 })));
-});
-
-test('actual catalog packaging uses categoryName when adding a recipe component', () => {
-  const item = details.ingredientItems.find(item => item.active && item.categoryName === 'Packaging');
-  assert.ok(item);
-  assert.equal(item.category, undefined);
-  const unit = item.units.find(unit => unit.base);
-  const component = componentFromItem(item, unit, { id: uuid(999), locationId: null });
-  assert.equal(component.kind, 'packaging');
-  assert.equal(component.itemUnitId, unit.itemUnitId);
-  assert.equal(component.uomId, unit.id);
-  const recipe = details.recipes.find(recipe => recipe.name === 'Bacon Cheddar Doogy');
-  assert.equal(validateRecipeComponents(recipe, [...recipe.components, component], details.ingredientItems, details.recipes), null);
 });

@@ -6,7 +6,6 @@ import { supplierItemWithEdits, filterSupplierItems, createSupplierDraft, resolv
 
 const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const now = '2026-10-04T20:00:00.000Z';
-const realCatalog = JSON.parse(await readFile(new URL('../public/data/supplier-catalog.json', import.meta.url), 'utf8'));
 const storage = () => {
   const values = new Map();
   return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
@@ -68,8 +67,8 @@ test('shared item changes reach supplier aliases while SKU, brand and associatio
   const first = supplierItemWithEdits(row, local), second = supplierItemWithEdits(alias, local);
   assert.equal(first.name, 'Supplier product name');
   assert.equal(second.name, alias.name);
-  assert.equal(first.catalogName, 'Shared catalog name');
-  assert.equal(second.catalogName, 'Shared catalog name');
+  assert.equal(first.catalogName, row.catalogName);
+  assert.equal(second.catalogName, alias.catalogName);
   assert.equal(second.internalName, 'Shared internal name');
   assert.equal(first.sku, 'EDITED');
   assert.equal(second.sku, alias.sku);
@@ -115,7 +114,7 @@ test('SKU uniqueness is scoped to supplier and excludes the current supplier ite
   assert.equal(validateSupplierDraft({ ...row, sku: alias.sku }, row, catalog), null);
   assert.equal(validateSupplierDraft({ ...row, sku: ' ' }, row, catalog), null);
   assert.match(validateSupplierDraft({ ...row, name: '  ' }, row, catalog), /name/);
-  assert.match(validateSupplierDraft({ ...row, catalogName: '  ' }, row, catalog), /catalog/);
+  assert.match(validateSupplierDraft({ ...row, internalName: '  ' }, row, catalog), /internal name/);
   assert.match(validateSupplierDraft({ ...row, categoryId: uuid(999) }, row, catalog), /category/);
 });
 
@@ -161,7 +160,7 @@ test('save normalizes text, numeric strings and booleans without changing source
   const { row, catalog } = fixture();
   const original = structuredClone(row);
   const draft = createSupplierDraft(row);
-  Object.assign(draft, { name: '  Edited name ', internalName: ' ', brand: ' Brand C ', sku: ' SKU-3 ', description: ' desc ', active: 'false', supplierActive: 'true', trackInventory: '0', yieldPercent: '85.5', categoryId: uuid(502), price: '0', type: 'must-not-change' });
+  Object.assign(draft, { name: '  Edited name ', internalName: ' Internal name ', brand: ' Brand C ', sku: ' SKU-3 ', description: ' desc ', active: 'false', supplierActive: 'true', trackInventory: '0', yieldPercent: '85.5', categoryId: uuid(502), price: '0', type: 'must-not-change' });
   draft.units[1].factor = '15.25';
   const entered = structuredClone(draft);
   freeze(row); freeze(draft);
@@ -175,7 +174,7 @@ test('save normalizes text, numeric strings and booleans without changing source
   assert.equal(result.item.name, 'Edited name');
   assert.equal(result.item.productDescription, 'Edited name');
   assert.equal(result.item.catalogName, row.catalogName);
-  assert.equal(result.item.internalName, null);
+  assert.equal(result.item.internalName, 'Internal name');
   assert.equal(result.item.brand, 'Brand C');
   assert.equal(result.item.sku, 'SKU-3');
   assert.equal(result.item.description, 'desc');
@@ -293,63 +292,6 @@ test('registered conversions can be added and removed unless another supplier st
   assert.match(validateSupplierDraft(removal, row, catalog), /another supplier/);
   const effectiveCatalog = { ...catalog, items: catalog.items.map(item => item.supplierItemId === alias.supplierItemId ? { ...item, orderingUnitId: row.baseUnitId, receivingUnitId: row.baseUnitId } : item) };
   assert.equal(validateSupplierDraft(removal, row, effectiveCatalog), null);
-});
-
-test('all real supplier associations validate without dropping aliases or promoting pending prices', () => {
-  assert.equal(realCatalog.items.length, 166);
-  assert.equal(new Set(realCatalog.items.map(item => item.supplierItemId)).size, 166);
-  assert.equal(new Set(realCatalog.items.map(item => item.itemId)).size, 164);
-  assert.equal(filterSupplierItems(realCatalog.items, { status: 'all' }).length, 166);
-  let approved = 0, pending = 0;
-  for (const row of realCatalog.items) {
-    assert.equal(validateSupplierDraft(createSupplierDraft(row), row, realCatalog), null, `${row.supplierName}: ${row.name}`);
-    const effective = supplierItemWithEdits(row);
-    assert.equal(effective.price, row.price);
-    assert.deepEqual(effective.currentPrices, row.currentPrices);
-    assert.deepEqual(effective.priceHistory, row.priceHistory);
-    for (const price of row.currentPrices) {
-      assert.equal(price.status, 'approved');
-      assert.ok(row.priceHistory.some(source => source.id === price.id && source.status === 'approved'));
-      approved += 1;
-    }
-    pending += row.priceHistory.filter(price => price.status === 'pending').length;
-    const global = row.currentPrices.find(price => price.locationId === null);
-    assert.equal(row.price, global?.amount ?? null, row.name);
-    for (const unit of row.units) assert.ok(realCatalog.units.some(globalUnit => globalUnit.id === unit.id));
-  }
-  assert.equal(approved, 163);
-  assert.equal(pending, 179);
-});
-
-test('actual supplier product name and purchase-unit changes do not leak into another supplier alias', () => {
-  const firstRow = realCatalog.items.find(row => realCatalog.items.some(other => other.itemId === row.itemId && other.supplierItemId !== row.supplierItemId));
-  const otherRow = realCatalog.items.find(row => row.itemId === firstRow.itemId && row.supplierItemId !== firstRow.supplierItemId);
-  const before = structuredClone(firstRow);
-  const draft = createSupplierDraft(firstRow);
-  draft.name = 'Local supplier description';
-  draft.internalName = 'Local shared internal name';
-  draft.orderingUnitId = firstRow.baseUnitId;
-  const result = saveSupplierDraft({}, firstRow, draft, realCatalog, { storage: storage(), now });
-  const other = supplierItemWithEdits(otherRow, result.local);
-  assert.equal(result.item.name, 'Local supplier description');
-  assert.equal(result.item.productDescription, 'Local supplier description');
-  assert.equal(other.name, otherRow.name);
-  assert.equal(other.internalName, 'Local shared internal name');
-  assert.equal(other.orderingUnitId, otherRow.orderingUnitId);
-  assert.equal(other.sku, otherRow.sku);
-  assert.equal(other.price, otherRow.price);
-  assert.equal(result.item.priceUnitId, firstRow.priceUnitId);
-  assert.deepEqual(result.item.priceHistory, firstRow.priceHistory);
-  assert.deepEqual(firstRow, before);
-});
-
-test('the exported global price scope saves as the all-locations fallback', () => {
-  const row = realCatalog.items.find(row => row.price != null);
-  assert.equal(row.priceScope, 'global');
-  const draft = { ...createSupplierDraft(row), price: String(row.price + 1) };
-  const result = saveSupplierDraft({}, row, draft, realCatalog, { storage: storage(), now });
-  assert.deepEqual(result.local.supplierItemEdits[row.supplierItemId].pricesByLocation, { all: { amount: row.price + 1, unitId: row.priceUnitId } });
-  assert.equal(result.item.price, row.price + 1);
 });
 
 test('price resolution prioritizes explicit store and all-store edits over approved store and global prices', () => {

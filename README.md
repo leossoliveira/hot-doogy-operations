@@ -2,15 +2,19 @@
 
 Aplicativo de gestão da HOT DOOGY para Sherwood Plaza e Natick Mall. Interface e servidor Node.js, com autenticação, banco e arquivos privados no Supabase.
 
+## Project structure
+
+See [the workspace map](docs/workspace-structure.md) for the current layout. Application code, technical documentation and migrations are versioned here. Private operational context and historical ZIP backups live outside this repository.
+
 ## Executar
 
-Requer Node.js 24. Não há dependências de instalação nem etapa de build.
+Requer Node.js 24 (versão definida em `.nvmrc` e `package.json`). Não há dependências de instalação nem etapa de build.
 
 ```sh
 npm start
 ```
 
-O endereço local é http://127.0.0.1:4173. Em produção, acesse https://management.hotdoogy.com sem túnel SSH. O subdomínio exige uma senha de entrada (usuário `management`), seguida do login individual de uma conta ativa vinculada à organização no banco. Consulte [a documentação da hospedagem](deploy/README.md).
+O endereço local é http://127.0.0.1:4173. Em produção, acesse https://management.hotdoogy.com sem túnel SSH. O acesso usa o login individual de uma conta ativa vinculada à organização, com MFA administrativo. Não há senha compartilhada adicional do navegador. Consulte [a documentação da hospedagem](deploy/README.md).
 
 ## Configuração
 
@@ -25,11 +29,11 @@ npm run check
 npm run test:ci
 ```
 
-A suíte `test:ci` usa somente dados sintéticos e funciona em um clone limpo. `npm test` também executa verificações locais contra extratos privados, que não são enviados ao GitHub. Essa suíte completa exige os arquivos locais de referência.
+`npm test` e `npm run test:ci` executam a mesma suíte independente de extratos privados, com descoberta automática. Os testes antigos dependentes de exportações ficam em `tests/historical/` e exigem `npm run test:historical`. Consulte [o guia de testes](tests/README.md).
 
 ## Histórico e versões
 
-Cada conjunto de alterações concluído deve ser registrado em um commit e enviado ao GitHub. Salvar um arquivo no editor, sozinho, não cria um commit nem publica uma versão.
+Cada conjunto de alterações concluído e verificado deve ser registrado em um commit local. O envio ao GitHub exige autorização explícita. Salvar um arquivo no editor, sozinho, não cria um commit nem publica uma versão.
 
 A automação valida cada atualização de `main`. Quando as verificações passam, cria uma tag e uma GitHub Release com o formato `v0.1.N`, onde N é o número da execução. Cada versão aponta para o commit exato; números podem ter intervalos quando uma execução falha ou valida uma pull request. Reexecutar a mesma execução não cria uma segunda versão.
 
