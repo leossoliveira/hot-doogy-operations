@@ -95,3 +95,5 @@
 .purchasing-filters{align-items:center}.purchasing-filters .hd-date-filter .hd-date-trigger,.purchasing-filters>.hd-date-trigger,.purchasing-filters>.btn{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center}
 
 .prep-usage-filters .hd-date-filter .hd-date-trigger,.prep-usage-filters>[data-action="prep-items-filter"]{min-height:44px;box-sizing:border-box}
+
+.purchasing-filters .purchasing-search{margin:0;flex:1 1 240px;min-width:0;max-width:360px}.purchasing-filters .purchasing-search input{width:100%;min-height:44px;box-sizing:border-box}.purchasing-history-controls{justify-content:flex-end}@media(max-width:600px){.purchasing-filters .purchasing-search{flex-basis:100%;max-width:none}}
