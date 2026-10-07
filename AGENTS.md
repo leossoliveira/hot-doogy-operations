@@ -7,6 +7,14 @@
 - Não crie commits de alterações incompletas ou com verificações necessárias pendentes; informe o impedimento.
 - Criar um commit local não autoriza envio ao GitHub. Não execute push nem publique imediatamente; siga a autorização descrita abaixo.
 
+## Mudanças no banco Supabase
+
+- Registrar cada nova mudança de estrutura, função ou permissão em uma migração SQL em `supabase/migrations/`, criada pela CLI Supabase e validada em ambiente isolado.
+- Incluir a migração no mesmo commit local da alteração correspondente do aplicativo, após as verificações necessárias.
+- Preservar migrações já aplicadas. Scripts históricos em `database/` não substituem uma nova migração.
+- Não aplicar SQL no banco remoto apenas por criar um commit ou publicar o front end. A aplicação exige escopo autorizado e verificação do histórico e do resultado.
+- Consultar `supabase/README.md` para os limites do histórico importado. Não executar replay, reset ou reparo automático na produção.
+
 ## Envio de alterações ao GitHub
 
 - Ao concluir as alterações solicitadas, prepare e verifique o resultado localmente.

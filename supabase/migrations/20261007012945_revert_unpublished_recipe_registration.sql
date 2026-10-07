@@ -1,0 +1,2 @@
+do $$ begin if exists(select 1 from public.audit_logs where action='recipe.create') or exists(select 1 from public.recipe_production_locations l join public.recipes r on r.id=l.recipe_id where l.location_id is distinct from r.production_location_id or l.organization_id<>r.organization_id) then raise exception 'Recipe registration has new data; rollback stopped';end if;end $$; drop function public.recipe_create(jsonb,uuid); drop function private.recipe_create(jsonb,uuid); drop table public.recipe_production_locations; notify pgrst,'reload schema';
+;
