@@ -1,6 +1,6 @@
 # Inventory count workflow
 
-New activity → Inventory count opens location and employee-name fields, the shared searchable supplier multiselect, and location-specific storage-area multiselect. Supplier selection supports All, None and multiple choices. Storage-area selection supports All, None and multiple choices. Filters select items; quantities remain whole-item totals for the chosen location.
+New activity → Inventory count opens an initially unselected location and required employee-name fields, the shared searchable supplier multiselect, and location-specific storage-area multiselect. Supplier selection supports All, None and multiple choices. Storage-area selection supports All, None and multiple choices. Filters select items; quantities remain whole-item totals for the chosen location.
 
 Complete count captures the device instant, local calendar date and UTC offset. Employee Name is required and limited to 80 characters; it is a label, not the authenticated actor. Authorization and created_by remain tied to the signed-in account.
 
@@ -19,3 +19,5 @@ node supabase/tests/count-completion.mjs /absolute/path/to/pglite/dist/index.js
 ```
 
 The regular checks and application tests also run before committing. Browser verification opens the filters and item list without submitting real inventory quantities.
+
+Items are grouped by their displayed storage area and alphabetized within each collapsible section. Mark section complete collapses that section; editing a quantity or unit clears its completion mark. Section completion is session-only review state and does not submit a count.

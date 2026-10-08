@@ -104,3 +104,5 @@
 #count-form .hd-date-trigger{width:100%;min-height:42px;justify-content:space-between;border-radius:8px}
 #count-form .hd-date-caption{display:none}
 #count-form .hd-date-value{font-weight:400;font-size:12px}
+
+#count-entry{margin-top:20px}.count-area-section{border:1px solid #e0e5d9;border-radius:10px;margin-top:14px;overflow:hidden}.count-area-section summary{padding:15px;cursor:pointer;background:#fafbf7;font-size:12px}.count-area-section summary>span{margin-left:14px;color:#738268}.count-area-section .table-wrap{max-height:350px}.count-section-foot{display:flex;justify-content:flex-end;padding:12px 15px;border-top:1px solid #e0e5d9}#count-employee-help{display:block;margin-top:6px;font-size:11px}
