@@ -1,10 +1,10 @@
 // One row per completed count, never one row per counted item.
 export function countSessions(observations=[],sessions=[],legacyLines=[]){
  const rows=new Map();
- for(const s of sessions.filter(s=>s.status==='completed'))rows.set(`${s.locationId}|${s.id}`,{id:s.id,locationId:s.locationId,employeeName:s.employeeName||'',countedAt:s.completedAt||null,date:s.countedOn||null,notes:s.notes||'',lines:legacyLines.filter(l=>l.sessionId===s.id),source:'legacy'});
+ for(const s of sessions.filter(s=>s.status==='completed'))rows.set(`${s.locationId}|${s.id}`,{id:s.id,locationId:s.locationId,status:s.status,employeeName:s.employeeName||'',countedAt:s.completedAt||null,date:s.countedOn||null,notes:s.notes||'',lines:legacyLines.filter(l=>l.sessionId===s.id),source:'legacy'});
  for(const o of observations){
   const id=o.sessionId||o.id,key=`${o.locationId}|${id}`;
-  if(!rows.has(key))rows.set(key,{id,locationId:o.locationId,employeeName:o.employeeName||'',date:o.countedOn,countedAt:o.countedAt||null,countOffsetMinutes:o.deviceUtcOffsetMinutes,lines:[],source:'observations'});
+  if(!rows.has(key))rows.set(key,{id,locationId:o.locationId,status:'completed',employeeName:o.employeeName||'',date:o.countedOn,countedAt:o.countedAt||null,countOffsetMinutes:o.deviceUtcOffsetMinutes,lines:[],source:'observations'});
   rows.get(key).lines.push({...o,itemId:o.inventoryItemId,qty:o.quantity});
  }
  return [...rows.values()];
