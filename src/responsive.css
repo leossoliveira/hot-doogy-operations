@@ -270,9 +270,9 @@ select, input, textarea { max-width: 100%; }
     align-items: start;
   }
   #count-rows .responsive-table > tbody > tr > td:nth-child(1) { grid-column: 1; grid-row: 1; }
-  #count-rows .responsive-table > tbody > tr > td:nth-child(2) { grid-column: 1; grid-row: 2 / 4; }
-  #count-rows .responsive-table > tbody > tr > td:nth-child(3) { grid-column: 2; grid-row: 1; padding-top: 38px !important; }
-  #count-rows .responsive-table > tbody > tr > td:nth-child(4) { grid-column: 2; grid-row: 2 / 4; }
+  #count-rows .responsive-table > tbody > tr > td:nth-child(2) { grid-column: 2; grid-row: 1; padding-top: 38px !important; }
+  #count-rows .responsive-table > tbody > tr > td:nth-child(3) { grid-column: 1; grid-row: 2; text-align: center !important; }
+  #count-rows .responsive-table > tbody > tr > td:nth-child(4) { grid-column: 2; grid-row: 2; }
   #count-rows .responsive-table > tbody > tr > td:nth-child(5) { position: absolute; top: 10px; right: 10px; }
   #count-rows .responsive-table > tbody > tr > td:nth-child(1)::before,
   #count-rows .responsive-table > tbody > tr > td:nth-child(5)::before { display: none; }
@@ -281,3 +281,5 @@ select, input, textarea { max-width: 100%; }
   #count-rows .count-issue-icon { width: 36px; height: 36px; min-height: 36px; }
   #count-rows select[data-count-unit], #count-rows .count-input { width: 100%; }
 }
+
+@container (max-width: 720px) { #count-rows .count-input { text-align: center; } }
