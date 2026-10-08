@@ -111,5 +111,7 @@
 
 #count-form .form-grid input:not([type=hidden]),#count-form .form-grid .hd-date-trigger,#count-form .form-grid select{height:42px;font-size:13px;width:100%;box-sizing:border-box}#count-rows select[data-count-unit]{width:140px;height:38px;font-size:13px;max-width:100%}#count-rows .count-input{height:38px;font-size:13px;box-sizing:border-box}.count-notes{margin-top:24px}.count-subdialog{border:1px solid var(--line);border-radius:16px;padding:24px;width:min(480px,calc(100vw - 32px));color:inherit;background:white}.count-subdialog::backdrop{background:#17211d66}.count-subdialog h2{font-size:18px;margin:0 0 20px}.count-subdialog footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.count-subdialog textarea,#count-notes{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px solid #dce1d4;border-radius:8px}
 
-@media(min-width:761px){#count-rows table{table-layout:fixed;width:100%}#count-rows th:nth-child(1){width:60%}#count-rows th:nth-child(2){width:16%}#count-rows th:nth-child(3){width:18%}#count-rows th:nth-child(4){width:6%}#count-rows td:first-child{overflow-wrap:anywhere}}
+@media(min-width:761px){#count-rows table{table-layout:fixed;width:100%}#count-rows th:nth-child(1){width:7%}#count-rows th:nth-child(2){width:53%}#count-rows th:nth-child(3){width:16%}#count-rows th:nth-child(4){width:18%}#count-rows th:nth-child(5){width:6%}#count-rows td:nth-child(2){overflow-wrap:anywhere}}
 #count-rows .count-issue-icon{width:38px;height:38px;padding:0;justify-content:center}
+
+#count-rows .inventory-photo{cursor:default}
