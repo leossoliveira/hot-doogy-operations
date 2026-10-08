@@ -23,7 +23,7 @@ export function queuePreparationUsage(auth,session,range,{calculate=calculatePre
 }
 export function preparationUsage(req,res,url,auth,session){
  if(req.method!=='GET')throw new ApiError(405,'Method not allowed.');
- if(!['owner','admin','manager','chef'].includes(session.member?.role))throw new ApiError(403,'Prep access denied.');
+ if(!['owner','admin','manager','chef','staff'].includes(session.member?.role))throw new ApiError(403,'Prep access denied.');
  const start=url.searchParams.get('start'),end=url.searchParams.get('end'),location=url.searchParams.get('location')||'all';
  try{periodWindow(start,start);periodWindow(end,end);const days=(Date.parse(end)-Date.parse(start))/86400000;if(days<0||days>737)throw Error();}catch{throw new ApiError(400,'Choose a valid date range of up to two years.');}
  if(location!=='all'&&!/^[a-f0-9-]{36}$/.test(location))throw new ApiError(400,'Choose a valid location.');

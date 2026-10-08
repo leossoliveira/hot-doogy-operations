@@ -3,8 +3,9 @@ import {escape as e} from './model.js';
 
 const tabs=[['ingredients',"Ingredients"],['packaging',"Packaging"],['cost','Cost'],['steps','Step-by-Step']];
 const photoSource=photo=>cloudPhotoSource(photo)||(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo?.src||'')?photo.src:null);
-export function recipePhotoView(recipe,photo){
+export function recipePhotoView(recipe,photo,readOnly=false){
   const src=photoSource(photo);
+  if(readOnly)return `<section class="recipe-photo"><div class="recipe-photo-preview">${src?`<img src="${e(src)}" alt="Photo of ${e(recipe.name)}">`:'<i data-lucide="image" class="icon" aria-hidden="true"></i>'}</div><div><strong>Item photo</strong>${src?'':'<p>No photo available.</p>'}</div></section>`;
   return `<section class="recipe-photo" data-photo-recipe="${e(recipe.id)}"><div class="recipe-photo-preview">${src?`<img src="${e(src)}" alt="Photo of ${e(recipe.name)}">`:'<i data-lucide="image" class="icon" aria-hidden="true"></i>'}</div><div><strong>Item photo</strong><p>JPG, PNG, or WebP · Up to 5 MB<br>${photo?.storage==='s3'?"✓ Photo verified in storage":src?"Local photo — select it again to upload to storage.":"Upload to private storage."}</p><div class="recipe-photo-actions"><button class="btn sm" data-action="recipe-photo-upload">${src?"Change photo":"Add photo"}</button>${src?"<button class=\"btn sm ghost\" data-action=\"recipe-photo-remove\">Remove photo</button>":''}</div><input type="file" hidden id="recipe-photo-file" data-change="recipe-photo" data-id="${e(recipe.id)}" accept="image/jpeg,image/png,image/webp"><p class="error-text" role="status" id="recipe-photo-message"></p></div></section>`;
 }
 export function recipeDetailTabs(recipe,componentsView,costView){
