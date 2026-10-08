@@ -21,16 +21,12 @@ export function historyDateTime(s){
  return {date:new Intl.DateTimeFormat('en-US',{timeZone,month:'2-digit',day:'2-digit',year:'numeric'}).format(value),time:new Intl.DateTimeFormat('en-US',{timeZone,hour:'2-digit',minute:'2-digit'}).format(value)};
 }
 
-export function groupCountLines(lines,items,locationId,query=''){
+export function countDetailRows(lines,items,locationId,query=''){
  const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
- const groups=new Map(),search=normalize(query);
- for(const line of lines){
+ const search=normalize(query).trim();
+ return lines.map(line=>{
   const item=items.find(x=>x.id===line.itemId&&x.locationId===locationId);
-  const name=line.name||item?.name||line.itemId,sku=item?.sku||'';
-  if(!normalize(name+' '+sku).includes(search))continue;
-  const area=line.areaName||item?.areaName||'No storage area';
-  if(!groups.has(area))groups.set(area,[]);
-  groups.get(area).push({...line,displayName:name,sku});
- }
- return [...groups].sort(([a],[b])=>a.localeCompare(b)).map(([area,rows])=>({area,rows:rows.sort((a,b)=>a.displayName.localeCompare(b.displayName))}));
+  return {...line,displayName:line.name||item?.name||line.itemId||'Unknown item',sku:item?.sku||'',displayArea:line.areaName||'Location total'};
+ }).filter(line=>normalize(line.displayName+' '+line.sku).includes(search))
+ .sort((a,b)=>a.displayName.localeCompare(b.displayName)||a.displayArea.localeCompare(b.displayArea));
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {countSessions,historyRows,historyDateTime,groupCountLines} from '../src/count-history.js';
+import {countSessions,historyRows,historyDateTime,countDetailRows} from '../src/count-history.js';
 import {projectData} from '../server/live-data.mjs';
 test('groups counted items by session and location, excludes unfinished legacy counts',()=>{
  const rows=countSessions([{id:'a',sessionId:'s',locationId:'l',employeeName:'Maria',countedOn:'2026-10-08'},{id:'b',sessionId:'s',locationId:'l'},{id:'c',sessionId:'s',locationId:'other'}],[{id:'draft',status:'draft'},{id:'old',locationId:'l',status:'completed',completedAt:'2026-10-07T15:00:00Z'}]);
@@ -26,15 +26,14 @@ test('count details retain zero quantities, all entries and legacy notes',()=>{
  assert.equal(rows.find(r=>r.id==='old').lines[0].entries.length,2);
 });
 
-test('groups history alphabetically by area and item without duplicating location totals',()=>{
- const items=[{id:'a',locationId:'l',name:'Zucchini',sku:'100',areaName:'Back Shelf'}, {id:'b',locationId:'l',name:'Ápple Juice',sku:'3802188',areaName:'Back Shelf'}, {id:'c',locationId:'l',name:'Milk',areaName:'Cooler'}, {id:'a',locationId:'other',name:'Wrong location',areaName:'Other'}];
- const lines=[{itemId:'c',qty:2,areaName:'Archived area'},{itemId:'a',qty:0},{itemId:'b',qty:21}];
- const groups=groupCountLines(lines,items,'l');
- assert.deepEqual(groups.map(g=>g.area),['Archived area','Back Shelf']);
- assert.deepEqual(groups[1].rows.map(r=>r.displayName),['Ápple Juice','Zucchini']);
- assert.equal(groups.flatMap(g=>g.rows).length,3);
- assert.equal(groups[1].rows[1].qty,0);
- assert.equal(groupCountLines(lines,items,'l','apple')[0].rows[0].itemId,'b');
- assert.equal(groupCountLines(lines,items,'l','3802188')[0].rows[0].itemId,'b');
- assert.deepEqual(groupCountLines(lines,items,'l','absent'),[]);
+test('lists items alphabetically with recorded area quantities and honest location totals',()=>{
+ const items=[{id:'a',locationId:'l',name:'Zucchini',sku:'100',areaName:'Back Shelf'}, {id:'b',locationId:'l',name:'Ápple Juice',sku:'3802188',areaName:'Back Shelf'}];
+ const lines=[{itemId:'a',qty:0,areaName:'Cooler'},{itemId:'b',qty:21},{itemId:'a',qty:2,areaName:'Shelf'}];
+ const rows=countDetailRows(lines,items,'l');
+ assert.deepEqual(rows.map(r=>r.displayName),['Ápple Juice','Zucchini','Zucchini']);
+ assert.deepEqual(rows.map(r=>r.displayArea),['Location total','Cooler','Shelf']);
+ assert.deepEqual(rows.map(r=>r.qty),[21,0,2]);
+ assert.equal(countDetailRows(lines,items,'l','apple')[0].itemId,'b');
+ assert.equal(countDetailRows(lines,items,'l','3802188')[0].itemId,'b');
+ assert.deepEqual(countDetailRows(lines,items,'l','absent'),[]);
 });
