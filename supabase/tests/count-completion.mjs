@@ -19,8 +19,8 @@ insert into inventory_item_units values('33333333-3333-4333-8333-333333333333','
 insert into location_inventory_items values('44444444-4444-4444-8444-444444444444','22222222-2222-4222-8222-222222222222',true);`);
 const original=await readFile(root+'supabase/migrations/20261005113923_authenticated_web_operations_and_store_counts.sql','utf8');
 await db.exec(original.slice(original.indexOf('create or replace function private.web_operation'),original.indexOf('revoke all on function private.web_operation')));
-await db.exec(await readFile(root+'supabase/migrations/20261008111849_inventory_count_device_completion.sql','utf8'));
-await db.exec(await readFile(root+'supabase/migrations/20261008123834_inventory_count_notes_issues.sql','utf8'));
+await db.exec(await readFile(root+'supabase/migrations/20261008125044_inventory_count_device_completion.sql','utf8'));
+await db.exec(await readFile(root+'supabase/migrations/20261008125059_inventory_count_notes_issues.sql','utf8'));
 const payload={notes:'Freezer checked',issues:[{itemId:'44444444-4444-4444-8444-444444444444',text:'Damaged packaging'}],id:'55555555-5555-4555-8555-555555555555',locationId:'22222222-2222-4222-8222-222222222222',employeeName:'Test Employee',date:'2026-10-08',countedAt:'2026-10-09T03:59:42.123Z',countOffsetMinutes:240,lines:[{itemId:'44444444-4444-4444-8444-444444444444',itemUnitId:'33333333-3333-4333-8333-333333333333',qty:0}]};
 await db.query(`select private.web_operation('counts',$1::jsonb)`,[JSON.stringify(payload)]);
 const audit=await db.query("select new_data from audit_logs where entity_type='counts'");assert.equal(audit.rows[0].new_data.notes,'Freezer checked');assert.equal(audit.rows[0].new_data.issues[0].text,'Damaged packaging');

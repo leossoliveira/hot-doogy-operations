@@ -37,3 +37,6 @@ __pycache__/
 *.py[cod]
 *.pgpass
 *.dump
+
+# Supabase CLI local cache.
+/supabase/.temp/
