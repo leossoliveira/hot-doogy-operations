@@ -21,3 +21,5 @@ node supabase/tests/count-completion.mjs /absolute/path/to/pglite/dist/index.js
 The regular checks and application tests also run before committing. Browser verification opens the filters and item list without submitting real inventory quantities.
 
 Items are grouped by their displayed storage area and alphabetized within each collapsible section. Mark section complete collapses that section; editing a quantity or unit clears its completion mark. Section completion is session-only review state and does not submit a count.
+
+Starting a count opens the full-screen entry view and locks location and employee. The entry view hides the required hint, shows ordering-to-stocktake conversions and item names, and provides green completion and red cancellation actions.
