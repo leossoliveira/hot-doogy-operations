@@ -1,8 +1,8 @@
 # Inventory count workflow
 
-New activity → Inventory count opens location and employee-name fields, the shared searchable supplier multiselect, and location-specific storage-area checkboxes. Supplier selection supports All, None and multiple choices. Unchecked storage areas mean all areas. Filters select items; quantities remain whole-item totals for the chosen location.
+New activity → Inventory count opens location and employee-name fields, the shared searchable supplier multiselect, and location-specific storage-area multiselect. Supplier selection supports All, None and multiple choices. Storage-area selection supports All, None and multiple choices. Filters select items; quantities remain whole-item totals for the chosen location.
 
-Complete count captures the device instant, local calendar date and UTC offset. Employee Name is optional and limited to 80 characters; it is a label, not the authenticated actor. Authorization and created_by remain tied to the signed-in account.
+Complete count captures the device instant, local calendar date and UTC offset. Employee Name is required and limited to 80 characters; it is a label, not the authenticated actor. Authorization and created_by remain tied to the signed-in account.
 
 ## Deployment order
 

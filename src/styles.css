@@ -97,3 +97,10 @@
 .prep-usage-filters .hd-date-filter .hd-date-trigger,.prep-usage-filters>[data-action="prep-items-filter"]{min-height:44px;box-sizing:border-box}
 
 .purchasing-filters .purchasing-search{margin:0;flex:1 1 240px;min-width:0;max-width:360px}.purchasing-filters .purchasing-search input{width:100%;min-height:44px;box-sizing:border-box}.purchasing-history-controls{justify-content:flex-end}@media(max-width:600px){.purchasing-filters .purchasing-search{flex-basis:100%;max-width:none}}
+
+/* Count filters align with the labeled location and employee fields. */
+#count-form .count-filter-grid{margin-top:20px}
+#count-form .count-filter-grid[hidden]{display:none}
+#count-form .hd-date-trigger{width:100%;min-height:42px;justify-content:space-between;border-radius:8px}
+#count-form .hd-date-caption{display:none}
+#count-form .hd-date-value{font-weight:400;font-size:12px}
