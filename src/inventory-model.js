@@ -78,8 +78,8 @@ function localResult(candidate,item){
   const targetFactor=Number(unit?.factor),canConvert=baseQty!==null&&Number.isFinite(targetFactor)&&targetFactor>0;
   return {qty:canConvert?baseQty/targetFactor:Number(line.qty),uom:canConvert?(unit.name||unit.abbreviation):line.uom||null,
     itemId:item.id,locationId:item.locationId,rowId:item.rowId,local:true,baseQty,
-    baseUom:item.baseUnitName||null,countedAt:null,date,countDate:date,moment:count.moment||null,
-    precision:count.moment?'moment':count.date?'date':'recorded_date',countedAtPrecision:count.moment?'moment':count.date?'date':'recorded_date',
+    baseUom:item.baseUnitName||null,countedAt:count.countedAt||null,countOffsetMinutes:count.countOffsetMinutes,date,countDate:date,moment:count.moment||null,
+    precision:count.countedAt?'timestamp':count.moment?'moment':count.date?'date':'recorded_date',countedAtPrecision:count.countedAt?'timestamp':count.moment?'moment':count.date?'date':'recorded_date',
     createdAt:count.createdAt||null,countSessionId:count.id||null,scope:'item_store_total',source:'local_stock_count',areas:[],partial:false,mixedDates:false,warnings:[],exceptions:[],
     originalQty:Number(line.qty),originalUom:line.uom||null};
 }
