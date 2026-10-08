@@ -25,6 +25,6 @@ The database enum migration commits before the permission migration. Restrictive
 
 ## Publication and assignment
 
-Apply `20261008133312_staff_access_role.sql`, then `20261008133343_staff_readonly_permissions.sql`, only after explicit authorization and checking remote history. Deploy the application before assigning any user to Staff. Do not run the test fixtures on production. Assigning actual users requires their specific identities and intended locations.
+Apply `20261008135853_staff_access_role.sql`, then `20261008135903_staff_readonly_permissions.sql`, only after explicit authorization and checking remote history. Deploy the application before assigning any user to Staff. Do not run the test fixtures on production. Assigning actual users requires their specific identities and intended locations.
 
 For rollback, first revoke/deactivate Staff memberships, then restore the previous application and function definitions in a new reviewed migration. Leave the additive enum value and restrictive policies in place until all memberships are reviewed. Do not restore the old application while active Staff users remain, since its navigation does not implement Staff restrictions.
