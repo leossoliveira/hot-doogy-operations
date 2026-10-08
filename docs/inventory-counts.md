@@ -23,3 +23,5 @@ The regular checks and application tests also run before committing. Browser ver
 Items are grouped by their displayed storage area and alphabetized within each collapsible section. Mark section complete collapses that section; editing a quantity or unit clears its completion mark. Section completion is session-only review state and does not submit a count.
 
 Starting a count opens the full-screen entry view and locks location and employee. Employee name remains required without a static helper label. The entry view removes the locked location dropdown arrow, shows ordering-to-stocktake conversions and SKU followed by the supplier catalog product description (without a description label), uses QTY. for quantities, and provides yellow section completion, green count completion, and red cancellation actions.
+
+Count quantity fields show Est. Stock in the selected count unit, using the same latest completed count plus subsequent production reference as the inventory view. Missing or partial totals display a dash rather than zero. Changing the count unit recalculates the displayed estimate.
