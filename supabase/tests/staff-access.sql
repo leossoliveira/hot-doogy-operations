@@ -50,6 +50,8 @@ do $$ declare payload jsonb; command_id uuid:=gen_random_uuid(); count_id uuid:=
  perform public.operations_command(command_id,'batch',payload);
  perform public.operations_command(command_id,'batch',payload);
  if (select count(*) from public.store_count_observations where session_id=count_id and quantity=0 and employee_name='Staff tester')<>1 then raise exception 'Count not saved exactly once';end if;
+ if public.inventory_count_notes(count_id,'00000000-0000-4000-8000-000000000301')->>'notes'<>'Staff count test' then raise exception 'Count notes not readable';end if;
+ begin perform public.inventory_count_notes(count_id,'00000000-0000-4000-8000-000000000302');raise exception 'Cross-store notes leaked';exception when insufficient_privilege then null;end;
  before_count:=(select count(*) from public.store_count_observations);
  begin
   perform public.operations_command(gen_random_uuid(),'batch',jsonb_set(payload,'{changes}',(payload->'changes')||'[{"action":"recipe","payload":{}}]'::jsonb));

@@ -18,3 +18,10 @@ test('live projection retains completed sessions without requiring active catalo
  const data=projectData({store_count_observations:[{id:'o',session_id:'s',location_id:'l',inventory_item_id:'deleted',employee_name:'Maria',counted_on:'2026-10-08',created_at:'2026-10-08T12:00:00Z'}]});
  assert.equal(data.inventoryHistory.sessions.length,1);assert.equal(data.inventoryHistory.sessions[0].employeeName,'Maria');
 });
+test('count details retain zero quantities, all entries and legacy notes',()=>{
+ const rows=countSessions([{id:'o1',sessionId:'s',locationId:'l',inventoryItemId:'i',quantity:0,itemUnitId:'u'},{id:'o2',sessionId:'s',locationId:'l',inventoryItemId:'j',quantity:3}], [{id:'old',locationId:'l',status:'completed',notes:'Original notes'}],[{sessionId:'old',itemId:'x',entries:[{quantity:2,inventoryItemUnitId:'box'},{quantity:1,inventoryItemUnitId:'each'}]}]);
+ assert.equal(rows.find(r=>r.id==='s').lines.length,2);
+ assert.equal(rows.find(r=>r.id==='s').lines[0].qty,0);
+ assert.equal(rows.find(r=>r.id==='old').notes,'Original notes');
+ assert.equal(rows.find(r=>r.id==='old').lines[0].entries.length,2);
+});
