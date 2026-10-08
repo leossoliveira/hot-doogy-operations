@@ -1,3 +1,4 @@
+import {createSessionStore} from './session-store.mjs';
 import {databaseErrorMessage} from './database-errors.mjs';
 import {randomBytes} from 'node:crypto';
 import {clientAddress,createLoginLimits} from './login-limits.mjs';
@@ -5,9 +6,9 @@ import {SUPABASE_URL,SUPABASE_KEY,ORGANIZATION_ID} from './supabase-config.mjs';
 export class ApiError extends Error {constructor(status,message){super(message);this.status=status;}}
 export async function jsonBody(req,max=1024*1024){let n=0,chunks=[];for await(const c of req){n+=c.length;if(n>max)throw new ApiError(413,"File is too large.");chunks.push(c);}try{return JSON.parse(Buffer.concat(chunks).toString());}catch{throw new ApiError(400,"Invalid data.");}}
 export function reply(res,status,value){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));}
-const SESSION_MS=28800000,PENDING_MS=600000;
-export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HOT_DOOGY_TRUST_PROXY==='loopback'}={}){
- const sessions=new Map(),limits=createLoginLimits({now}),mfaLimits=createLoginLimits({now});
+const SESSION_MS=28800000,PENDING_MS=600000,MFA_MS=30*24*60*60*1000;
+export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HOT_DOOGY_TRUST_PROXY==='loopback',sessionDirectory=process.env.HOT_DOOGY_SESSION_DIR}={}){
+ const store=createSessionStore(sessionDirectory,{now,maxAge:MFA_MS}),sessions=store.sessions,limits=createLoginLimits({now}),mfaLimits=createLoginLimits({now});
  async function request(route,{token,method='GET',body}={}){
   const r=await fetcher(SUPABASE_URL+route,{method,headers:{apikey:SUPABASE_KEY,...(token?{Authorization:`Bearer ${token}`} : {}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});
   const data=await r.json().catch(()=>null);
@@ -37,20 +38,21 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
   if(!s.pending){delete s.pendingAt;delete s.enrollment;}
   return s;
  }
- function expired(s){return now()-s.createdAt>=SESSION_MS||(s.pendingAt!=null&&now()-s.pendingAt>=PENDING_MS);}
+ function remaining(s){return Number.isFinite(s.verifiedAt)?MFA_MS-(now()-s.verifiedAt):SESSION_MS-(now()-s.createdAt);}
+ function expired(s){return remaining(s)<=0||(s.pendingAt!=null&&now()-s.pendingAt>=PENDING_MS);}
  function remember(req,res,s){
   for(const [id,old] of sessions)if(expired(old))sessions.delete(id);
   sessions.delete(sid(req));if(sessions.size>=10000)throw new ApiError(503,"Sign-in is temporarily unavailable. Try again shortly.");
-  const id=randomBytes(32).toString('hex');sessions.set(id,s);cookie(req,res,id,Math.max(1,Math.floor((SESSION_MS-(now()-s.createdAt))/1000)));
+  const id=randomBytes(32).toString('hex');sessions.set(id,s);store.save();cookie(req,res,id,Math.max(1,Math.floor(remaining(s)/1000)));
  }
  async function getSession(req){
   const id=sid(req),s=sessions.get(id);
-  if(!s||expired(s)){sessions.delete(id);throw new ApiError(401,"Your session has expired. Sign in again.");}
+  if(!s||expired(s)){sessions.delete(id);store.save();throw new ApiError(401,"Your session has expired. Sign in again.");}
   if(s.expiresAt<=now()+60000){
-   if(!s.refreshing)s.refreshing=request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:s.refresh}}).then(t=>setTokens(s,t)).finally(()=>s.refreshing=null);
-   try{await s.refreshing;}catch(e){sessions.delete(id);throw e;}
+   if(!s.refreshing)s.refreshing=request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:s.refresh}}).then(t=>{setTokens(s,t);store.save();}).finally(()=>s.refreshing=null);
+   try{await s.refreshing;}catch(e){sessions.delete(id);store.save();throw e;}
   }
-  try{await validate(s);if(expired(s))throw new ApiError(401,"Your session has expired. Sign in again.");return s;}catch(e){if([401,403].includes(e.status))sessions.delete(id);throw e;}
+  try{await validate(s);if(expired(s))throw new ApiError(401,"Your session has expired. Sign in again.");store.save();return s;}catch(e){if([401,403].includes(e.status)){sessions.delete(id);store.save();}throw e;}
  }
  async function requireSession(req){const s=await getSession(req);if(s.pending||!s.allowed)throw new ApiError(403,"Complete two-step verification before accessing your workspace.");return s;}
  function publicSession(s){return {user:s.user,role:s.member.role,mfa:s.pending?{required:true,step:s.factors.some(f=>f.status==='verified')?'verify':'enroll',factors:s.factors.filter(f=>f.status==='verified'&&f.factor_type==='totp').map(f=>({id:f.id,name:f.friendly_name||'Authenticator app'}))}:{required:false,verified:s.mfaRequired}};}
@@ -66,7 +68,7 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
   }
   if(url.pathname==='/api/auth/session'&&req.method==='GET'){reply(res,200,publicSession(await getSession(req)));return true;}
   if(url.pathname==='/api/auth/logout'&&req.method==='POST'){
-   const id=sid(req),s=sessions.get(id);sessions.delete(id);cookie(req,res,'',0);
+   const id=sid(req),s=sessions.get(id);sessions.delete(id);store.save();cookie(req,res,'',0);
    if(s)await request('/auth/v1/logout?scope=local',{token:s.token,method:'POST'}).catch(()=>{});
    reply(res,200,{ok:true});return true;
   }
@@ -103,6 +105,8 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
     setTokens(s,t);await validate(s);
     if(s.pending||!s.allowed)throw new ApiError(403,"Two-step verification could not be confirmed. Sign in again.");
     if(sessions.get(sid(req))!==s||now()-s.createdAt>=SESSION_MS)throw new ApiError(401,"Sign in again.");
+    s.verifiedAt=now();
+    // Absolute 30-day lifetime starts only after provider-confirmed MFA.
     // Invalidate the pending cookie; provider tokens never leave the server.
     remember(req,res,s);reply(res,200,publicSession(s));return true;
    }finally{s.mfaBusy=false;}

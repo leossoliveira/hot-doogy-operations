@@ -29,7 +29,7 @@ A cada aproximadamente dois minutos, `hot-doogy-update.timer` busca tags `v0.1.N
 
 O atualizador escolhe a versão numericamente mais recente que pertença ao histórico de `main`, executa novamente a verificação de sintaxe e os testes sem privilégios de root, troca o diretório ativo e reinicia o serviço. Se o teste de disponibilidade falhar, restaura o diretório anterior. As versões anteriores ficam em `/opt/hot-doogy/releases`.
 
-Alterações locais continuam exigindo autorização antes do envio ao GitHub. Uma vez enviada e aprovada nos testes, a versão é instalada automaticamente na VPS. Reiniciar o aplicativo encerra as sessões em memória: os usuários precisam entrar novamente. O banco permanece no Supabase.
+Alterações locais continuam exigindo autorização antes do envio ao GitHub. Uma vez enviada e aprovada nos testes, a versão é instalada automaticamente na VPS. Com `HOT_DOOGY_SESSION_DIR` configurado, sessões verificadas por MFA são preservadas de forma criptografada fora das releases e duram 30 dias desde a verificação, sem renovação desse prazo por uso. O banco permanece no Supabase.
 
 ## Instalar em outra VPS sem arquivos do Mac
 
@@ -84,3 +84,11 @@ Os arquivos desta pasta documentam os serviços instalados. Alterá-los no GitHu
 - `database/security-anonymous-access.sql` registra a migração já aplicada `security_revoke_unnecessary_anonymous_access`; não é necessário reaplicá-la para publicar a correção do login.
 
 A senha adicional do subdomínio foi removida em 5 de outubro de 2026 a pedido do responsável, preservando o login individual e o MFA. Essas correções não significam aprovação integral do checklist: proteção da branch, scanners de segurança, validação completa de uploads e restauração de backup ainda precisam de conclusão.
+
+## Sessões MFA por 30 dias
+
+O serviço usa `StateDirectory=hot-doogy-auth` (modo 0700) e `HOT_DOOGY_SESSION_DIR=/var/lib/hot-doogy-auth`. A chave e o arquivo criptografado de sessões têm modo 0600. Não incluir esses arquivos em Git, artefatos ou backups comuns. Uma única instância do aplicativo deve usar esse diretório. O cookie HttpOnly contém somente um identificador aleatório; tokens do Supabase permanecem no servidor. Atualizações preservam o diretório. Sem a variável, a prévia local mantém sessões em memória.
+
+É necessário reinstalar `hot-doogy.service` e executar `systemctl daemon-reload` antes de reiniciar a nova versão na VPS. A primeira implantação ainda exigirá novo login/MFA porque as sessões antigas só existem em memória. Depois, o prazo absoluto de 30 dias começa na verificação MFA. Logout, remoção de acesso, revogação/expiração pelo provedor ou limpeza do cookie podem exigir login antes desse prazo. MFA pendente continua limitado a dez minutos; usuários sem MFA continuam com sessões de oito horas. As políticas AAL2 do banco não são alteradas.
+
+Para reverter, restaure a versão anterior e o serviço anterior; as sessões serão encerradas. Não reutilize uma cópia antiga dos tokens de sessão. Em caso de arquivo corrompido, o aplicativo não inicia: pare o serviço, remova apenas `sessions.enc` e reinicie para exigir novos logins (preserve a chave). A perda da chave invalida as sessões persistidas.

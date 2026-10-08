@@ -10,6 +10,9 @@ Group=hotdoogy
 WorkingDirectory=/opt/hot-doogy/current
 Environment=NODE_ENV=production
 Environment=PORT=4173
+StateDirectory=hot-doogy-auth
+StateDirectoryMode=0700
+Environment=HOT_DOOGY_SESSION_DIR=/var/lib/hot-doogy-auth
 Environment=HOT_DOOGY_TRUST_PROXY=loopback
 Environment=HOT_DOOGY_S3_CONFIG=/etc/hot-doogy/supabase-s3.env
 ExecStart=/usr/bin/node server.mjs

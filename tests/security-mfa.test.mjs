@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Readable} from 'node:stream';
+import {mkdtempSync,rmSync,readFileSync,statSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createAuth} from '../server/auth.mjs';
-function fixture({role='admin',factors=[],verified=false}={}){
+function fixture({role='admin',factors=[],verified=false,sessionDirectory}={}){
  const state={role,factors,verified,active:true,time:0,calls:[],code:'123456',verifiedAt:null};
  const user=()=>({id:'user-1',email:'test@example.invalid',factors:state.factors});
  const tokens=()=>({user:user(),access_token:state.verified?'trusted-aal2':'trusted-aal1',refresh_token:'server-only-refresh',expires_in:3600});
@@ -25,7 +28,7 @@ function fixture({role='admin',factors=[],verified=false}={}){
   else throw Error('Unexpected provider call: '+route);
   return {ok:status===200,status,json:async()=>value};
  };
- const auth=createAuth({fetcher,now:()=>state.time});
+ let auth=createAuth({fetcher,now:()=>state.time,sessionDirectory});
  let cookie='';
  function request(body={},customCookie=cookie){const req=Readable.from([Buffer.from(JSON.stringify(body))]);req.socket={remoteAddress:'127.0.0.1',encrypted:true};req.headers={cookie:customCookie};req.method='POST';return req;}
  async function call(path,body={},options={}){
@@ -33,7 +36,7 @@ function fixture({role='admin',factors=[],verified=false}={}){
   await auth.handle(req,{setHeader(k,v){headers[k]=v;},writeHead(status,h){headers={...headers,...h};},end(v){data=JSON.parse(v);}},new URL('https://test.invalid/api/auth/'+path));
   if(headers['Set-Cookie'])cookie=headers['Set-Cookie'].split(';')[0];return {data,headers};
  }
- return {state,auth,call,request,get cookie(){return cookie;},login:()=>call('login',{email:'test@example.invalid',password:'test-only'})};
+ return {state,get auth(){return auth;},restart(){auth=createAuth({fetcher,now:()=>state.time,sessionDirectory});},call,request,get cookie(){return cookie;},login:()=>call('login',{email:'test@example.invalid',password:'test-only'})};
 }
 const enrolled=()=>[{id:'verified-factor',factor_type:'totp',status:'verified',friendly_name:'Phone'}];
 test('owner/admin sessions require enrollment; pending sessions cannot access the workspace',async()=>{
@@ -77,4 +80,33 @@ test('logout invalidates pending cookies and revokes the provider session',async
 });
 test('verified factors are never cleaned up; stale unverified app factors can be retried',async()=>{
  const f=fixture({factors:[{id:'abandoned',status:'unverified',factor_type:'totp',friendly_name:'HOT DOOGY · old',created_at:new Date(-700000).toISOString()},{id:'other-app',status:'unverified',factor_type:'totp',friendly_name:'Other'}]});await f.login();await f.call('mfa/enroll');assert.deepEqual(f.state.factors.map(x=>x.id),['other-app','new-factor']);
+});
+
+test('verified session survives restart encrypted, expires at 30 days without sliding',async()=>{
+ const directory=mkdtempSync(join(tmpdir(),'hd-auth-'));
+ try{
+  const f=fixture({factors:enrolled(),sessionDirectory:directory});await f.login();
+  await f.call('mfa/verify',{factorId:'verified-factor',code:'123456'});
+  const disk=readFileSync(join(directory,'sessions.enc'));assert.equal(disk.includes(Buffer.from('server-only-refresh')),false);assert.equal(disk.includes(Buffer.from('trusted-aal2')),false);assert.equal(statSync(join(directory,'sessions.enc')).mode&0o777,0o600);
+  f.restart();assert.equal((await f.auth.requireSession(f.request())).user.id,'user-1');
+  f.state.time=29*86400000;await f.auth.requireSession(f.request());f.restart();await f.auth.requireSession(f.request());
+  f.state.time=30*86400000;await assert.rejects(f.auth.requireSession(f.request()),{status:401});
+  f.restart();await assert.rejects(f.auth.requireSession(f.request()),{status:401});
+ }finally{rmSync(directory,{recursive:true,force:true});}
+});
+test('persistent logout removes session; unknown browser and pending sessions are not trusted',async()=>{
+ const directory=mkdtempSync(join(tmpdir(),'hd-auth-'));
+ try{
+  const f=fixture({factors:enrolled(),sessionDirectory:directory});await f.login();f.restart();await assert.rejects(f.auth.requireSession(f.request()),{status:401});
+  await f.login();const result=await f.call('mfa/verify',{factorId:'verified-factor',code:'123456'});assert.match(result.headers['Set-Cookie'],/Max-Age=2592000/);
+  await assert.rejects(f.auth.requireSession(f.request({},'hd_session='+'0'.repeat(64))),{status:401});
+  const saved=f.cookie;await f.call('logout');f.restart();await assert.rejects(f.auth.requireSession(f.request({},saved)),{status:401});
+ }finally{rmSync(directory,{recursive:true,force:true});}
+});
+test('encrypted session tampering fails closed',async()=>{
+ const directory=mkdtempSync(join(tmpdir(),'hd-auth-'));
+ try{
+  const f=fixture({factors:enrolled(),sessionDirectory:directory});await f.login();await f.call('mfa/verify',{factorId:'verified-factor',code:'123456'});
+  const file=join(directory,'sessions.enc'),bytes=readFileSync(file);bytes[30]^=1;writeFileSync(file,bytes);assert.throws(()=>f.restart(),/Unable to read encrypted session store/);
+ }finally{rmSync(directory,{recursive:true,force:true});}
 });
