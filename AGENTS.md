@@ -23,3 +23,10 @@
 - Uma autorização vale para o conjunto de alterações apresentado; não autoriza envios futuros automaticamente.
 - Se o usuário já pediu explicitamente o envio daquele conjunto de alterações, essa solicitação conta como autorização, sem necessidade de perguntar novamente.
 - Não configure envio automático de alterações locais sem uma nova solicitação explícita do usuário.
+
+## Comprovantes de recebimento e invoices
+
+- Comprovante de recebimento, canhoto, delivery receipt, pedido e confirmação de entrega não são automaticamente invoices. O recebimento deve ser registrado independentemente do documento financeiro.
+- Não criar invoice nem armazenar comprovante em `invoice-documents` apenas porque foi enviado no fluxo de recebimento. Confirmar a natureza fiscal/financeira do documento; em caso de dúvida, solicitar identificação antes de cadastrar como invoice.
+- Uma exceção exige instrução explícita para aquele documento. Uma autorização de recebimento, conferência ou entrada de estoque não autoriza a classificação como invoice.
+- Correções e exclusões de documentos não devem apagar recebimentos, pagamentos ou movimentações de estoque por consequência. Identificar os arquivos e os vínculos exatos antes da limpeza.
