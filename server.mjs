@@ -30,6 +30,10 @@ http.createServer(async(req,res)=>{
    if(url.pathname.startsWith('/api/invoices/'))return await invoiceUpload(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/photos'))return await photos(req,res,url,auth,session);
    if(url.pathname==='/api/preparation/usage')return preparationUsage(req,res,url,auth,session);
+   if(url.pathname==='/api/inventory/count-edit'&&req.method==='POST'){
+    const body=await jsonBody(req);
+    return reply(res,200,await auth.request('/rest/v1/rpc/edit_inventory_count',{token:session.token,method:'POST',body:{p_source:body.source,p_id:body.id,p_quantity:body.quantity,p_unit:body.unit,p_old_quantity:body.oldQuantity,p_old_unit:body.oldUnit}}));
+   }
    if(url.pathname==='/api/inventory/count-notes'&&req.method==='GET'){
     const id=url.searchParams.get('id'),location=url.searchParams.get('location');
     if(!/^[a-f0-9-]{36}$/.test(id||'')||!/^[a-f0-9-]{36}$/.test(location||''))throw new ApiError(400,'Invalid count.');

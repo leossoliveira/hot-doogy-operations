@@ -32,3 +32,9 @@ The schema fingerprint does not compare every function body, index, trigger, def
 Update the expected catalog deliberately when introducing a reviewed schema change; it is a dated reference, not a live sync. Keep applied migrations immutable.
 
 Native runtime documentation: https://supabase.com/docs/guides/local-development/docker-and-native-runtimes
+
+## Count quantity/UOM correction
+
+`edit-count.mjs` validates the correction function in an isolated PGlite database with synthetic records. Pass the migration file as the first argument and, if needed, set `PGLITE_MODULE_PATH` to the installed PGlite module. It covers modern observations, legacy entries and base-only lines; zero values; unit conversion; stale-write rejection; invalid units/quantities; MFA, Staff and store restrictions; and audit records. It never connects to a remote database.
+
+Migration `20261009014307_edit_inventory_count_quantity_unit.sql` was applied with user authorization after isolation validation. The CLI initially generated timestamp 20261009014005; the filename follows the applied remote version. No business quantities were changed during verification. The UI retains existing Staff read-only access to saved counts.
