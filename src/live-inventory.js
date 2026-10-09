@@ -33,5 +33,5 @@ export function liveInventory(item,history,source,batches,asOf){
   net+=Number(m.baseQty)/factor;
  }
  const raw=count.qty+net-daily*(now-count.at)/86400000;
- return {qty:Math.max(0,raw),uom:unit.name||unit.abbreviation,basis:coverage.basis||'sales',partial:!!coverage.partial,asOf,exhausted:raw<0};
+ return {daily,start:coverage.start,end:coverage.end,qty:Math.max(0,raw),uom:unit.name||unit.abbreviation,basis:coverage.basis||'sales',partial:!!coverage.partial,asOf,exhausted:raw<0};
 }
