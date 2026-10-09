@@ -156,21 +156,36 @@ async function showCountHistory(id,location,savedDetail=null){
 }
 
 function editCountLine(el){
+ if(countEditDraft?.saving)return;
  const line=countEditContext?.lines.find(x=>(x.entryId||x.id)===el.dataset.id);if(!line)return;
  const item=(data.ingredientItems||[]).find(x=>x.id===line.itemId)||inventoryItems().find(x=>x.id===line.itemId);
  const units=prioritizeUnits((item?.units||[]).filter(validUnit));if(!units.length){toast('No valid units available for this item.','circle-alert');return;}
  const source=countEditContext.source==='observations'?'observations':line.entryId?'legacy_entry':'legacy_line';
  const selected=units.find(u=>(u.itemUnitId||u.id)===line.itemUnitId)||units.find(u=>Number(u.factor)===1)||units[0];
+ cancelCountLine();
  countEditDraft={...countEditContext,units,line,source,rowId:line.entryId||line.id,oldQuantity:line.qty??line.baseQty,oldUnit:line.itemUnitId||null};
  const quantity=source==='legacy_line'?Number(line.baseQty)/Number(selected.factor):line.qty;
  countDetailAreaPicker.close(false);
- openModal('Edit inventory count',`<p><strong>${e(item?.internalName||item?.name||line.name)}</strong></p><form id="count-edit-form"><div class="form-grid"><div class="field"><label for="count-edit-qty">QTY.</label><input id="count-edit-qty" type="number" min="0" max="100000000" step="any" required value="${e(quantity)}"></div><div class="field"><label for="count-edit-uom">UOM</label><select id="count-edit-uom">${units.map(u=>`<option value="${e(u.itemUnitId||u.id)}" ${u===selected?'selected':''}>${e(u.name)}</option>`).join('')}</select></div></div><p id="count-edit-error" class="error-text" role="alert"></p></form>`,btn('Cancel','count-edit-cancel')+btn('Save','count-edit-save','check','count-confirm'));
+ const row=el.closest('tr'),cells=row.querySelectorAll('td');
+ countEditDraft.row=row;countEditDraft.originalCells=[cells[2].innerHTML,cells[3].innerHTML];
+ cells[2].innerHTML=`<input id="count-edit-qty" class="count-inline-qty" aria-label="QTY." type="number" min="0" max="100000000" step="any" required value="${e(quantity)}">`;
+ cells[3].innerHTML=`<div class="count-inline-editor"><select id="count-edit-uom" aria-label="UOM">${units.map(u=>`<option value="${e(u.itemUnitId||u.id)}" ${u===selected?'selected':''}>${e(u.name)}</option>`).join('')}</select><div class="count-inline-actions">${btn('Save','count-edit-save','check','count-confirm')}${btn('Cancel','count-edit-cancel')}</div><p id="count-edit-error" class="error-text" role="alert"></p></div>`;
+ icons();$('#count-edit-qty').focus();
+}
+function cancelCountLine(){
+ if(countEditDraft?.saving)return;
+ const draft=countEditDraft;
+ if(draft?.row?.isConnected&&draft.originalCells){const cells=draft.row.querySelectorAll('td');cells[2].innerHTML=draft.originalCells[0];cells[3].innerHTML=draft.originalCells[1];cells[3].querySelectorAll('[data-action="count-edit"]').forEach(button=>button.disabled=false);icons();}
+
 }
 async function saveCountLine(){
- if(!$('#count-edit-form').reportValidity())return;
+ if(!$('#count-edit-qty')?.reportValidity())return;
  const draft=countEditDraft,quantity=Number($('#count-edit-qty').value),unitId=$('#count-edit-uom').value;
+ if(draft.saving)return;draft.saving=true;
+ const controls=[...draft.row.querySelectorAll('input,select,button')];controls.forEach(control=>control.disabled=true);
  try{await api('/api/inventory/count-edit',{source:draft.source,id:draft.rowId,quantity,unit:unitId,oldQuantity:draft.oldQuantity,oldUnit:draft.oldUnit});}
- catch(error){if($('#count-edit-error'))$('#count-edit-error').textContent=error.message;return;}
+ catch(error){draft.saving=false;controls.forEach(control=>control.disabled=false);if($('#count-edit-error'))$('#count-edit-error').textContent=error.message;return;}
+ draft.saving=false;
  const unit=draft.units.find(u=>(u.itemUnitId||u.id)===unitId);
  const lines=draft.lines.map(line=>(line.entryId||line.id)===draft.rowId?{...line,entries:undefined,qty:quantity,uom:unit.name,itemUnitId:unitId}: {...line,entries:undefined});
  await showCountHistory(draft.id,draft.location,{...draft.detail,record:{...draft.detail.record,lines,awaitingRefresh:true}});
@@ -436,7 +451,7 @@ const actions={
 locations:()=>{closeDatePicker(false);locationPicker.open();},calendar:showCalendar,'period-clear':()=>{state.dateRange=null;render();},
 'restore-recipe':el=>restoreRecipe(el.dataset.id),'edit-recipe':el=>editRecipe(el.dataset.id),'recipe-picker':recipePicker,'recipe-picker-close':()=>{$('#recipe-picker').classList.add('hidden');recipeEditor.pickerOpen=false;},'recipe-add':el=>recipeAdd(el.dataset.id),'recipe-remove':el=>recipeRemove(Number(el.dataset.index)),'save-recipe':saveRecipe,'recipe-cancel':cancelRecipe,'recipe-discard':discardRecipe,'recipe-keep':()=>$('#recipe-discard-guard')?.remove(),
 close:closeModal,quick,search:globalSearch,'new-order':()=>newRecord('order'),'new-transfer':()=>newRecord('transfer'),'new-count':()=>countModal(),'count-item':el=>countModal(el.dataset.id),'new-production':newProduction,'new-invoice':newInvoice,'save-record':saveRecord,'count-suppliers':()=>countSupplierPicker.open(),'count-areas':()=>countAreaPicker.open(),'complete-count-section':completeCountSection,'count-issue':countIssue,'start-count':startCount,'save-count':saveCount,'save-production':saveProduction,'save-invoice':saveInvoice,
-'count-edit':editCountLine,'count-edit-save':saveCountLine,'count-edit-cancel':()=>showCountHistory(countEditDraft.id,countEditDraft.location),
+'count-edit':editCountLine,'count-edit-save':saveCountLine,'count-edit-cancel':cancelCountLine,
 'count-detail-areas':()=>countDetailAreaPicker.open(),
 'count-history-detail':el=>showCountHistory(el.dataset.id,el.dataset.location),
 'inventory-history':el=>{const x=inventoryItems().find(x=>x.rowId===el.dataset.id);if(!x)return;$('#inventory-history').outerHTML=inventoryHistoryView(x,data,local,el.dataset.tab,el.dataset.page);$('#inventory-history .history-tab.active')?.focus();},item:el=>showItem(el.dataset.id),recipe:el=>showRecipe(el.dataset.id),order:el=>showOrder(el.dataset.id),invoice:el=>showInvoice(el.dataset.id),'invoice-summary-filter':el=>{invoiceFilters.status=[el.dataset.status];state.page=1;render();document.querySelector(`[data-action="invoice-summary-filter"][data-status="${el.dataset.status}"]`)?.focus();},'invoice-sort':el=>{invoiceView.direction=invoiceView.sort===el.dataset.key&&invoiceView.direction==='asc'?'desc':'asc';invoiceView.sort=el.dataset.key;state.page=1;render();},'invoice-download':downloadInvoice,'invoice-mark-paid':markInvoicePaid,'invoice-delete':confirmInvoiceDelete,'invoice-delete-confirm':deleteConfirmedInvoice,'invoice-delete-cancel':()=>{const id=invoiceDeletePending?.id;invoiceDeletePending=null;closeModal(true);if(id)showInvoice(id);},'inventory-suppliers':()=>inventorySupplierPicker.open(),'inventory-areas':()=>inventoryAreaPicker.open(),'invoice-suppliers':()=>invoiceSupplierPicker.open(),'invoice-statuses':()=>invoiceStatusPicker.open(),'invoice-date-filter':el=>{invoiceSupplierPicker.close(false);invoiceStatusPicker.close(false);openDatePicker({anchor:el,range:true,start:invoiceFilters.start,end:invoiceFilters.end,onApply:({start,end})=>{Object.assign(invoiceFilters,{start,end});state.page=1;render();},onClear:()=>{Object.assign(invoiceFilters,{start:'',end:''});state.page=1;render();}});},'invoice-clear-filters':()=>{Object.assign(invoiceFilters,{start:'',end:'',supplier:'all',status:'all'});state.q='';state.page=1;render();},transfer:el=>showTransfer(el.dataset.id),production:el=>showProduction(el.dataset.id),supplier:el=>showSupplier(el.dataset.id),issue:el=>showIssue(el.dataset.id),
