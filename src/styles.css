@@ -123,3 +123,5 @@
 .count-uom-edit{display:flex;align-items:center;justify-content:space-between;gap:12px}.count-uom-edit .icon-btn{flex-shrink:0}
 
 .count-inline-qty{width:90px;max-width:100%;min-height:38px}.count-inline-editor{min-width:150px}.count-inline-editor select{width:100%;min-height:38px}.count-inline-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.count-inline-actions .btn{padding:7px 10px}.count-inline-editor .error-text{white-space:normal}
+
+.count-inline-editing>td:nth-child(3),.count-inline-editing>td:nth-child(4){vertical-align:top}.count-inline-qty,.count-inline-editor select{display:block;height:40px;min-height:40px;margin:0;padding:9px 10px;border:1px solid #dce3d2;border-radius:7px;background:#fff;color:#334326;font:inherit;box-sizing:border-box}.count-inline-actions{margin-top:10px}

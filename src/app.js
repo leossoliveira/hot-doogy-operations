@@ -166,7 +166,7 @@ function editCountLine(el){
  countEditDraft={...countEditContext,units,line,source,rowId:line.entryId||line.id,oldQuantity:line.qty??line.baseQty,oldUnit:line.itemUnitId||null};
  const quantity=source==='legacy_line'?Number(line.baseQty)/Number(selected.factor):line.qty;
  countDetailAreaPicker.close(false);
- const row=el.closest('tr'),cells=row.querySelectorAll('td');
+ const row=el.closest('tr'),cells=row.querySelectorAll('td');row.classList.add('count-inline-editing');
  countEditDraft.row=row;countEditDraft.originalCells=[cells[2].innerHTML,cells[3].innerHTML];
  cells[2].innerHTML=`<input id="count-edit-qty" class="count-inline-qty" aria-label="QTY." type="number" min="0" max="100000000" step="any" required value="${e(quantity)}">`;
  cells[3].innerHTML=`<div class="count-inline-editor"><select id="count-edit-uom" aria-label="UOM">${units.map(u=>`<option value="${e(u.itemUnitId||u.id)}" ${u===selected?'selected':''}>${e(u.name)}</option>`).join('')}</select><div class="count-inline-actions">${btn('Save','count-edit-save','check','count-confirm')}${btn('Cancel','count-edit-cancel')}</div><p id="count-edit-error" class="error-text" role="alert"></p></div>`;
@@ -175,7 +175,7 @@ function editCountLine(el){
 function cancelCountLine(){
  if(countEditDraft?.saving)return;
  const draft=countEditDraft;
- if(draft?.row?.isConnected&&draft.originalCells){const cells=draft.row.querySelectorAll('td');cells[2].innerHTML=draft.originalCells[0];cells[3].innerHTML=draft.originalCells[1];cells[3].querySelectorAll('[data-action="count-edit"]').forEach(button=>button.disabled=false);icons();}
+ if(draft?.row?.isConnected&&draft.originalCells){draft.row.classList.remove('count-inline-editing');const cells=draft.row.querySelectorAll('td');cells[2].innerHTML=draft.originalCells[0];cells[3].innerHTML=draft.originalCells[1];cells[3].querySelectorAll('[data-action="count-edit"]').forEach(button=>button.disabled=false);icons();}
 
 }
 async function saveCountLine(){
