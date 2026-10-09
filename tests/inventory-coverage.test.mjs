@@ -21,3 +21,12 @@ test('weekly coverage labels partial calculated consumption without suppressing 
  assert.equal(result.days,7);assert.equal(result.partial,true);
  assert.equal(result.start,'2026-10-01');assert.equal(result.end,'2026-10-07');
 });
+
+test('inventory preview includes posted receipts, excludes sales to avoid double counting, and converts units',async()=>{
+ const {inventoryBasedCoverage}=await import('../src/inventory-coverage.js');
+ const history={sessions:[{id:'1',locationId:'a',status:'completed',source:'observations',countedAt:'2026-10-01T12:00:00Z',lines:[{itemId:'i',quantityBase:40}]},{id:'2',locationId:'a',status:'completed',source:'observations',countedAt:'2026-10-08T12:00:00Z',lines:[{itemId:'i',quantityBase:32}]}],movements:[{id:'m',itemId:'i',locationId:'a',occurredAt:'2026-10-03T12:00:00Z',type:'purchase_receipt',baseQty:20},{id:'s',itemId:'i',locationId:'a',occurredAt:'2026-10-04T12:00:00Z',type:'sale_consumption',baseQty:-28}]};
+ assert.equal(inventoryBasedCoverage(item,{qty:8},history).days,8);
+ assert.equal(inventoryBasedCoverage(item,{qty:0},history).days,0);
+ assert.equal(inventoryBasedCoverage(item,{qty:8},{...history,sessions:history.sessions.slice(1)}).days,null);
+ assert.equal(inventoryBasedCoverage(item,{qty:8},{...history,movements:[{...history.movements[0],type:'unknown'}]}).days,null);
+});
