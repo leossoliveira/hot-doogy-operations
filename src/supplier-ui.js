@@ -51,7 +51,7 @@ export function createSupplierUI(ctx) {
     const page=Math.min(st.page,Math.max(1,Math.ceil(rows.length/30)));
     return heading("Purchasing","Price updates","Compare the latest two invoices. Select an item to view its price history.")+`<section class="panel">${ctx.searchToolbar("Search item, description, or SKU",filter,`<span class="table-count">${rows.length} items</span>`)}<div class="table-wrap"><table><thead><tr><th>ITEM / SKU</th><th>SUPPLIER</th><th>LATEST INVOICE</th><th>PREVIOUS INVOICE</th><th>VARIATION</th><th></th></tr></thead><tbody>${rows.slice((page-1)*30,page*30).map(r=>{const h=invoicePriceHistory(r,ctx.data().invoices||[],st.store),change=invoicePriceChange(h),cell=v=>v?`<strong>${v.price==null?'Not recorded':money(v.price)}</strong><small>${e(v.uom||'')} · ${e(v.date||'')} · #${e(v.number||'')}</small>`:'—';return `<tr><td><button class="table-name-button" data-action="price-history" data-id="${e(r.supplierItemId)}">${e(r.internalName||r.name)}</button><small>${e([r.sku?'SKU '+r.sku:'No SKU',r.name].join(' · '))}</small></td><td>${e(ctx.suppliers().find(s=>s.id===r.supplierId)?.name||'—')}</td><td>${cell(h[0])}</td><td>${cell(h[1])}</td><td><span class="status ${change.delta>0?'red':change.delta<0?'green':''}">${change.percent!=null?(change.percent>0?'+':'')+change.percent.toFixed(2)+'%':'—'}</span></td><td><button class="row-action" data-action="price-history" data-id="${e(r.supplierItemId)}" aria-label="Price history for ${e(r.internalName||r.name)}">${icon('chart-no-axes-combined')}</button></td></tr>`;}).join('')}</tbody></table></div>${rows.length?'':empty("No items found","Try a different search or supplier.")}<div class="pagination"><span>${rows.length?(page-1)*30+1:0}–${Math.min(page*30,rows.length)} of ${rows.length}</span><div class="pages">${btn("Previous",'page-prev','chevron-left','',page<=1?'disabled':'')}<span class="btn current">${page}</span>${btn("Next",'page-next','chevron-right','',page*30>=rows.length?'disabled':'')}</div></div></section>`;
   }
-  function priceHistory(id){
+  function showInvoicePriceHistory(id){
     const item=items().find(r=>r.supplierItemId===id);if(!item)return;
     const history=invoicePriceHistory(item,ctx.data().invoices||[],ctx.state().store);
     const units=[...new Set(history.filter(p=>p.price!=null).map(p=>p.unit))];
@@ -153,7 +153,7 @@ export function createSupplierUI(ctx) {
     if(!$('#supplier-restore-guard'))$('#overlay-root .modal-foot').insertAdjacentHTML('afterbegin',`<div class="recipe-discard-guard" id="supplier-restore-guard" role="alert"><span>Restore shared item details and this supplier’s details from the original export?</span>${btn("Keep edits",'supplier-keep-restore','','sm')}${btn("Restore details",'supplier-confirm-restore','','sm')}</div>`);
   }
   const actions={
-    'price-history':el=>priceHistory(el.dataset.id),
+    'price-history':el=>showInvoicePriceHistory(el.dataset.id),
     'supplier-create':()=>forms.open('supplier'),'supplier-create-item':()=>forms.open('item',selected),'supplier-create-save':forms.save,
     'supplier-photo-upload':()=>$('#supplier-photo-file')?.click(),
     'supplier-photo-remove':()=>{editor.photo=null;editor.photoDirty=true;editor.dirty=true;$('.item-photo').outerHTML=itemPhotoView(editor.draft,null,'supplier');ctx.icons();},
