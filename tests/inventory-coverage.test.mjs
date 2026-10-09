@@ -30,3 +30,15 @@ test('inventory preview includes posted receipts, excludes sales to avoid double
  assert.equal(inventoryBasedCoverage(item,{qty:8},{...history,sessions:history.sessions.slice(1)}).days,null);
  assert.equal(inventoryBasedCoverage(item,{qty:8},{...history,movements:[{...history.movements[0],type:'unknown'}]}).days,null);
 });
+
+test('live inventory uses exact elapsed time and signed movements once, without duplicate sales',async()=>{
+ const {liveInventory}=await import('../src/live-inventory.js');
+ const count={locationId:'a',status:'completed',source:'observations',countedAt:'2026-10-08T12:00:00Z',lines:[{itemId:'i',quantityBase:40}]};
+ const receipt={id:'r',itemId:'i',locationId:'a',occurredAt:'2026-10-08T14:00:00Z',type:'purchase_receipt',baseQty:8};
+ const history={sessions:[count],movements:[receipt,receipt,{...receipt,id:'s',type:'sale_consumption',baseQty:-100},{...receipt,id:'t',type:'transfer_out',baseQty:-4},{...receipt,id:'w',type:'waste',baseQty:-2},{...receipt,id:'f',occurredAt:'2026-10-10T12:00:00Z'}]};
+ const result=liveInventory(item,history,source,batches,'2026-10-09T00:00:00Z');
+ assert.equal(result.qty,10); // 10 + 2 - 1 - .5 waste - .5 day of consumption
+ assert.equal(liveInventory(item,{...history,movements:[{...receipt,baseQty:null}]},source,batches,'2026-10-09T00:00:00Z').qty,null);
+ assert.equal(liveInventory(item,{...history,sessions:[{...count,countedAt:'2026-10-10T00:00:00Z'}]},source,batches,'2026-10-09T00:00:00Z').qty,null);
+ assert.equal(liveInventory(item,{sessions:[{...count,lines:[{itemId:'i',quantityBase:0}]}],movements:[]},source,batches,'2026-10-09T00:00:00Z').qty,0);
+});
