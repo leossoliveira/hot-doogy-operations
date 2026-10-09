@@ -169,7 +169,7 @@ function editCountLine(el){
  const row=el.closest('tr'),cells=row.querySelectorAll('td');row.classList.add('count-inline-editing');
  countEditDraft.row=row;countEditDraft.originalCells=[cells[2].innerHTML,cells[3].innerHTML];
  cells[2].innerHTML=`<input id="count-edit-qty" class="count-inline-qty" aria-label="QTY." type="number" min="0" max="100000000" step="any" required value="${e(quantity)}">`;
- cells[3].innerHTML=`<div class="count-inline-editor"><select id="count-edit-uom" aria-label="UOM">${units.map(u=>`<option value="${e(u.itemUnitId||u.id)}" ${u===selected?'selected':''}>${e(u.name)}</option>`).join('')}</select><div class="count-inline-actions">${btn('Save','count-edit-save','check','count-confirm')}${btn('Cancel','count-edit-cancel')}</div><p id="count-edit-error" class="error-text" role="alert"></p></div>`;
+ cells[3].innerHTML=`<div class="count-inline-editor"><select id="count-edit-uom" aria-label="UOM">${units.map(u=>`<option value="${e(u.itemUnitId||u.id)}" ${u===selected?'selected':''}>${e(u.name)}</option>`).join('')}</select><div class="count-inline-actions">${btn('','count-edit-save','check','icon-btn count-inline-save','aria-label="Save" title="Save"')}${btn('','count-edit-cancel','ban','icon-btn','aria-label="Cancel" title="Cancel"')}</div><p id="count-edit-error" class="error-text" role="alert"></p></div>`;
  icons();$('#count-edit-qty').focus();
 }
 function cancelCountLine(){
