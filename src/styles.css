@@ -133,3 +133,5 @@
 .count-inline-actions .count-inline-save:hover{background:#e9f6ed;border-color:#b9ddca}
 .count-inline-editor .error-text{grid-column:1/-1;white-space:normal;margin:0}
 .count-inline-editor .error-text:empty{display:none}
+
+.coverage-heading{display:inline-flex;align-items:center;gap:5px}.coverage-info{width:26px;height:26px}.coverage-info .icon{width:15px;height:15px}.coverage-explanation{max-width:380px;width:calc(100vw - 32px);padding:20px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);box-shadow:0 12px 38px #20261b26;font-size:13px;font-weight:400;text-transform:none;letter-spacing:normal;line-height:1.6;text-align:left}.coverage-explanation p{margin:12px 0}.coverage-explanation::backdrop{background:transparent}
