@@ -1,6 +1,6 @@
 // Invoice prices only: never substitute today's catalog price for historical evidence.
 export function invoicePriceHistory(item,invoices,location='all',allItem=false){
- return invoices.filter(i=>(allItem||i.supplierId===item.supplierId)&&(location==='all'||i.locationId===location)&&(allItem||!['cancelled','canceled','draft'].includes(i.dbStatus||i.status))).flatMap(i=>{
+ return invoices.filter(i=>!(i.intakeSource==='llm'&&!i.humanApprovedAt)&&(allItem||i.supplierId===item.supplierId)&&(location==='all'||i.locationId===location)&&(allItem||!['cancelled','canceled','draft'].includes(i.dbStatus||i.status))).flatMap(i=>{
   const lines=(i.lines||[]).filter(l=>allItem?(l.itemId||l.inventoryItemId)===item.itemId||l.supplierItemId===item.supplierItemId:l.supplierItemId?l.supplierItemId===item.supplierItemId:(l.itemId||l.inventoryItemId)===item.itemId);
   if(!lines.length)return [];
   const units=new Set(lines.map(l=>l.itemUnitId||l.uomId||l.uom||''));

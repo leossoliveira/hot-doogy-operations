@@ -1,3 +1,4 @@
+import {invoiceIntake} from './server/invoice-intake.mjs';
 import {requireStaffRequest,requireStaffCommand} from './server/staff-access.mjs';
 import {preparationUsage} from './server/preparation-usage.mjs';
 import {invoiceDownload} from './server/invoice-download.mjs';
@@ -27,6 +28,7 @@ http.createServer(async(req,res)=>{
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/documents\/[^/]+\/download$/.test(url.pathname))return await invoiceDownload(req,res,url,auth,session);
+   if(['/api/invoices/analyze','/api/invoices/draft'].includes(url.pathname)||url.pathname.endsWith('/approve-draft')||url.pathname.endsWith('/edit-draft'))return await invoiceIntake(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/invoices/'))return await invoiceUpload(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/photos'))return await photos(req,res,url,auth,session);
    if(url.pathname==='/api/preparation/usage')return preparationUsage(req,res,url,auth,session);

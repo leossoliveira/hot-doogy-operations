@@ -1,6 +1,7 @@
-export const FINANCIAL_STATUSES=[['unpaid','Unpaid'],['paid','Paid'],['cancelled','Canceled'],['credit','Credit'],['overdue','Overdue']];
+export const FINANCIAL_STATUSES=[['draft','Draft'],['unpaid','Unpaid'],['paid','Paid'],['cancelled','Canceled'],['credit','Credit'],['overdue','Overdue']];
 export function financialStatus(invoice,now=new Date()){
  const state=invoice.dbStatus??invoice.status;
+ if(invoice.intakeSource==='llm'&&!invoice.humanApprovedAt&&state!=='cancelled')return 'draft';
  if(state==='cancelled')return 'cancelled';
  if(Number(invoice.total)<0||state==='credit')return 'credit';
  if(state==='paid')return 'paid';
