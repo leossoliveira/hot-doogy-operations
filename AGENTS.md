@@ -28,5 +28,6 @@
 
 - Comprovante de recebimento, canhoto, delivery receipt, pedido e confirmação de entrega não são automaticamente invoices. O recebimento deve ser registrado independentemente do documento financeiro.
 - Não criar invoice nem armazenar comprovante em `invoice-documents` apenas porque foi enviado no fluxo de recebimento. Confirmar a natureza fiscal/financeira do documento; em caso de dúvida, solicitar identificação antes de cadastrar como invoice.
-- Uma exceção exige instrução explícita para aquele documento. Uma autorização de recebimento, conferência ou entrada de estoque não autoriza a classificação como invoice.
+- Comprovantes de recebimento não devem ser enviados ao Storage. Uma autorização de recebimento, conferência ou entrada de estoque não autoriza a classificação como invoice.
+- Novos invoices exigem classificação explícita `document_kind=invoice`. Anexos exigem conferência humana autenticada, registrada para o SHA-256 e tamanho do arquivo antes do upload. Não declarar a conferência sem inspecionar o documento financeiro original. A classificação não é reconhecimento automático do conteúdo.
 - Correções e exclusões de documentos não devem apagar recebimentos, pagamentos ou movimentações de estoque por consequência. Identificar os arquivos e os vínculos exatos antes da limpeza.
