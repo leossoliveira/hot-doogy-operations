@@ -19,7 +19,7 @@ export function createReportsUI({data,local,state,render,heading,btn,icon,downlo
  const currentId=()=>state().route.replace(/^report-/,'');
  const filters=()=>{const id=currentId();if(!saved.has(id))saved.set(id,defaultReportFilters());return saved.get(id);};
  function catalog(){
-  return heading('Business intelligence','Reports','Sales, costs, purchasing and operations. Open a report to choose dates, filters and export its results.')+`<div class="reports-catalog">${groups.map(group=>`<section class="report-group"><div class="section-title">${icon(icons[group])} ${e(group)}</div><div class="report-cards">${REPORTS.filter(r=>r.group===group).map(r=>`<a class="report-card" href="#${reportRoute(r.id)}" data-route="${reportRoute(r.id)}"><div class="report-card-title"><h2>${e(r.title)}</h2>${icon('arrow-up-right')}</div><p>${e(r.description)}</p><span class="report-tag">${['tickets','pnl','cogs'].includes(r.id)?'Data readiness':r.dateLabel?'Date & location filters':'Current catalog'}</span></a>`).join('')}</div></section>`).join('')}</div>`;
+  return heading('Business intelligence','Reports','HOT DOOGY store operations: menu performance, food cost, vendor spending and inventory control.')+`<div class="reports-catalog">${groups.map(group=>`<section class="report-group"><div class="section-title">${icon(icons[group])} ${e(group)}</div><div class="report-cards">${REPORTS.filter(r=>r.group===group&&!['tickets','pnl','cogs'].includes(r.id)).map(r=>`<a class="report-card" href="#${reportRoute(r.id)}" data-route="${reportRoute(r.id)}"><div class="report-card-title"><h2>${e(r.title)}</h2>${icon('arrow-up-right')}</div><p>${e(r.description)}</p><span class="report-tag">${['tickets','pnl','cogs'].includes(r.id)?'Data readiness':r.dateLabel?'Date & location filters':'Current catalog'}</span></a>`).join('')}</div></section>`).join('')}</div>`;
  }
  function optionsFor(key,spec){
   const d=data();
@@ -58,6 +58,7 @@ export function createReportsUI({data,local,state,render,heading,btn,icon,downlo
  }
  return {catalog,page,actions:{
   'report-apply':apply,
+  'report-metric':el=>{filters().metric=el.dataset.metric;filters().sort='';filters().page=1;render();},
   'report-calendar':anchor=>{const f=filters();openDatePicker({anchor,range:true,start:f.start,end:f.end,onApply:({start,end})=>{f.start=start;f.end=end;f.page=1;render();},onClear:()=>{f.start='';f.end='';f.page=1;render();}});},
   'report-print':()=>{const f=filters(),size=f.pageSize,page=f.page;f.pageSize='all';f.page=1;render();try{window.print();}finally{f.pageSize=size;f.page=page;render();}},
   'report-reset':()=>{saved.set(currentId(),defaultReportFilters());render();},

@@ -57,7 +57,7 @@ test('report UI includes compatible controls and escapes untrusted report cells'
  const d=base(),s={route:'report-waste',store:'all'};d.ingredientItems[0].name='<script>unsafe</script>';d.waste=[{inventoryItemId:'i',locationId:'a',quantity:1}];
  const ui=createReportsUI({data:()=>d,local:()=>({}),state:()=>s,render:()=>{},heading:()=>'',btn:()=>'',icon:()=>'',download:()=>{}});
  assert.match(ui.page(),/&lt;script&gt;/);assert.match(ui.page(),/data-report-filter="reason"/);assert.doesNotMatch(ui.page(),/data-report-filter="supplier"/);
- s.route='report-food-cost';assert.doesNotMatch(ui.page(),/data-report-filter="start"/);assert.match(ui.catalog(),/report-pnl/);
+ s.route='report-food-cost';assert.doesNotMatch(ui.page(),/data-report-filter="start"/);assert.doesNotMatch(ui.catalog(),/report-(pnl|tickets|cogs)/);
 });
 test('usage and replenishment preserve supplier associations, coverage, counts and order units',()=>{
  const d=base(),units=[{id:'each',itemUnitId:'iu',name:'Each',factor:1,stocktake:true},{id:'case',itemUnitId:'case-iu',name:'Case',factor:12,ordering:true}];
@@ -68,4 +68,13 @@ test('usage and replenishment preserve supplier associations, coverage, counts a
  const f={start:'2026-09-20',end:'2026-09-20',supplier:'s'},local={counts:[]};
  const r=buildReport('reorder',d,f,'a',local).rows[0];assert.equal(r.current,120);assert.equal(r.stock,24);assert.equal(r.orderQty,8);assert.equal(r.orderUnit,'Case');
  d.purchasingSales.days=[];assert.equal(buildReport('usage',d,f,'a',local).rows[0].current,null);
+});
+
+test('PMIX consolidates stores, switches quantity ranking and preserves revenue ABC',()=>{
+ const d=base();d.salesPeriods.facts=[sale({netSales:100,quantity:1}),sale({locationId:'b',netSales:80,quantity:2}),sale({menuItemId:'other',externalItemName:'Fries',netSales:20,quantity:20})];
+ const revenue=buildReport('mix',d),quantity=buildReport('mix',d,{metric:'quantity'});
+ assert.equal(revenue.rows.length,2);assert.equal(revenue.rows[0].netSales,180);assert.equal(revenue.rows[0].quantity,3);
+ assert.equal(quantity.rows[0].name,'Fries');assert.equal(quantity.rows[0].abc,'B');assert.equal(quantity.rows[1].abc,'A');
+ assert.equal(buildReport('mix',d,{},'a').rows.find(r=>r.itemId==='m').netSales,100);
+ assert.ok(!revenue.columns.some(c=>c.key==='location'));
 });

@@ -36,3 +36,12 @@ test('readiness is movement counts rather than an invented cost total',()=>{
 test('unknown high-ranked rows cannot displace valid negative values and labels are escaped',()=>{
  const rows=[...Array.from({length:12},()=>({netSales:null})),{name:'<script>bad</script>',netSales:-5}];const r=report('mix',rows);assert.equal(reportChartModel(r).points.length,1);assert.match(reportChart(r),/&lt;script&gt;/);assert.doesNotMatch(reportChart(r),/<script>/);
 });
+
+test('recipe chart consolidates items using highest store cost, without averaging percentages',()=>{
+ const c=reportChartModel(report('food-cost',[{itemId:'a',name:'Burger',location:'A',foodCost:20},{itemId:'a',name:'Burger',location:'B',foodCost:30},{itemId:'b',name:'Fries',foodCost:null}]));
+ assert.deepEqual(c.points,[{label:'Burger',value:30}]);
+});
+test('quantity chart aggregates menu sales and removes the redundant values disclosure',()=>{
+ const r={...report('mix',[{name:'Burger',quantity:2,netSales:20},{name:'Burger',quantity:3,netSales:30}]),filters:{metric:'quantity'}};
+ assert.deepEqual(reportChartModel(r).points,[{label:'Burger',value:5}]);assert.equal(reportChartModel(r).unit,'items');assert.doesNotMatch(reportChart(r),/View chart values/);
+});

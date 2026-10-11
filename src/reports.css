@@ -6,3 +6,5 @@
 @media print{.report-chart{break-inside:avoid}.report-chart-plot{overflow:visible}.report-chart-svg{min-width:0}.report-chart-values{display:none}}
 
 .chart-line .report-chart-svg{max-height:280px}.chart-heatmap .report-chart-svg{max-height:260px}.chart-donut .report-chart-svg{max-height:250px}
+
+.report-filter-buttons{margin-left:auto}.report-metric-toggle{display:flex;gap:6px}.report-metric-toggle [aria-pressed="true"]{background:var(--yellow);border-color:var(--yellow)}.chart-tooltip{visibility:hidden;pointer-events:none}.chart-tooltip rect{fill:#172b20}.chart-tooltip text{fill:white;font:11px system-ui,sans-serif}.chart-point:hover .chart-tooltip,.chart-point:focus .chart-tooltip{visibility:visible}.chart-point{cursor:crosshair}

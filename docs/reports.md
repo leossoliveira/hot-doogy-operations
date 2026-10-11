@@ -1,6 +1,6 @@
 # Reports
 
-Reports is a single direct sidebar link to a catalog with 18 individual report routes. Individual reports are accessed through the catalog, without sidebar submenus; Reports remains highlighted while viewing a report. It uses the existing authenticated data feed and does not add database queries, mutations or migrations. Staff cannot access the catalog or report routes.
+Reports is a single direct sidebar link to a catalog with 15 operational reports and 3 legacy data-readiness routes. Individual reports are accessed through the catalog, without sidebar submenus; Reports remains highlighted while viewing a report. It uses the existing authenticated data feed and does not add database queries, mutations or migrations. Staff cannot access the catalog or report routes.
 
 ## Available models
 
@@ -40,14 +40,14 @@ Tables provide sortable columns, 25/50/100/all pagination, CSV export of all mat
 
 ## Visual summaries
 
-Every report has a chart area above its filters. It uses all filtered rows, independent of pagination and table sorting. The chart updates with dates, locations and other filters; Clear Filters restores the defaults. Charts include focusable marks with values, native tooltips, a text value list, and print styling. Narrow screens can scroll the plot horizontally.
+Every report has a chart area above its filters. It uses all filtered rows, independent of pagination and table sorting. The chart updates with dates, locations and other filters; Clear Filters restores the defaults. Charts include focusable marks with values, tooltips (immediate hover/focus values on daily lines), and print styling. Narrow screens can scroll the plot horizontally.
 
 | Reports | Chart |
 | --- | --- |
 | Sales by location; recorded supplier payments | Daily lines by location, with gaps for missing dates |
-| Product mix | Top 10 product/location net-sales bars |
+| Product mix | Top 10 consolidated menu items by net sales or items sold |
 | Hour and weekday | Seven-day / 24-hour net-sales heatmap |
-| Food cost | Highest percentages with a 25% target line |
+| Food cost | Highest known store percentage per item with a 25% house target line |
 | Ingredient usage; purchase price changes | Signed percentage-change bars |
 | Purchases; accounts payable; waste | Amounts by supplier, financial status or waste reason |
 | Counts | Signed count-versus-expected percentage variances |
@@ -58,3 +58,19 @@ Every report has a chart area above its filters. It uses all filtered rows, inde
 Unknown values are never plotted as zero. Monetary aggregation uses USD only. Shared supplier demand is deduplicated by item/location. Ratios avoid summing quantities in incompatible units; missing or nonpositive denominators are excluded. Price and count rankings retain signed changes. COGS charts measure data coverage, not cost totals. Empty reports display a no-data state without fabricated marks.
 
 The date/location explanatory line beneath report controls has been removed. Relevant calculation caveats remain with the chart, report notes and exports. Filter-clearing actions use **Clear Filters** with the reset icon throughout Reports, Invoices, Purchasing History and Food Cost. Pagination uses **Items per page**.
+
+## US quick-service operations review — October 2026
+
+The catalog exposes 15 operational reports. Ticket/average-check, actual COGS and P&L readiness routes remain compatible with existing links but are removed from the catalog: verified checks, reconciled inventory valuation, payroll and operating expenses are not available. Labor %, prime cost, drive-thru service times and delivery-channel profitability must not be inferred from item sales.
+
+PMIX consolidates the selected locations by menu item ID. Net sales and Items sold switch ranking and chart units; ABC always uses net sales concentration (80/95% cumulative boundaries), not menu-engineering profitability quadrants. CSV follows the selected ranking. Recipe cost charts show the highest known store percentage per item, with store details retained in the table. The 25% line is a house planning target, not a US industry benchmark. Production measures output versus plan, not ingredient yield. Physical count variance is not actual-versus-theoretical food cost.
+
+USD, US dates and America/New_York sales boundaries remain in use. The navigation has one Reports entry; Sales & usage is removed from Intelligence. Chart values remain available through visible point hover/focus tooltips and the report table; the duplicate disclosure has been removed.
+
+References used for report selection:
+- Toast PMIX: https://support.toasttab.com/en/article/Product-Mix-PMIX-Report-Overview?language=en_US
+- Toast report families: https://support.toasttab.com/en/article/Getting-Started-with-Analytics-and-Reports
+- Restaurant365 operations reports: https://docs.restaurant365.com/docs/key-operations-reports
+- Restaurant365 recipe costing: https://radar.help.restaurant365.com/support/solutions/articles/12000084054-theoretical-item-cost-by-recipe
+
+These references guide report names and operational purpose; they do not supply HOT DOOGY financial data or benchmark targets.

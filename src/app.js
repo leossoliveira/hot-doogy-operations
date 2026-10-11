@@ -52,7 +52,7 @@ const navigationModules=[
  {id:'purchasing',label:'Purchasing',icon:'shopping-bag',routes:['suppliers','purchases','invoices','prices']},
  {id:'recipes',direct:true,routes:['recipes']},
  {id:'food-cost',direct:true,routes:['food-cost']},
- {id:'intelligence',label:'Intelligence',icon:'bot',routes:['sales','doogy-ai']},
+ {id:'intelligence',label:'Intelligence',icon:'bot',routes:['doogy-ai']},
  {id:'reports',direct:true,label:'Reports',icon:'chart-no-axes-combined',routes:['reports',...REPORTS.map(r=>reportRoute(r.id))]}
 ];
 const expandedNavigation=new Map();

@@ -25,15 +25,17 @@ export function reportChartModel(report){
   chart.notes.push('Missing dates are gaps, not zero. Dates use New York time.');
   if(id==='cash')chart.notes.push('USD dated paid invoices only; not a complete bank cash-flow statement.');
  }else if(id==='mix'){
-  bars('Top products by net sales',top(rows.map(r=>({label:label(r),value:r.netSales}))),'USD');chart.notes.push('Top 10 product/location results. Signed adjustments are preserved.');
+  const quantity=report.filters?.metric==='quantity';
+  bars(quantity?'Top menu items by items sold':'Top menu items by net sales',top(sumGroups(rows,r=>r.name||'Unmapped product',quantity?'quantity':'netSales')),quantity?'items':'USD');chart.notes.push('Top 10 menu items across selected stores. ABC remains based on net sales; signed adjustments are preserved.');
  }else if(id==='hours'){
   chart.kind='heatmap';chart.title='When sales happen';chart.unit='USD';
   const grouped=new Map();for(const r of rows){const key=`${r.weekday}|${r.hour}`,a=grouped.get(key)||[];a.push(r);grouped.set(key,a);}
   chart.points=[...grouped.values()].map(a=>({weekday:Number(a[0].weekday),hour:Number(a[0].hour),label:`${a[0].dayName} ${a[0].hourLabel}`,value:a.every(r=>finite(r.netSales))?a.reduce((s,r)=>s+Number(r.netSales),0):null}));
   chart.notes.push('Net sales across selected locations. Blank cells mean no available record.');
  }else if(id==='food-cost'){
-  bars('Food cost vs. 25% target',top(rows.map(r=>({label:label(r),value:r.foodCost}))),'%',25);
-  chart.notes.push('Top 10 by food cost percentage. Current recipe costs; missing calculations are excluded.');
+  const byItem=new Map();for(const r of rows){const key=r.itemId||r.name;if(finite(r.foodCost)&&(!byItem.has(key)||r.foodCost>byItem.get(key).foodCost))byItem.set(key,r);}
+  bars('Recipe food cost vs. 25% house target',top([...byItem.values()].map(r=>({label:r.name,value:r.foodCost}))),'%',25);
+  chart.notes.push('Top 10 items by highest food cost percentage across selected stores. 25% is the HOT DOOGY planning target, not an industry benchmark. Current recipes; missing costs excluded.');
  }else if(id==='usage'){
   const unique=[...new Map(rows.map(r=>[JSON.stringify([r.itemId,r.locationId]),r])).values()];
   bars('Ingredient demand change',top(unique.map(r=>({label:label(r),value:r.variation})),true),'%');
@@ -96,7 +98,7 @@ function line(c){
  for(const [i,name] of series.entries()){
   const points=c.points.filter(p=>p.label===name).sort((a,b)=>a.date.localeCompare(b.date));let path='',last=null;
   for(const p of points){path+=(last&&stamp(p.date)-stamp(last)<=86400000?' L':' M')+`${x(p.date)},${y(p.value)}`;last=p.date;}
-  body+=`<path d="${path}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="3"/>`+points.map(p=>`<circle cx="${x(p.date)}" cy="${y(p.value)}" r="4" fill="${colors[i%colors.length]}" tabindex="0" aria-label="${e(title(p)+format(p.value,'USD'))}"><title>${e(title(p)+format(p.value,'USD'))}</title></circle>`).join('');
+  body+=`<path d="${path}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="3"/>`+points.map(p=>{const px=x(p.date),py=y(p.value),tx=Math.min(right-220,Math.max(left,px-110)),ty=py<65?py+16:py-53;return `<g class="chart-point" tabindex="0" aria-label="${e(title(p)+format(p.value,'USD'))}"><circle cx="${px}" cy="${py}" r="12" fill="transparent"/><circle cx="${px}" cy="${py}" r="4" fill="${colors[i%colors.length]}"/><g class="chart-tooltip" transform="translate(${tx},${ty})" aria-hidden="true"><rect width="220" height="44" rx="6"/><text x="10" y="17">${e(p.date.slice(5).replace('-','/'))} · ${e(p.label)}</text><text x="10" y="34">${e(format(p.value,'USD'))}</text></g></g>`;}).join('');
  }
  const ticks=[...new Set([0,Math.floor((dates.length-1)/2),dates.length-1])];body+=ticks.map(i=>`<text x="${x(dates[i])}" y="280" text-anchor="middle" class="chart-tick">${e(dates[i].slice(5).replace('-','/'))}</text>`).join('');
  return `<div class="report-chart-legend">${series.map((s,i)=>`<span><i style="background:${colors[i%colors.length]}"></i>${e(s)}</span>`).join('')}</div>`+svg(body);
@@ -116,5 +118,5 @@ function donut(c){
 export function reportChart(report){
  const c=reportChartModel(report),empty=!c.points.length||c.kind==='unavailable';
  const plot=empty?`<div class="report-chart-empty"><svg viewBox="0 0 120 56" width="120" height="56" aria-hidden="true"><path d="M5 5v46h110" fill="none" stroke="#cbd5cb" stroke-width="2"/><path d="M18 39h16m12-11h16m12-9h16" stroke="#cbd5cb" stroke-width="6" stroke-linecap="round"/></svg><strong>${c.kind==='unavailable'?'Additional data required':'No chartable data for these filters'}</strong><span>${report.spec.id==='usage'||report.spec.id==='reorder'?'Choose a date range and review data coverage below.':'Unknown values are not plotted as zero.'}</span></div>`:({line,heatmap,donut,bars}[c.kind](c));
- return `<section class="panel report-chart" aria-label="${e(c.title)}"><div class="panel-head"><div><h2>${e(c.title)}</h2><p>${e(c.subtitle)}</p></div><span class="report-chart-badge">${{line:'Trend',heatmap:'Hourly pattern',bars:'Comparison',donut:'Coverage',unavailable:'Awaiting data'}[c.kind]}</span></div><div class="report-chart-plot chart-${c.kind}">${plot}</div><div class="report-chart-notes">${c.notes.map(n=>`<p>${e(n)}</p>`).join('')}</div>${!empty?`<details class="report-chart-values"><summary>View chart values</summary><ul>${c.points.map(p=>`<li><span>${e(p.label)}${p.date?' · '+e(p.date):''}</span><strong>${e(format(p.value,c.unit))}</strong></li>`).join('')}</ul></details>`:''}</section>`;
+ return `<section class="panel report-chart" aria-label="${e(c.title)}"><div class="panel-head"><div><h2>${e(c.title)}</h2><p>${e(c.subtitle)}</p></div>${report.spec.id==='mix'?`<div class="report-metric-toggle" role="group" aria-label="Product mix metric"><button class="btn" data-action="report-metric" data-metric="netSales" aria-pressed="${report.filters?.metric!=='quantity'}">Net sales</button><button class="btn" data-action="report-metric" data-metric="quantity" aria-pressed="${report.filters?.metric==='quantity'}">Items sold</button></div>`:''}<span class="report-chart-badge">${{line:'Trend',heatmap:'Hourly pattern',bars:'Comparison',donut:'Coverage',unavailable:'Awaiting data'}[c.kind]}</span></div><div class="report-chart-plot chart-${c.kind}">${plot}</div><div class="report-chart-notes">${c.notes.map(n=>`<p>${e(n)}</p>`).join('')}</div></section>`;
 }

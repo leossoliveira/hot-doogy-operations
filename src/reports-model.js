@@ -6,27 +6,27 @@ import {safeCsv,norm} from './model.js';
 
 const template=(id,title,group,description,filters,dateLabel='Record date')=>({id,title,group,description,filters,dateLabel});
 export const REPORTS=[
- template('sales','Sales by location','Sales','Compare daily revenue, discounts and quantities across locations.',['category','item'],'Sale date'),
- template('mix','Product sales & ABC','Sales','Rank products by net sales and inspect the sales mix.',['category','item'],'Sale date'),
- template('hours','Sales by hour & weekday','Sales','Find busy hours and weekdays using transaction timestamps.',['category','item','weekday','hour'],'Sale date'),
- template('food-cost','Food cost & theoretical margin','Costs','Ingredient and packaging costs compared with current selling prices.',['category','item','status'],null),
- template('usage','Theoretical ingredient usage','Costs','Sales-derived demand using recipes and unit conversions.',['supplier','item'],'Sale date'),
- template('purchases','Purchases by supplier & item','Purchasing','Invoice-line purchases, quantities and spending by supplier.',['supplier','category','item','status'],'Invoice date'),
- template('prices','Purchase price changes','Purchasing','Price history and comparable changes per base unit.',['supplier','category','item','status'],'Price effective date'),
- template('payables','Accounts payable & invoices','Purchasing','Invoice balances by recorded status, supplier and due date.',['supplier','status','dateBasis'],'Invoice date / due date'),
- template('inventory','Inventory counts & variances','Operations','Completed physical counts and recorded expected quantities by area.',['category','item','area'],'Count date'),
- template('receiving','Orders & receiving','Purchasing','Ordered versus received quantities and receipt evidence.',['supplier','item','status'],'Order date (creation for drafts)'),
- template('production','Production & yield','Operations','Planned versus actual output for preparation batches.',['item','area','status'],'Completion date / creation for planned batches'),
- template('transfers','Interstore transfers','Operations','Requested, approved, dispatched and received quantities.',['item','status','destination'],'Request creation date'),
+ template('sales','Daily Sales Summary','Sales','Compare daily revenue, discounts and quantities across locations.',['category','item'],'Sale date'),
+ template('mix','Product Mix (PMIX)','Sales','Rank menu items by net sales or items sold across selected stores; review sales contribution and ABC concentration.',['category','item'],'Sale date'),
+ template('hours','Hourly & Weekday Sales','Sales','Find busy hours and weekdays using transaction timestamps.',['category','item','weekday','hour'],'Sale date'),
+ template('food-cost','Recipe Cost & Menu Margin','Costs','Ingredient and packaging costs compared with current selling prices.',['category','item','status'],null),
+ template('usage','Theoretical Ingredient Usage','Costs','Sales-derived demand using recipes and unit conversions.',['supplier','item'],'Sale date'),
+ template('purchases','Vendor Purchase Detail','Purchasing','Invoice-line purchases, quantities and spending by supplier.',['supplier','category','item','status'],'Invoice date'),
+ template('prices','Vendor Price Variance','Purchasing','Price history and comparable changes per base unit.',['supplier','category','item','status'],'Price effective date'),
+ template('payables','Accounts Payable','Purchasing','Invoice balances by recorded status, supplier and due date.',['supplier','status','dateBasis'],'Invoice date / due date'),
+ template('inventory','Physical Inventory Variance','Operations','Completed physical counts and recorded expected quantities by area.',['category','item','area'],'Count date'),
+ template('receiving','Purchase Order Receiving','Purchasing','Ordered versus received quantities and receipt evidence.',['supplier','item','status'],'Order date (creation for drafts)'),
+ template('production','Prep Production vs. Plan','Operations','Compare planned and actual prep output to spot short production and overproduction.',['item','area','status'],'Completion date / creation for planned batches'),
+ template('transfers','Interstore Transfer Reconciliation','Operations','Requested, approved, dispatched and received quantities.',['item','status','destination'],'Request creation date'),
  template('cogs','Actual COGS & unexplained losses','Costs','Review readiness for reconciled actual consumption costs.',['item'],'Movement date'),
- template('waste','Waste & recorded losses','Operations','Recorded waste quantities, reasons and estimated cost.',['category','item','area','reason'],'Waste date'),
+ template('waste','Waste by Item & Reason','Operations','Recorded waste quantities, reasons and estimated cost.',['category','item','area','reason'],'Waste date'),
  template('tickets','Orders & average ticket','Sales','Customer order totals and average order value when order-level data is available.',[],'Order date'),
- template('cash','Recorded supplier payments','Purchasing','Paid invoice amounts by recorded payment date and method.',['supplier','method'],'Payment date'),
- template('reorder','Replenishment planning','Operations','Demand less last physical count, converted to supplier order units.',['supplier','item'],'Sales reference period'),
+ template('cash','Vendor Payment Register','Purchasing','Paid invoice amounts by recorded payment date and method.',['supplier','method'],'Payment date'),
+ template('reorder','Ingredient Order Guide','Operations','Demand less last physical count, converted to supplier order units.',['supplier','item'],'Sales reference period'),
  template('pnl','Profit & loss','Costs','Readiness for a complete income statement including operating expenses.',[],'Accounting period'),
 ];
 export const reportRoute=id=>`report-${id}`;
-export const defaultReportFilters=()=>({start:'',end:'',supplier:'all',category:'all',item:'all',area:'all',status:'all',destination:'all',reason:'all',method:'all',weekday:'all',hour:'all',dateBasis:'invoice',query:'',sort:'',direction:'asc',page:1,pageSize:25});
+export const defaultReportFilters=()=>({start:'',end:'',supplier:'all',category:'all',item:'all',area:'all',status:'all',destination:'all',reason:'all',method:'all',weekday:'all',hour:'all',dateBasis:'invoice',query:'',metric:'netSales',sort:'',direction:'asc',page:1,pageSize:25});
 const num=v=>v===null||v===undefined||v===''||!Number.isFinite(Number(v))?null:Number(v);
 const subtract=(a,b)=>num(a)==null||num(b)==null?null:Number(a)-Number(b);
 const sum=(rows,key)=>rows.length&&rows.every(r=>num(r[key])!=null)?rows.reduce((s,r)=>s+Number(r[key]),0):null;
@@ -70,11 +70,13 @@ export function buildReport(id,data,filters={},location='all',local={}){
    rows=groupSum(rows.filter(r=>r.hour!=null),['locationId','weekday','hour'],['quantity','grossSales','discounts','netSales']).map(r=>({...r,dayName:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][r.weekday],hourLabel:`${r.hour}:00–${r.hour}:59`}));
    columns=[locationCol,col('dayName','Weekday'),col('hourLabel','Hour (New York)')];
   }else if(id==='mix'){
-   rows=groupSum(rows,['locationId','itemId'],['quantity','grossSales','discounts','netSales']).sort((a,b)=>(b.netSales??-Infinity)-(a.netSales??-Infinity));
+   rows=groupSum(rows,['itemId'],['quantity','grossSales','discounts','netSales']).sort((a,b)=>(b[f.metric==='quantity'?'quantity':'netSales']??-Infinity)-(a[f.metric==='quantity'?'quantity':'netSales']??-Infinity));
    const total=sum(rows,'netSales');let cumulative=0;
+   const abcByItem=new Map();for(const r of [...rows].sort((a,b)=>(b.netSales||0)-(a.netSales||0))){abcByItem.set(r.itemId,cumulative/total<0.8?'A':cumulative/total<0.95?'B':'C');cumulative+=r.netSales||0;}
+   cumulative=0;
    const validABC=total>0&&rows.every(r=>r.netSales>=0);if(!validABC&&rows.length)warnings.push('ABC classification is unavailable for nonpositive totals or negative product sales. Signed adjustments are preserved.');
-   rows=rows.map((r,i)=>{const before=cumulative;cumulative+=r.netSales||0;return {...r,rank:i+1,share:total>0&&r.netSales!=null?r.netSales/total*100:null,abc:validABC?(before/total<0.8?'A':before/total<0.95?'B':'C'):null};});
-   columns=[col('rank','Rank','number'),locationCol,itemCol,col('share','Sales share','percent'),col('abc','ABC')];
+   rows=rows.map((r,i)=>{return {...r,rank:i+1,share:total>0&&r.netSales!=null?r.netSales/total*100:null,abc:validABC?abcByItem.get(r.itemId):null};});
+   columns=[col('rank','Rank','number'),itemCol,col('share','Sales share','percent'),col('abc','ABC')];
   }else{rows=groupSum(rows,['date','locationId'],['quantity','grossSales','discounts','netSales']);columns=[dateCol,locationCol];}
   columns.push(col('quantity','Quantity','number'),col('grossSales','Gross sales','money'),col('discounts','Discounts','money'),col('netSales','Net sales','money'));
   metrics.push({label:'Net sales',value:sum(rows,'netSales'),type:'money'},{label:'Units sold',value:sum(rows,'quantity'),type:'number'});
