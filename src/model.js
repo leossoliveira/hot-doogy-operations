@@ -2,7 +2,7 @@ export const LOCAL_KEY='hot-doogy-operations-v1';
 export const money=n=>n==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n));
 export const number=n=>new Intl.NumberFormat("en-US",{maximumFractionDigits:2}).format(Number(n||0));
 export const preciseNumber=n=>{const value=Number(n??0);if(!Number.isFinite(value))return '—';return new Intl.NumberFormat("en-US",{maximumFractionDigits:6,...(value!==0&&Math.abs(value)<0.000001?{notation:'scientific'}:{})}).format(value);};
-export const date=d=>{if(!d)return "Not set";const raw=String(d),normalized=raw.length===10?raw+'T12:00:00-04:00':raw.replace(' ','T').replace(/([+-]\d{2})$/,'$1:00');const parsed=new Date(normalized);return Number.isNaN(parsed.getTime())?"Not set":new Intl.DateTimeFormat("en-US",{day:'2-digit',month:'short',timeZone:'America/New_York'}).format(parsed);};
+export const date=d=>{if(!d)return "Not set";const raw=String(d),normalized=raw.length===10?raw+'T12:00:00-04:00':raw.replace(' ','T').replace(/([+-]\d{2})$/,'$1:00');const parsed=new Date(normalized);return Number.isNaN(parsed.getTime())?"Not set":new Intl.DateTimeFormat("en-US",{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'America/New_York'}).format(parsed);};
 export const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 export const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const unique=(a,key='id')=>[...new Map(a.map(x=>[x[key],x])).values()];

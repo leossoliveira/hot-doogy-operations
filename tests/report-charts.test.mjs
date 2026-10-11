@@ -6,9 +6,9 @@ const report=(id,rows=[])=>({spec:{id},rows});
 test('all 18 report charts handle empty data without invented values',()=>{
  for(const r of REPORTS){const model=reportChartModel(report(r.id));assert.deepEqual(model.points,[]);const html=reportChart(report(r.id));assert.doesNotMatch(html,/NaN|Infinity/);assert.match(html,/No chartable data|Additional data required/);}
 });
-test('daily line charts aggregate by date and location, preserve gaps and signed values',()=>{
- const r=report('sales',[{date:'2026-09-03',location:'A',netSales:5},{date:'2026-09-01',location:'A',netSales:10},{date:'2026-09-01',location:'A',netSales:-3},{date:'2026-09-01',location:'B',netSales:null}]);
- const original=structuredClone(r);assert.deepEqual(reportChartModel(r).points.map(p=>p.value),[7,5]);assert.deepEqual(r,original);
+test('daily line charts aggregate selected locations by date, preserve gaps and signed values',()=>{
+ const r=report('sales',[{date:'2026-09-03',location:'A',netSales:5},{date:'2026-09-01',location:'A',netSales:10},{date:'2026-09-01',location:'A',netSales:-3},{date:'2026-09-01',location:'B',netSales:3}]);
+ const original=structuredClone(r);assert.deepEqual(reportChartModel(r).points.map(p=>p.value),[10,5]);assert.deepEqual(r,original);assert.equal(reportChartModel(r).points[0].label,'Selected period');
  const html=reportChart(r);assert.match(html,/d=" M[^L]+ M/);assert.doesNotMatch(html,/NaN|Infinity/);
 });
 test('heatmaps combine selected locations and keep unknown cells distinct from zero',()=>{

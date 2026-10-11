@@ -9,9 +9,9 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   const ref=x=>x.number||'#'+String(x.id||'').slice(0,7).toUpperCase();
   const when=(x,day=false)=>{
     if(!x)return absent;
-    if(day||String(x).length===10){const parsed=new Date(String(x).slice(0,10)+'T12:00:00Z');return Number.isNaN(parsed.getTime())?text(x):e(new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'short',year:'numeric'}).format(parsed));}
+    if(day||String(x).length===10){const parsed=new Date(String(x).slice(0,10)+'T12:00:00Z');return Number.isNaN(parsed.getTime())?text(x):e(new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'2-digit',year:'numeric'}).format(parsed));}
     const d=new Date(String(x).replace(' ','T').replace(/([+-]\d{2})$/,'$1:00'));
-    return Number.isNaN(d.getTime())?text(x):e(new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d));
+    return Number.isNaN(d.getTime())?text(x):e(new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d));
   };
   const grid=fields=>'<div class="detail-grid operation-detail-grid">'+fields.map(([label,value])=>pair(label,value)).join('')+'</div>';
   const section=(title,body)=>'<section class="operation-section"><h3>'+e(title)+'</h3>'+body+'</section>';

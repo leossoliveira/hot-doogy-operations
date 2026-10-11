@@ -13,7 +13,7 @@ function formatDate(value,withTime=false){
   if(!value)return 'Not provided';
   const date=new Date(String(value).length===10?value+'T12:00:00Z':value);
   if(!Number.isFinite(date.getTime()))return 'Not provided';
-  return new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'short',year:'numeric',...(withTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(date);
+  return new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',day:'2-digit',month:'2-digit',year:'numeric',...(withTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(date);
 }
 
 // Generated in the browser; no upload, database write or inventory movement.

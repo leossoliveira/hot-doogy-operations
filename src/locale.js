@@ -14,3 +14,6 @@ export function usTime(value){
   const hour=Number(match[1]);
   return `${hour%12||12}:${match[2]} ${hour<12?'AM':'PM'}`;
 }
+
+// Format date tokens in display text while leaving stored date keys unchanged.
+export const usDateText=value=>String(value??'').replace(/\b\d{4}-\d{2}-\d{2}\b/g,usDate);

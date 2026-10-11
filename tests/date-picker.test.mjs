@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {calendarDate,calendarDays,monthDate,addDays,storeToday,displayDate,presetRange,selectCalendarDate} from '../src/date-picker-model.js';
+import {compactDateLabel,calendarDate,calendarDays,monthDate,addDays,storeToday,displayDate,presetRange,selectCalendarDate} from '../src/date-picker-model.js';
 import {fullDayRange,inclusivePeriodDates,parseLocalDateTime} from '../src/period-model.js';
 
 test('presets respect Sunday-start weeks and completed prior periods',()=>{
@@ -34,4 +34,9 @@ test('selected dates retain inclusive full days across daylight saving changes',
   assert.equal((parseLocalDateTime(range.end)-parseLocalDateTime(range.start))/3600000,hours);
   assert.deepEqual(inclusivePeriodDates(range),{start:date,end:date});
  }
+});
+
+test('compact date selections always include a four-digit year',()=>{
+ assert.equal(compactDateLabel('2026-10-05','2026-10-05'),'10/05/2026');
+ assert.equal(compactDateLabel('2025-12-31','2026-01-02'),'12/31/2025 – 01/02/2026');
 });

@@ -11,7 +11,7 @@ import {periodWindow,shiftDay,countUnit,outputRecipe,suggestedProduction,partial
 const q=value=>value==null?'—':n(value);
 const periodQuantity=value=>value==null?'—':Number(value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const day=usDate;
-const ts=value=>value?new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',dateStyle:'short',timeStyle:'short'}).format(new Date(value)):'—';
+const ts=value=>value?new Intl.DateTimeFormat("en-US",{timeZone:'America/New_York',month:'2-digit',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(value)):'—';
 export function createPreparationUI(ctx){
   const {data,local,setLocal,items,state,render,toast,openModal,close,showTransfer,icon}=ctx;
   const ps={tab:'dashboard',sort:'asc',start:'',end:'',item:'all',from:'',to:'',delivery:'',quantities:{},notes:'',margins:{},page:1,historyStart:'',historyEnd:''};

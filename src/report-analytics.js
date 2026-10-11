@@ -1,3 +1,4 @@
+import {usDateText} from './locale.js';
 import {escape as e} from './model.js';
 import {calculateSalesPeriod,fullDayRange} from './period-model.js';
 import {buildReport} from './reports-model.js';
@@ -28,7 +29,7 @@ export function withSalesComparison(report,data,local){
 export function temporalPoints(report){
  const f=report.filters||{},key=report.spec.id==='cash'?'total':f.metric==='quantity'?'quantity':f.metric==='grossSales'?'grossSales':'netSales',weekly=f.chartInterval==='week',compare=f.chartCompare==='previous'&&report.comparison;
  const bucket=date=>weekly?shift(date,-((new Date(date+'T12:00:00Z').getUTCDay()+6)%7)):date;
- const source=report.rows.filter(r=>r.date&&(report.spec.id!=='cash'||r.currency==='USD')).map(r=>({...r,series:compare?'Selected period':r.location}));
+ const source=report.rows.filter(r=>r.date&&(report.spec.id!=='cash'||r.currency==='USD')).map(r=>({...r,series:'Selected period'}));
  if(compare)source.push(...report.comparison.rows.map(r=>({...r,series:'Previous period'})));
  const groups=new Map();for(const r of source){const date=bucket(r.date),id=JSON.stringify([r.series,date]);if(!groups.has(id))groups.set(id,[]);groups.get(id).push(r);}
  return [...groups.values()].map(rows=>({label:rows[0].series,date:bucket(rows[0].date),value:total(rows,key),originalDate:rows[0].originalDate?(weekly?[...new Set(rows.map(r=>r.originalDate))].sort().filter((_,i,a)=>i===0||i===a.length-1).join(' – '):rows[0].originalDate):null,previous:rows[0].series==='Previous period',observations:rows.length})).filter(p=>known(p.value)).sort((a,b)=>a.date.localeCompare(b.date)||a.label.localeCompare(b.label));
@@ -70,7 +71,7 @@ function scatter(report){
 export function breakdownModel(report){
  const rows=report.rows,id=report.spec.id;
  if(id==='hours')return {title:'Sales by daypart',description:'Totals across the selected dates, not average sales per service. House dayparts use New York time.',unit:'USD',points:groupedValues(rows,r=>{const h=Number(r.hour);return h<6?'Overnight · 12–6 AM':h<11?'Breakfast · 6–11 AM':h<15?'Lunch · 11 AM–3 PM':h<17?'Afternoon · 3–5 PM':h<21?'Dinner · 5–9 PM':'Late night · 9 PM–12 AM';},'netSales')};
- if(id==='purchases'||id==='cash'||id==='waste')return {title:id==='waste'?'Highest-loss days':id==='cash'?'Payments by method':'Highest-spend purchase days',description:'Signed recorded amounts. Missing dates or unknown amounts are not replaced with zero.',unit:'USD',points:groupedValues(rows.filter(r=>(id==='waste'||r.currency==='USD')&&(id==='cash'||r.date)),r=>id==='cash'?r.method||'Not recorded':r.date,id==='waste'?'cost':id==='cash'?'total':'lineTotal')};
+ if(id==='purchases'||id==='cash'||id==='waste')return {title:id==='waste'?'Highest-loss days':id==='cash'?'Payments by method':'Highest-spend purchase days',description:'Signed recorded amounts. Missing dates or unknown amounts are not replaced with zero.',unit:'USD',points:groupedValues(rows.filter(r=>(id==='waste'||r.currency==='USD')&&(id==='cash'||r.date)),r=>id==='cash'?r.method||'Not recorded':usDateText(r.date),id==='waste'?'cost':id==='cash'?'total':'lineTotal')};
  if(id==='payables')return {title:'Unpaid invoices by vendor',description:'Unpaid and overdue USD invoice totals; not a partial-payment balance.',unit:'USD',points:groupedValues(rows.filter(r=>['unpaid','overdue'].includes(r.status)&&r.currency==='USD'),r=>r.supplier||'Unknown vendor','total')};
  return null;
 }
@@ -91,7 +92,7 @@ export function referenceModel(report){
  if(!config)return null;
  const [actual,expected,actualLabel,expectedLabel]=config;
  let rows=report.rows;if(['usage','reorder'].includes(report.spec.id))rows=[...new Map(rows.map(r=>[JSON.stringify([r.itemId,r.locationId]),r])).values()];
- return {actualLabel,expectedLabel,total:rows.length,points:rows.filter(r=>known(r[actual])&&known(r[expected])&&r[expected]>0).map(r=>({label:[r.name,r.location,r.date].filter(Boolean).join(' · '),actual:Number(r[actual]),expected:Number(r[expected]),unit:report.spec.id==='prices'?`USD/${r.unit||'base unit'}`:r.unit||'',ratio:Number(r[actual])/Number(r[expected])*100})).sort((a,b)=>Math.abs(b.ratio-100)-Math.abs(a.ratio-100)||a.label.localeCompare(b.label)).slice(0,10)};
+ return {actualLabel,expectedLabel,total:rows.length,points:rows.filter(r=>known(r[actual])&&known(r[expected])&&r[expected]>0).map(r=>({label:[r.name,usDateText(r.date)].filter(Boolean).join(' · '),actual:Number(r[actual]),expected:Number(r[expected]),unit:report.spec.id==='prices'?`USD/${r.unit||'base unit'}`:r.unit||'',ratio:Number(r[actual])/Number(r[expected])*100})).sort((a,b)=>Math.abs(b.ratio-100)-Math.abs(a.ratio-100)||a.label.localeCompare(b.label)).slice(0,10)};
 }
 export function referenceChart(report){
  const c=referenceModel(report);if(!c?.points.length)return null;

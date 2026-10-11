@@ -1,10 +1,11 @@
+import {usDate,usDateText} from './locale.js';
 import {reportAnalytics,temporalPoints,chartNumber,referenceChart} from './report-analytics.js';
 import {escape as e} from './model.js';
 
 const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const colors=['#356b50','#d49a19','#527aa4','#a56681','#7765a0'];
 const pretty=s=>String(s||'Not recorded').replaceAll('_',' ');
-const label=r=>[r.name,r.location].filter(Boolean).join(' · ');
+const label=r=>[r.name].filter(Boolean).join(' · ');
 const format=(v,unit)=>!finite(v)?'Unknown':new Intl.NumberFormat('en-US',{maximumFractionDigits:unit==='%'?1:2,...(unit==='USD'?{style:'currency',currency:'USD'}:{})}).format(v)+(unit==='%'?'%':unit&&unit!=='USD'?` ${unit}`:'');
 function sumGroups(rows,key,value){
  const groups=new Map();
@@ -18,11 +19,11 @@ export function reportChartModel(report){
  const chart={kind:'bars',title:'Report overview',subtitle:'All matching rows · hover or focus a mark for details',unit:'',points:[],notes:[],total:rows.length};
  const bars=(title,points,unit='',target=null)=>Object.assign(chart,{title,points,unit,target});
  if(id==='sales'||id==='cash'){
-  chart.kind='line';chart.unit='USD';chart.title=id==='sales'?'Daily net sales by location':'Recorded supplier payments over time';
+  chart.kind='line';chart.unit='USD';chart.title=id==='sales'?'Daily net sales':'Recorded supplier payments over time';
   chart.points=temporalPoints(report);chart.interval=report.filters?.chartInterval==='week'?7:1;chart.view=report.filters?.chartView||'line';
   chart.unit=id==='sales'&&report.filters?.metric==='quantity'?'items':'USD';
   const metric=chart.unit==='items'?'items sold':report.filters?.metric==='grossSales'?'gross sales':'net sales';
-  if(id==='sales')chart.title=`${chart.interval===7?'Weekly':'Daily'} ${metric}${report.comparison?' · period comparison':' by location'}`;
+  if(id==='sales')chart.title=`${chart.interval===7?'Weekly':'Daily'} ${metric}${report.comparison?' · period comparison':''}`;
   if(chart.interval===7)chart.notes.push('Weeks start Monday. Edge weeks may be partial; only recorded days contribute.');
   if(report.comparison){const c=report.comparison;chart.notes.push(`Selected: ${c.start} to ${c.end} · Previous: ${c.previousStart} to ${c.previousEnd}. Prior dates are aligned by day offset.`);chart.notes.push(c.change==null?'Percent change unavailable: every date and store needs a known amount in both periods, with a positive prior total.':`${chartNumber(c.change,'%')} versus the prior period. These are imported item sales, not settled payment totals.`);}
   chart.notes.push('Missing dates are gaps, not zero. Dates use New York time.');
@@ -64,7 +65,7 @@ export function reportChartModel(report){
   bars('Production output vs. plan',top(rows.map(r=>({label:[label(r),r.date].filter(Boolean).join(' · '),value:r.yield})),false),'%',100);
   chart.notes.push('Top 10 output attainment rates: actual ÷ planned output. This is not ingredient conversion yield.');
  }else if(id==='transfers'){
-  bars('Transfer receipt completion',rows.filter(r=>finite(r.received)&&r.dispatched>0).map(r=>({label:[r.name,`${r.from} → ${r.location}`,r.date].filter(Boolean).join(' · '),value:r.received/r.dispatched*100})).sort((a,b)=>a.value-b.value||a.label.localeCompare(b.label)).slice(0,10),'%',100);
+  bars('Transfer receipt completion',rows.filter(r=>finite(r.received)&&r.dispatched>0).map(r=>({label:[r.name,r.date].filter(Boolean).join(' · '),value:r.received/r.dispatched*100})).sort((a,b)=>a.value-b.value||a.label.localeCompare(b.label)).slice(0,10),'%',100);
   chart.notes.push('10 lowest receipt rates: received ÷ dispatched. Undispatched lines are excluded.');
  }else if(id==='waste'){
   bars('Recorded waste cost by reason',sumGroups(rows,r=>pretty(r.reason),'cost'),'USD');
@@ -84,12 +85,12 @@ export function reportChartModel(report){
  }
  const unknown=chart.points.filter(p=>!finite(p.value)).length;
  if(unknown)chart.notes.push(`${unknown} displayed groups or observations have unknown values and are omitted.`);
- chart.points=chart.points.filter(p=>finite(p.value)).map(p=>({...p,value:Number(p.value)}));
+ chart.points=chart.points.filter(p=>finite(p.value)).map(p=>({...p,label:usDateText(p.label),value:Number(p.value)}));
  if(!rows.length||chart.kind==='donut'&&!chart.points.some(p=>p.value>0))chart.points=[];
  return chart;
 }
 const svg=(body,height=300)=>`<svg viewBox="0 0 960 ${height}" role="img" aria-label="Chart plot" class="report-chart-svg">${body}</svg>`;
-const title=p=>`${p.label}${p.date?' · '+p.date:''}: `;
+const title=p=>`${p.label}${p.date?' · '+usDate(p.date):''}: `;
 function bars(c){
  const height=Math.max(170,c.points.length*42+42),left=c.compact?360:330,right=c.compact?735:830,top=16,values=c.points.map(p=>p.value),min=Math.min(0,...values),max=Math.max(0,c.target||0,...values),span=max-min||1,x=v=>left+(v-min)/span*(right-left),zero=x(0);
  return svg(`<line x1="${zero}" x2="${zero}" y1="${top}" y2="${height-20}" class="chart-axis"/>${c.target!=null?`<line x1="${x(c.target)}" x2="${x(c.target)}" y1="${top}" y2="${height-20}" class="chart-target"/><text x="${x(c.target)}" y="12" text-anchor="middle" class="chart-tick">Target ${c.target}%</text>`:''}${c.points.map((p,i)=>{const y=top+i*42+12,full=title(p)+format(p.value,c.unit);return `<g tabindex="0" aria-label="${e(full)}"><title>${e(full)}</title><text x="${left-16}" y="${y+4}" text-anchor="end" class="chart-label">${e(p.label.length>(c.compact?32:46)?p.label.slice(0,c.compact?29:43)+'…':p.label)}</text><rect x="${Math.min(zero,x(p.value))}" y="${y-9}" width="${Math.max(p.value===0?2:0,Math.abs(x(p.value)-zero))}" height="22" rx="4" fill="${p.value<0?'#b9604b':colors[0]}"/><text x="${c.compact?755:850}" y="${y+5}" class="chart-value">${e(format(p.value,c.unit))}</text></g>`;}).join('')}`,height);
@@ -103,9 +104,9 @@ function line(c){
   const points=c.points.filter(p=>p.label===name).sort((a,b)=>a.date.localeCompare(b.date));let path='',last=null;
   for(const p of points){path+=(last&&stamp(p.date)-stamp(last)<=86400000*(c.interval||1)?' L':' M')+`${x(p.date)},${y(p.value)}`;last=p.date;}
   if(!column)body+=`<path d="${path}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="3" ${points[0]?.previous?'stroke-dasharray="7 5"':''}/>`;
-  marks+=points.map(p=>{const px=x(p.date)+(column?(i-(series.length-1)/2)*band/series.length:0),py=y(p.value),tx=Math.min(right-230,Math.max(left,px-115)),ty=py<105?py+18:py-80,full=title(p)+format(p.value,c.unit);return `<g class="chart-point" tabindex="0" aria-label="${e(full)}">${column?`<rect x="${px-band/series.length/2}" y="${Math.min(py,zero)}" width="${Math.max(2,band/series.length-2)}" height="${Math.max(2,Math.abs(zero-py))}" rx="3" fill="${colors[i%colors.length]}" fill-opacity="${p.previous?.55:.9}"/>`:`<circle cx="${px}" cy="${py}" r="12" fill="transparent"/><circle cx="${px}" cy="${py}" r="4" fill="${colors[i%colors.length]}"/>`}<g class="chart-tooltip" transform="translate(${tx},${ty})" aria-hidden="true"><rect width="230" height="64" rx="6"/><text x="10" y="18">${e(p.label)}</text><text x="10" y="36">${e(p.originalDate||p.date)}${c.interval===7?' · week':''}</text><text x="10" y="54">${e(format(p.value,c.unit))}</text></g></g>`;}).join('');
+  marks+=points.map(p=>{const px=x(p.date)+(column?(i-(series.length-1)/2)*band/series.length:0),py=y(p.value),tx=Math.min(right-230,Math.max(left,px-115)),ty=py<105?py+18:py-80,full=title(p)+format(p.value,c.unit);return `<g class="chart-point" tabindex="0" aria-label="${e(full)}">${column?`<rect x="${px-band/series.length/2}" y="${Math.min(py,zero)}" width="${Math.max(2,band/series.length-2)}" height="${Math.max(2,Math.abs(zero-py))}" rx="3" fill="${colors[i%colors.length]}" fill-opacity="${p.previous?.55:.9}"/>`:`<circle cx="${px}" cy="${py}" r="12" fill="transparent"/><circle cx="${px}" cy="${py}" r="4" fill="${colors[i%colors.length]}"/>`}<g class="chart-tooltip" transform="translate(${tx},${ty})" aria-hidden="true"><rect width="230" height="64" rx="6"/><text x="10" y="18">${e(p.label)}</text><text x="10" y="36">${e(usDateText(p.originalDate||p.date))}${c.interval===7?' · week':''}</text><text x="10" y="54">${e(format(p.value,c.unit))}</text></g></g>`;}).join('');
  }
- const ticks=[...new Set(Array.from({length:Math.min(7,dates.length)},(_,i)=>Math.round(i*(dates.length-1)/Math.max(1,Math.min(7,dates.length)-1))))];body+=ticks.map(i=>`<text x="${x(dates[i])}" y="285" text-anchor="middle" class="chart-tick">${e(dates[i].slice(5).replace('-','/'))}</text>`).join('');
+ const ticks=[...new Set(Array.from({length:Math.min(7,dates.length)},(_,i)=>Math.round(i*(dates.length-1)/Math.max(1,Math.min(7,dates.length)-1))))];body+=ticks.map(i=>`<text x="${x(dates[i])}" y="285" text-anchor="middle" class="chart-tick">${e(usDate(dates[i]))}</text>`).join('');
  return `<div class="report-chart-legend">${series.map((s,i)=>`<span><i style="background:${colors[i%colors.length]}"></i>${e(s)}${s==='Previous period'?' (aligned)':''}</span>`).join('')}</div>`+svg(body+marks,310);
 }
 function heatmap(c){
@@ -123,11 +124,11 @@ function donut(c){
 function chartControls(report){
  const f=report.filters||{},id=report.spec.id;
  const select=(key,label,options)=>`<select data-report-chart="${key}" aria-label="${label}">${options.map(([value,text])=>`<option value="${value}" ${String(f[key])===value?'selected':''}>${text}</option>`).join('')}</select>`;
- return `<div class="report-chart-controls">${id==='sales'?select('metric','Sales metric',[['netSales','Net sales'],['grossSales','Gross sales'],['quantity','Items sold']])+select('chartCompare','Compare sales',[['locations','Compare stores'],['previous','Previous period']]):''}${['sales','cash'].includes(id)?select('chartInterval','Time grouping',[['day','Daily'],['week','Weekly']])+select('chartView','Chart style',[['line','Lines'],['bar','Columns']]):''}${id==='mix'?select('chartLimit','Number of ranked items',[['10','Top 10 items'],['20','Top 20 items']]):''}</div>`;
+ return `<div class="report-chart-controls">${id==='sales'?select('metric','Sales metric',[['netSales','Net sales'],['grossSales','Gross sales'],['quantity','Items sold']])+select('chartCompare','Compare sales',[['locations','Selected period'],['previous','Previous period']]):''}${['sales','cash'].includes(id)?select('chartInterval','Time grouping',[['day','Daily'],['week','Weekly']])+select('chartView','Chart style',[['line','Lines'],['bar','Columns']]):''}${id==='mix'?select('chartLimit','Number of ranked items',[['10','Top 10 items'],['20','Top 20 items']]):''}</div>`;
 }
 export function reportChart(report){
  const c=reportChartModel(report),reference=referenceChart(report),analytics=reportAnalytics(report);c.compact=!!analytics;if(reference){c.title=reference.title;c.notes=reference.notes;}const empty=(!c.points.length&&!reference)||c.kind==='unavailable';
  const plot=empty?`<div class="report-chart-empty"><svg viewBox="0 0 120 56" width="120" height="56" aria-hidden="true"><path d="M5 5v46h110" fill="none" stroke="#cbd5cb" stroke-width="2"/><path d="M18 39h16m12-11h16m12-9h16" stroke="#cbd5cb" stroke-width="6" stroke-linecap="round"/></svg><strong>${c.kind==='unavailable'?'Additional data required':'No chartable data for these filters'}</strong><span>${report.spec.id==='usage'||report.spec.id==='reorder'?'Choose a date range with available sales data.':'Unknown values are not plotted as zero.'}</span></div>`:reference?reference.plot:({line,heatmap,donut,bars}[c.kind](c));
- const primary=`<section class="panel report-chart" aria-label="${e(c.title)}"><div class="panel-head"><div><h2>${e(c.title)}</h2><p>${e(c.subtitle)}</p></div>${report.spec.id==='mix'?`<div class="report-metric-toggle" role="group" aria-label="Product mix metric"><button class="btn" data-action="report-metric" data-metric="netSales" aria-pressed="${report.filters?.metric!=='quantity'}">Net sales</button><button class="btn" data-action="report-metric" data-metric="quantity" aria-pressed="${report.filters?.metric==='quantity'}">Items sold</button></div>`:''}<span class="report-chart-badge">${{line:'Trend',heatmap:'Hourly pattern',bars:'Comparison',donut:'Coverage',unavailable:'Awaiting data'}[c.kind]}</span></div>${chartControls(report)}${report.comparison?`<div class="report-comparison-summary"><div><span>Selected period · recorded</span><strong>${e(format(report.comparison.currentTotal,c.unit))}</strong></div><div><span>Previous period · recorded</span><strong>${e(format(report.comparison.previousTotal,c.unit))}</strong></div><div><span>Change</span><strong>${e(format(report.comparison.change,'%'))}</strong></div></div>`:''}<div class="report-chart-plot chart-${c.kind}">${plot}</div><div class="report-chart-notes">${c.notes.map(n=>`<p>${e(n)}</p>`).join('')}</div></section>`;
+ const primary=`<section class="panel report-chart" aria-label="${e(c.title)}"><div class="panel-head"><div><h2>${e(c.title)}</h2><p>${e(c.subtitle)}</p></div>${report.spec.id==='mix'?`<div class="report-metric-toggle" role="group" aria-label="Product mix metric"><button class="btn" data-action="report-metric" data-metric="netSales" aria-pressed="${report.filters?.metric!=='quantity'}">Net sales</button><button class="btn" data-action="report-metric" data-metric="quantity" aria-pressed="${report.filters?.metric==='quantity'}">Items sold</button></div>`:''}<span class="report-chart-badge">${{line:'Trend',heatmap:'Hourly pattern',bars:'Comparison',donut:'Coverage',unavailable:'Awaiting data'}[c.kind]}</span></div>${chartControls(report)}${report.comparison?`<div class="report-comparison-summary"><div><span>Selected period · recorded</span><strong>${e(format(report.comparison.currentTotal,c.unit))}</strong></div><div><span>Previous period · recorded</span><strong>${e(format(report.comparison.previousTotal,c.unit))}</strong></div><div><span>Change</span><strong>${e(format(report.comparison.change,'%'))}</strong></div></div>`:''}<div class="report-chart-plot chart-${c.kind}">${plot}</div><div class="report-chart-notes">${c.notes.map(n=>`<p>${e(usDateText(n))}</p>`).join('')}</div></section>`;
  return analytics?`<div class="report-chart-pair">${primary}<div class="panel report-chart-secondary">${analytics}</div></div>`:primary;
 }

@@ -94,3 +94,10 @@ test('all report pages place filters before metrics and charts, omit generic row
  for(const r of REPORTS){s.route=reportRoute(r.id);const html=ui.page();assert.ok(html.indexOf('report-filter-panel')<html.indexOf('panel report-chart'));assert.ok(html.indexOf('report-summary')<html.indexOf('panel report-chart'));assert.doesNotMatch(html,/Matching rows|aria-label="Report coverage"/);}
  s.route='report-sales';assert.match(ui.page(),/report-item-select/);assert.match(ui.page(),/report-category-select/);
 });
+
+test('report display columns omit locations and CSV dates use US format',()=>{
+ const d=base();d.salesPeriods.facts=[sale()];
+ for(const spec of REPORTS)assert.ok(buildReport(spec.id,d,{},'all').columns.every(c=>!['location','from','note'].includes(c.key)));
+ const csv=reportCsv(buildReport('sales',d,{start:'2026-10-03',end:'2026-10-03'},'all'));
+ assert.match(csv,/10\/03\/2026/);assert.doesNotMatch(csv,/2026-10-03|Location filter/);
+});

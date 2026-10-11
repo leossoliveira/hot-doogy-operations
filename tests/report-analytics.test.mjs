@@ -20,8 +20,8 @@ test('comparison preserves calendar boundaries across daylight saving and unknow
 });
 test('weekly totals start Monday, use selected metric and omit unknown groups without inventing zero',()=>{
  const r=report('sales',[{date:'2026-10-04',location:'A',quantity:2},{date:'2026-10-05',location:'A',quantity:3},{date:'2026-10-06',location:'A',quantity:4},{date:'2026-10-05',location:'B',quantity:null}],{metric:'quantity',chartInterval:'week'});
- assert.deepEqual(temporalPoints(r).map(p=>[p.date,p.value]),[['2026-09-28',2],['2026-10-05',7]]);
- const html=reportChart(r);assert.match(html,/7 items/);assert.doesNotMatch(html,/NaN|Infinity/);
+ assert.deepEqual(temporalPoints(r).map(p=>[p.date,p.value]),[['2026-09-28',2]]);
+ const html=reportChart(r);assert.match(html,/2 items/);assert.doesNotMatch(html,/NaN|Infinity/);
 });
 test('Pareto shares use the complete population, not only the displayed top items',()=>{
  const c=paretoModel([{name:'A',netSales:60},{name:'B',netSales:30},{name:'C',netSales:10}],'netSales',2);
@@ -41,4 +41,10 @@ test('reference charts retain original units, rank gaps and do not combine quant
 test('analytics escape labels and suppress fake charts when values are unavailable',()=>{
  const html=reportAnalytics(report('mix',[{name:'<script>alert(1)</script>',netSales:10}]));assert.doesNotMatch(html,/<script>/);assert.match(html,/&lt;script&gt;/);
  assert.equal(reportAnalytics(report('food-cost',[])),'');
+});
+
+test('operational chart labels show US dates without store names',()=>{
+ const r=report('inventory',[{name:'Buns',location:'Sherwood Plaza',date:'2026-10-01',count:3,expected:2}]);
+ assert.equal(referenceModel(r).points[0].label,'Buns · 10/01/2026');
+ const html=reportChart(r);assert.doesNotMatch(html,/Sherwood|2026-10-01/);assert.match(html,/10\/01\/2026/);
 });

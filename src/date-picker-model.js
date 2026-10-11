@@ -29,7 +29,7 @@ export function selectCalendarDate(selection,value){
 }
 
 export function compactDateLabel(start,end=start,today=storeToday()){
- const format=value=>{const d=calendarDate(value);if(!d)return 'mm/dd/yyyy';return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}${value.slice(0,4)!==today.slice(0,4)?`, ${d.getUTCFullYear()}`:''}`;};
+ const format=displayDate;
  if(!start&&!end)return 'mm/dd/yyyy';
  if(start===end||!end)return end===start?format(start):`${format(start)} – …`;
  if(!start)return `… – ${format(end)}`;

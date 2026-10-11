@@ -1,3 +1,4 @@
+import {usDateText} from './locale.js';
 import {foodCostRows} from './food-cost.js';
 import {purchasingRows,purchasingDemand,validateOrderDates} from './purchasing-model.js';
 import {financialStatus} from './invoice-financial.js';
@@ -6,7 +7,7 @@ import {safeCsv,norm} from './model.js';
 
 const template=(id,title,group,description,filters,dateLabel='Record date')=>({id,title,group,description,filters,dateLabel});
 export const REPORTS=[
- template('sales','Daily Sales Summary','Sales','Compare daily revenue, discounts and quantities across locations.',['category','item'],'Sale date'),
+ template('sales','Daily Sales Summary','Sales','Review daily revenue, discounts and quantities.',['category','item'],'Sale date'),
  template('mix','Product Mix (PMIX)','Sales','Rank menu items by net sales or items sold across selected stores; review sales contribution and ABC concentration.',['category','item'],'Sale date'),
  template('hours','Hourly & Weekday Sales','Sales','Find busy hours and weekdays using transaction timestamps.',['category','item','weekday','hour'],'Sale date'),
  template('food-cost','Recipe Cost & Menu Margin','Costs','Ingredient and packaging costs compared with current selling prices.',['category','item','status'],null),
@@ -17,7 +18,7 @@ export const REPORTS=[
  template('inventory','Physical Inventory Variance','Operations','Completed physical counts and recorded expected quantities by area.',['category','item','area'],'Count date'),
  template('receiving','Purchase Order Receiving','Purchasing','Ordered versus received quantities and receipt evidence.',['supplier','item','status'],'Order date (creation for drafts)'),
  template('production','Prep Production vs. Plan','Operations','Compare planned and actual prep output to spot short production and overproduction.',['item','area','status'],'Completion date / creation for planned batches'),
- template('transfers','Interstore Transfer Reconciliation','Operations','Requested, approved, dispatched and received quantities.',['item','status','destination'],'Request creation date'),
+ template('transfers','Interstore Transfer Reconciliation','Operations','Requested, approved, dispatched and received quantities.',['item','status'],'Request creation date'),
  template('cogs','Actual COGS & unexplained losses','Costs','Review readiness for reconciled actual consumption costs.',['item'],'Movement date'),
  template('waste','Waste by Item & Reason','Operations','Recorded waste quantities, reasons and estimated cost.',['category','item','area','reason'],'Waste date'),
  template('tickets','Orders & average ticket','Sales','Customer order totals and average order value when order-level data is available.',[],'Order date'),
@@ -166,7 +167,7 @@ export function buildReport(id,data,filters={},location='all',local={}){
  if(id==='payables')metrics.push({label:'Unpaid invoice totals (USD)',value:sum(rows.filter(r=>['unpaid','overdue'].includes(r.status)&&r.currency==='USD'),'total'),type:'money'});
  if(id==='cash')metrics.push({label:'Dated paid invoice totals (USD)',value:sum(rows.filter(r=>r.currency==='USD'),'total'),type:'money'});
  if(id==='waste')metrics.push({label:'Recorded estimated loss',value:sum(rows,'cost'),type:'money'});
- columns=columns.filter(c=>c.key!=='note');
+ columns=columns.filter(c=>!['note','location','from'].includes(c.key));
  if(f.sort&&columns.some(c=>c.key===f.sort)){
   const direction=f.direction==='desc'?-1:1;
   rows.sort((a,b)=>{const av=a[f.sort],bv=b[f.sort];if(av==null||bv==null)return av==null?(bv==null?0:1):-1;return direction*(typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),'en-US',{numeric:true}));});
@@ -174,6 +175,6 @@ export function buildReport(id,data,filters={},location='all',local={}){
  return {spec,columns,rows,warnings:[...new Set(warnings)],metrics,filters:f,location,generatedAt:data.meta?.extractedAt||null};
 }
 export function reportCsv(report){
- const extra=[{label:'Report',value:()=>report.spec.title},{label:'Date basis',value:()=>report.spec.dateLabel||'Current catalog'},{label:'Start date (inclusive)',value:()=>report.filters.start},{label:'End date (inclusive)',value:()=>report.filters.end},{label:'Time zone',value:()=>'America/New_York'},{label:'Location filter',value:()=>report.location},{label:'Applied filters',value:()=>JSON.stringify(Object.fromEntries(Object.entries(report.filters).filter(([k])=>!['page','pageSize'].includes(k))))},{label:'Data as of',value:()=>report.generatedAt},{label:'Report notes',value:()=>report.warnings.join(' | ')}];
- return safeCsv(report.rows,[...report.columns.map(c=>({label:c.label,value:c.key})),...extra]);
+ const extra=[{label:'Report',value:()=>report.spec.title},{label:'Date basis',value:()=>report.spec.dateLabel||'Current catalog'},{label:'Start date (inclusive)',value:()=>report.filters.start},{label:'End date (inclusive)',value:()=>report.filters.end},{label:'Time zone',value:()=>'America/New_York'},{label:'Applied filters',value:()=>JSON.stringify(Object.fromEntries(Object.entries(report.filters).filter(([k])=>!['page','pageSize'].includes(k))))},{label:'Data as of',value:()=>report.generatedAt},{label:'Report notes',value:()=>report.warnings.join(' | ')}];
+ return safeCsv(report.rows,[...report.columns.map(c=>({label:c.label,value:r=>c.type==='date'?usDateText(r[c.key]):r[c.key]})),...extra.map(c=>({...c,value:r=>usDateText(c.value(r))}))]);
 }
