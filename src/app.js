@@ -554,3 +554,5 @@ document.addEventListener('keydown',ev=>{
 document.addEventListener('change',ev=>{if(ev.target.matches('[data-invoice-page-size]')){invoiceView.per=ev.target.value==='all'?'all':Number(ev.target.value);state.page=1;render();}});
 
 document.addEventListener('toggle',ev=>{const el=ev.target;if(el.matches?.('[data-count-section]')&&dialog?.kind==='count'){const entry=dialog.sections[el.dataset.countSection];if(entry&&el.isConnected)entry.open=el.open;}},true);
+
+document.addEventListener('change',ev=>{if(ev.target.matches('[data-price-page-size]'))supplierUI.setPricePageSize(ev.target.value);});
