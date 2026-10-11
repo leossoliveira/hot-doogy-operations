@@ -13,6 +13,7 @@ This directory is the current source for application documentation. Keep instruc
 - [Administrative MFA](administrative-mfa.md)
 - [Responsive layout](responsive-layout.md)
 - [Calendar controls](calendar-controls.md)
+- [Reports, filters and calculation limits](reports.md)
 
 ## Change workflow
 
