@@ -55,4 +55,6 @@ Validated with synthetic PGlite records by passing this migration as the third a
 
 ## Invoice line item type
 
-Migration `20261011194009_invoice_line_item_type.sql` adds nullable invoice-specific `source_item_type` (`purchased` or `prepared`) and persists the reviewed selection through draft creation and editing. Catalog records are unchanged. Pass this migration as the fourth argument to `llm-invoice-drafts.mjs` to validate creation, editing and invalid-type rejection in isolated PGlite. Not applied to production. Deploy the migration before the matching UI; rollback the UI first and preserve the column to retain classifications.
+Migration `20261011195918_invoice_line_item_type.sql` adds nullable invoice-specific `source_item_type` (`purchased` or `prepared`) and persists the reviewed selection through draft creation and editing. Catalog records are unchanged. Pass this migration as the fourth argument to `llm-invoice-drafts.mjs` to validate creation, editing and invalid-type rejection in isolated PGlite. Not applied to production. Deploy the migration before the matching UI; rollback the UI first and preserve the column to retain classifications.
+
+Invoice item type and category migrations were applied and verified on October 11, 2026 (20261011195918 and 20261011195920). Isolated create/edit/category scope validation passed.
