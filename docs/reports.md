@@ -37,3 +37,24 @@ Tables provide sortable columns, 25/50/100/all pagination, CSV export of all mat
 ## Validation
 
 `tests/reports.test.mjs` covers New York date boundaries, sales aggregation, signed credits, missing amounts and dates, price-unit normalization, receiving evidence, counts, supplier demand/pack conversions, unavailable metrics, access restrictions, HTML escaping and CSV metadata/formula protection. A local browser check with synthetic data exercises all 18 routes, filters, pagination, CSV download and desktop/mobile layouts.
+
+## Visual summaries
+
+Every report has a chart area above its filters. It uses all filtered rows, independent of pagination and table sorting. The chart updates with dates, locations and other filters; Clear Filters restores the defaults. Charts include focusable marks with values, native tooltips, a text value list, and print styling. Narrow screens can scroll the plot horizontally.
+
+| Reports | Chart |
+| --- | --- |
+| Sales by location; recorded supplier payments | Daily lines by location, with gaps for missing dates |
+| Product mix | Top 10 product/location net-sales bars |
+| Hour and weekday | Seven-day / 24-hour net-sales heatmap |
+| Food cost | Highest percentages with a 25% target line |
+| Ingredient usage; purchase price changes | Signed percentage-change bars |
+| Purchases; accounts payable; waste | Amounts by supplier, financial status or waste reason |
+| Counts | Signed count-versus-expected percentage variances |
+| Receiving; production; transfers; replenishment | Comparable attainment/coverage ratios with a 100% reference |
+| Actual COGS readiness | Recorded-cost versus missing-cost movement counts |
+| Customer orders/average ticket; P&L | Explicit unavailable state until the required data feed exists |
+
+Unknown values are never plotted as zero. Monetary aggregation uses USD only. Shared supplier demand is deduplicated by item/location. Ratios avoid summing quantities in incompatible units; missing or nonpositive denominators are excluded. Price and count rankings retain signed changes. COGS charts measure data coverage, not cost totals. Empty reports display a no-data state without fabricated marks.
+
+The date/location explanatory line beneath report controls has been removed. Relevant calculation caveats remain with the chart, report notes and exports. Filter-clearing actions use **Clear Filters** with the reset icon throughout Reports, Invoices, Purchasing History and Food Cost. Pagination uses **Items per page**.
