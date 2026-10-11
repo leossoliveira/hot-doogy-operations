@@ -1,6 +1,6 @@
 # Reports
 
-Reports is a separate sidebar module with a catalog and 18 individual routes. It uses the existing authenticated data feed and does not add database queries, mutations or migrations. Staff cannot access the catalog or report routes.
+Reports is a single direct sidebar link to a catalog with 18 individual report routes. Individual reports are accessed through the catalog, without sidebar submenus; Reports remains highlighted while viewing a report. It uses the existing authenticated data feed and does not add database queries, mutations or migrations. Staff cannot access the catalog or report routes.
 
 ## Available models
 
