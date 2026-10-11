@@ -1,6 +1,6 @@
 // Translate known database validation messages without changing stored enum values or records.
 const messages=new Map([
- ...['Confirm permanent deletion.','Item unavailable.','This item is shared with another supplier. Deactivate it instead.','This item has linked recipes or history. Deactivate it instead.'].map(message=>[message,message]),
+ ...['Invalid waste record.','This waste request has changed. Reopen the form.','Invalid waste location.','Invalid waste storage area.','Item is unavailable at this location.','Invalid waste quantity or unit.','Invalid waste date.','Choose a waste reason and valid notes.','Confirm permanent deletion.','Item unavailable.','This item is shared with another supplier. Deactivate it instead.','This item has linked recipes or history. Deactivate it instead.'].map(message=>[message,message]),
  ['Sem permissão para gravar esta operação.','You do not have permission to save this activity.'],
  ['Unidades inválidas.','Invalid units.'],
  ['Cadastro não disponível.','This record is unavailable.'],

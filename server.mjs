@@ -1,3 +1,4 @@
+import {readWhatsappDirectory} from './server/doogy-ai.mjs';
 import {invoiceIntake} from './server/invoice-intake.mjs';
 import {requireStaffRequest,requireStaffCommand} from './server/staff-access.mjs';
 import {preparationUsage} from './server/preparation-usage.mjs';
@@ -43,6 +44,8 @@ http.createServer(async(req,res)=>{
    }
    if(url.pathname==='/api/data'&&req.method==='GET'){const raw=await readTables(auth,session.token,session.member.role);const data=projectData(raw);data.access={role:session.member.role};if(['owner','admin','manager','chef'].includes(session.member.role)){const summary=queueSalesSummary(auth,session,raw);data.preparationSales=summary.result?Object.fromEntries(Object.entries(summary.result).filter(([k])=>k!=='purchasingSales')):null;data.purchasingSales=summary.result?.purchasingSales||null;data.meta.preparationSalesStatus=summary.status;if(summary.result){data.meta.pendingImportRows=summary.result.days.reduce((n,x)=>n+x.incompleteLines,0);data.issues=summary.result.issues.map(x=>({...x,count:x.occurrences,label:x.code,locationName:data.locations.find(l=>l.id===x.locationId)?.name}));}}return await replyData(req,res,data);}
    if(url.pathname==='/api/catalog/delete'&&req.method==='POST'){const body=await jsonBody(req,4096);if(body.confirmed!==true||!/^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.test(body.id||''))throw new ApiError(400,'Confirm deletion of a valid item.');return reply(res,200,await auth.request('/rest/v1/rpc/delete_catalog_item',{token:session.token,method:'POST',body:{p_id:body.id,p_confirmed:true}}));}
+   if(url.pathname==='/api/doogy-ai/whatsapp'&&req.method==='GET')return reply(res,200,await readWhatsappDirectory(session.member.role));
+   if(url.pathname==='/api/waste'&&req.method==='POST'){const body=await jsonBody(req,8192);return reply(res,200,await auth.request('/rest/v1/rpc/record_waste',{token:session.token,method:'POST',body:{p_id:body.id,p:body.payload}}));}
    if(url.pathname==='/api/catalog/create'&&req.method==='POST'){const body=await jsonBody(req);const result=await auth.request('/rest/v1/rpc/catalog_create',{token:session.token,method:'POST',body:{p_kind:body.kind,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
    if(url.pathname==='/api/command'&&req.method==='POST'){const body=await jsonBody(req);requireStaffCommand(session.member.role,body);const result=await auth.request('/rest/v1/rpc/operations_command',{token:session.token,method:'POST',body:{p_action:body.action,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
    throw new ApiError(404,"Resource not found.");

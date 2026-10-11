@@ -40,8 +40,8 @@ export function inventoryBasedCoverage(item,stock,history){
  for(const m of history.movements.filter(m=>m.itemId===item.id&&m.locationId===item.locationId)){
   const at=Date.parse(m.occurredAt||'');if(!Number.isFinite(at))return unknown('Movement dates need review');
   if(at<=prior.at||at>latest.at||seen.has(m.id))continue;seen.add(m.id);
-  if(['sale_consumption','waste','prep_consumption','stock_count_adjustment'].includes(m.type))continue;
-  if(!['purchase_receipt','prep_production','transfer_in','transfer_out'].includes(m.type))return unknown('Movement types need review');
+  if(['sale_consumption','prep_consumption','stock_count_adjustment'].includes(m.type))continue;
+  if(!['purchase_receipt','prep_production','transfer_in','transfer_out','waste'].includes(m.type))return unknown('Movement types need review');
   if(m.baseQty==null||!Number.isFinite(Number(m.baseQty)))return unknown('Movement quantities need review');
   net+=Number(m.baseQty);
  }

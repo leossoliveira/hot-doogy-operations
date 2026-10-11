@@ -27,7 +27,6 @@ export function liveInventory(item,history,source,batches,asOf){
   if(at<=count.at||at>now||seen.has(m.id))continue;seen.add(m.id);
   // Average consumption replaces actual consumption postings, never subtract both.
   if(['sale_consumption','prep_consumption','stock_count_adjustment'].includes(m.type))continue;
-  if(m.type==='waste'&&coverage.basis==='inventory')continue;
   if(!['purchase_receipt','prep_production','transfer_in','transfer_out','waste'].includes(m.type))return unknown('Movement types need review');
   if(m.baseQty==null||!Number.isFinite(Number(m.baseQty)))return unknown('Movement quantities need review');
   net+=Number(m.baseQty)/factor;

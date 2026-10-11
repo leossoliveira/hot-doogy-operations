@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {sanitizeWhatsappDirectory,readWhatsappDirectory} from '../server/doogy-ai.mjs';
+test('directory exposes only WhatsApp summaries and deduplicates chats',()=>{
+ const result=sanitizeWhatsappDirectory({sessions:[{channel:'whatsapp',key:'a',displayName:'Team',kind:'group',origin:{to:'group',accountId:'one'},updatedAt:1,token:'SECRET',messages:['PRIVATE']},{channel:'whatsapp',key:'b',displayName:'Team',kind:'group',origin:{to:'group',accountId:'one'},updatedAt:2},{channel:'openresponses',key:'private'}]});assert.equal(result.rows.length,1);assert.equal(result.rows[0].updatedAt,2);assert.doesNotMatch(JSON.stringify(result),/SECRET|PRIVATE|openresponses/);
+});
+test('directory rejects incomplete results and non-admin access',async()=>{assert.throws(()=>sanitizeWhatsappDirectory({sessions:[],hasMore:true}));await assert.rejects(readWhatsappDirectory('staff'),/administrators/);await assert.rejects(readWhatsappDirectory('manager'),/administrators/);});

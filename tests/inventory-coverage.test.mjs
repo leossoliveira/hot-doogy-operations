@@ -42,3 +42,13 @@ test('live inventory uses exact elapsed time and signed movements once, without 
  assert.equal(liveInventory(item,{...history,sessions:[{...count,countedAt:'2026-10-10T00:00:00Z'}]},source,batches,'2026-10-09T00:00:00Z').qty,null);
  assert.equal(liveInventory(item,{sessions:[{...count,lines:[{itemId:'i',quantityBase:0}]}],movements:[]},source,batches,'2026-10-09T00:00:00Z').qty,0);
 });
+
+test('inventory-based live stock deducts new waste without counting historical waste as daily usage',async()=>{
+ const {liveInventory}=await import('../src/live-inventory.js');
+ const item={id:'i',locationId:'l',units:[{stocktake:true,factor:1,name:'Each'}],areas:[]};
+ const count=(at,qty)=>({locationId:'l',status:'completed',source:'observations',countedAt:at,lines:[{itemId:'i',quantityBase:qty}]});
+ const waste=(id,at,qty)=>({id,itemId:'i',locationId:'l',type:'waste',occurredAt:at,baseQty:-qty});
+ const history={sessions:[count('2026-10-01T00:00:00Z',100),count('2026-10-03T00:00:00Z',70)],movements:[waste('a','2026-10-02T00:00:00Z',10),waste('b','2026-10-03T12:00:00Z',5)]};
+ const source={days:[{date:'2026-10-02',locationId:'l'}],rows:[]};
+ const result=liveInventory(item,history,source,[],'2026-10-04T00:00:00Z');assert.equal(result.daily,10);assert.equal(result.qty,55);
+});

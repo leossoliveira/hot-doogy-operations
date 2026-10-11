@@ -190,3 +190,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 [data-action="food-clear-filters"]{height:var(--control-height,44px);min-height:var(--control-height,44px);box-sizing:border-box}
 
 .catalog-delete-button{background:#b92318;color:#fff;border-color:#b92318}.catalog-toggle-button{background:#eceeea;color:#454c40;border-color:#d7dbd2}
+
+.recipe-layout-switch{display:flex;gap:6px}.recipe-list{grid-template-columns:1fr}.recipe-list .recipe-card{display:grid;grid-template-columns:120px 2fr 2fr 1fr;align-items:center;gap:18px}.recipe-list .recipe-card h3,.recipe-list .recipe-card p,.recipe-list .recipe-card-bottom{margin:0}@media(max-width:700px){.recipe-list .recipe-card{grid-template-columns:1fr 1fr}.recipe-layout-switch .btn{padding:8px}}
