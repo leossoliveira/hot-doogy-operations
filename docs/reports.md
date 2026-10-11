@@ -99,3 +99,7 @@ All Report results retain tabular rows at every viewport width. The shared respo
 Pages with two charts use equal side-by-side panels on desktop (1200px and wider). Below that width, charts stack vertically. SVG labels and gutters adapt to the desktop columns; each chart retains its own heading and legend. Print stacks the panels.
 
 The per-row Notes/Calculation notes/Coverage/Readiness column is excluded from report columns. Source records and report-level export metadata remain intact.
+
+## Expanded charts
+
+Every primary and secondary chart has an icon-only Expand chart button in its upper-right corner. The dialog shows a snapshot of that chart with its current filters, legends and point details, without the neighboring chart or report table. Close with the close icon, Escape or the backdrop; keyboard focus returns to the expansion button. Background data refresh pauses while the dialog is open. Overview and invoice-price history charts use the same control.
