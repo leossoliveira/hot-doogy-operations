@@ -62,7 +62,8 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
     const stored=financialStatus(x),paid=(x.dbStatus??x.status)==='paid';
     let body=intro(x)+grid([["INVOICE DATE",when(x.date,true)],["Due Date",when(x.dueDate,true)]]);
     body+=section("Invoice amounts",grid([['Subtotal',amount(x.subtotal)],["Tax",amount(x.tax)],["Fees",amount(x.fees)],['Total',amount(x.total)]]));
-    if(paid&&!x.paymentRecordedAt)body+="<p class=\"operation-help\">This invoice is marked as paid in the database. The historical payment date was not recorded.</p>";
+    if(paid&&x.paymentDate)body+=grid([["Payment date",when(x.paymentDate,true)]]);
+    if(paid&&!x.paymentDate)body+="<p class=\"operation-help\">This invoice is marked as paid in the database. The historical payment date was not recorded.</p>";
     body+=section("Invoice items",(list(x.lines).length?table(["Product / SKU","Quantity","Unit","Unit price","Total"],x.lines.map(l=>row([product(l),number(l.quantity??l.qty),text(l.uom),amount(l.catalogUnitPrice),amount(l.lineTotal)])))+'<p class="operation-help">Unit prices reflect the current item catalog. Totals remain as recorded on the invoice.</p>':emptyLines())+'<p class="invoice-item-count">Total items <strong>'+number(x.lineCount??list(x.lines).length)+'</strong></p>');
     body+=section("Receipts",list(x.receipts).length?x.receipts.map(r=>grid([["Received on",(r.dbStatus??r.status)==='completed'?when(r.receivedAt,r.receivedDateOnly):text("Not recorded")],["Received by",text(r.receiverName||r.receivedByName||"Not recorded")],["Status",status((r.dbStatus??r.status)==='completed'?'received':'awaiting_receipt')]])).join(''):grid([["Received on",text("Not recorded")],["Received by",text("Not recorded")],["Status",status("awaiting_receipt")]]));
     body+=notes(x.notes)+timelineView(x);

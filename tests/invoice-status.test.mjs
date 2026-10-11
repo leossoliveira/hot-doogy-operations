@@ -6,7 +6,7 @@ import {isUnpaidInvoice,validInvoiceStatusChange} from '../src/invoice-status.js
 import {databaseErrorMessage} from '../server/database-errors.mjs';
 const id='11111111-1111-4111-8111-111111111111';
 const url=new URL(`http://localhost/api/invoices/${id}/status`);
-const body={status:'paid',expectedStatus:'approved',expectedUpdatedAt:'2026-10-05T12:00:00.123456+00:00'};
+const body={paymentDate:'2026-10-09',status:'paid',expectedStatus:'approved',expectedUpdatedAt:'2026-10-05T12:00:00.123456+00:00'};
 function req(payload=body){return Object.assign(Readable.from([Buffer.from(JSON.stringify(payload))]),{method:'POST'});}
 function res(){return {writeHead(status){this.status=status;},end(value){this.body=JSON.parse(value);}};}
 test('financial roles save only the requested status with the session token and concurrency version',async()=>{
@@ -14,8 +14,8 @@ test('financial roles save only the requested status with the session token and 
   let call;const response=res();
   await updateInvoiceStatus(req({...body,organizationId:'untrusted',total:0}),response,url,{request:async(path,options)=>{call={path,...options};return {id,status:'paid',changed:true};}},{member:{role},token:'test-token'});
   assert.equal(response.status,200);assert.equal(response.body.status,'paid');assert.equal(call.token,'test-token');
-  assert.equal(call.path,'/rest/v1/rpc/update_invoice_status');
-  assert.deepEqual(Object.keys(call.body).sort(),['p_expected_status','p_expected_updated_at','p_invoice_id','p_organization_id','p_status']);
+  assert.equal(call.path,'/rest/v1/rpc/record_invoice_payment');
+  assert.deepEqual(Object.keys(call.body).sort(),['p_expected_status','p_expected_updated_at','p_invoice_id','p_organization_id','p_payment_date','p_status']);
   assert.equal(call.body.p_invoice_id,id);assert.notEqual(call.body.p_organization_id,'untrusted');assert.equal(call.body.p_expected_updated_at,body.expectedUpdatedAt);
  }
 });
@@ -54,4 +54,8 @@ test('confirmed deletion uses scoped RPC and propagates failures without success
  await deleteInvoice(req(payload),response,deleteUrl,{request:async(path,options)=>{call={path,...options};return {id,deleted:true};}},{member:{role:'admin'},token:'user-token'});
  assert.equal(response.body.deleted,true);assert.equal(call.path,'/rest/v1/rpc/delete_invoice');assert.equal(call.token,'user-token');assert.equal(call.body.p_invoice_id,id);assert.notEqual(call.body.p_organization_id,'fake');
  const failed=res();await assert.rejects(deleteInvoice(req(payload),failed,deleteUrl,{request:async()=>{throw Error('conflict');}},{member:{role:'admin'}}),/conflict/);assert.equal(failed.status,undefined);
+});
+
+test('payment requires a real calendar date before contacting the database',async()=>{
+ for(const paymentDate of ['',undefined,'2026-02-30','10/09/2026'])await assert.rejects(updateInvoiceStatus(req({...body,paymentDate}),res(),url,{request:()=>assert.fail('No mutation')},{member:{role:'admin'}}),e=>e.status===400);
 });
