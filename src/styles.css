@@ -147,3 +147,30 @@
 @media(max-width:900px){.invoice-review-layout{grid-template-columns:1fr}.invoice-review-preview{position:static}.invoice-review-preview iframe,.invoice-review-preview img{height:45dvh}.invoice-review-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}.invoice-review-numbers>.btn{grid-column:1/-1;justify-self:end}}
 .invoice-price-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:20px}.invoice-price-label .status{font-size:9px;white-space:nowrap}.invoice-review-line input[readonly]{background:#f5f7f1;color:#69755f;cursor:default}
 .invoice-pdf-preview{max-height:65dvh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#f5f6f2;padding:8px}.invoice-pdf-preview canvas{display:block;width:100%;height:auto;background:white}.invoice-pdf-controls{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;background:#f5f6f2;z-index:1}.invoice-pdf-preview [role=status]:empty{display:none}.invoice-pdf-preview [role=status]{padding:12px;font-size:12px}
+
+/* Shared single-line controls across forms, tables and filters.
+   Metrics intentionally override legacy per-screen sizes; native checkboxes,
+   uploads, hidden date sources and multiline fields retain their own layout. */
+:root{--control-height:44px;--control-font-size:13px;--control-line-height:20px;--control-radius:8px}
+input:where(:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]):not([type=range]):not([type=color]):not(.hd-date-source)),select:not([multiple]):not([size]),.hd-date-trigger{
+  height:var(--control-height)!important;min-height:var(--control-height)!important;
+  box-sizing:border-box;border-radius:var(--control-radius)!important;
+  font-family:inherit!important;font-size:var(--control-font-size)!important;
+  font-weight:400!important;line-height:var(--control-line-height)!important;letter-spacing:normal!important;
+  padding:0 12px!important;
+}
+select:not([multiple]):not([size]){
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2356624c' stroke-width='1.7'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:16px;
+  padding-right:36px!important;
+}
+textarea{font-family:inherit!important;font-size:var(--control-font-size)!important;font-weight:400!important;line-height:1.5!important;letter-spacing:normal!important;border-radius:var(--control-radius)!important}
+.hd-date-trigger .hd-date-value,.hd-date-trigger .hd-date-caption{font-family:inherit!important;font-size:var(--control-font-size)!important;font-weight:400!important;line-height:var(--control-line-height)!important}
+.field{font-size:12px;font-weight:400;line-height:1.5;min-width:0}
+.field label{font-size:12px!important;font-weight:400!important;letter-spacing:normal!important;text-transform:none!important}
+.input-wrap{height:var(--control-height);min-height:var(--control-height)}
+.input-wrap input:not([type=hidden]){height:calc(var(--control-height) - 2px)!important;min-height:0!important;padding:0!important}
+.store-picker,.date-control{padding-top:0;padding-bottom:0;min-height:var(--control-height)}
+.store-picker select,.date-control select{height:calc(var(--control-height) - 2px)!important;min-height:0!important}
+@media(max-width:1024px),(pointer:coarse){:root{--control-font-size:16px}}
