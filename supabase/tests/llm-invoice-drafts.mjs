@@ -68,4 +68,22 @@ const linked=(await save(u(22),{...payload,number:'TEST-2',orderId:u(30)})).rows
 await assert.rejects(db.query('select approve_invoice_draft_payment($1,$2,$3,$4,$5)',[u(22),linked.updatedAt,'paid',null,null]));
 await db.query('select approve_invoice_draft_payment($1,$2,$3,$4,$5)',[u(22),linked.updatedAt,'paid','2026-10-09','credit_card']);
 assert.equal((await db.query(`select payment_method from invoices where id='${u(22)}'`)).rows[0].payment_method,'credit_card');assert.equal((await db.query(`select status from invoices where id='${u(22)}'`)).rows[0].status,'paid');
+if(process.argv[3]){
+ await db.exec(fs.readFileSync(process.argv[3],'utf8'));
+ const fresh=(await save(u(40),{...payload,number:'RECEIVING-TEST',receivingStatus:'received',receivedBy:'Martiese',receivedDate:'2026-10-09',paymentStatus:'paid',paymentDate:'2026-10-09',paymentMethod:'debit_card'})).rows[0].result;
+ assert.equal((await db.query(`select extraction from invoices where id='${u(40)}'`)).rows[0].extraction.reviewedFields.receivedBy,'Martiese');
+ const review=(status='received',by='Martiese',date='2026-10-09')=>db.query('select approve_invoice_review($1,$2,$3,$4,$5,$6,$7,$8)',[u(40),fresh.updatedAt,'paid','2026-10-09','debit_card',status,by,date]);
+ await assert.rejects(review('invalid'));await assert.rejects(review('received',''));await assert.rejects(review('received','Martiese','2999-01-01'));
+ await db.exec("set test.role='staff'");await assert.rejects(review());await db.exec("set test.role='manager';set test.mfa='no'");await assert.rejects(review());await db.exec("set test.mfa='yes'");
+ assert.equal((await db.query(`select status from invoices where id='${u(40)}'`)).rows[0].status,'review');
+ await review();await assert.rejects(review());
+ const received=(await db.query(`select extraction,status,payment_method from invoices where id='${u(40)}'`)).rows[0];
+ assert.equal(received.extraction.receiving.status,'received');assert.equal(received.extraction.receiving.receivedBy,'Martiese');assert.equal(received.extraction.receiving.receivedDate,'2026-10-09');assert.equal(received.status,'paid');assert.equal(received.payment_method,'debit_card');
+ const pending=(await save(u(41),{...payload,number:'NOT-RECEIVED'})).rows[0].result;
+ await db.query('select approve_invoice_review($1,$2,$3,$4,$5,$6,$7,$8)',[u(41),pending.updatedAt,'unpaid',null,null,'not_received','stale','2026-10-09']);
+ const declaration=(await db.query(`select extraction from invoices where id='${u(41)}'`)).rows[0].extraction.receiving;
+ assert.equal(declaration.receivedBy,null);assert.equal(declaration.receivedDate,null);
+ assert.equal((await db.query('select count(*)::int n from inventory_transactions')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from purchase_receipts')).rows[0].n,0);
+ console.log('PASS: receiving and payment approval, validation, role/MFA, replay rejection, no stock or receipt writes');
+}
 await db.close();console.log('PASS: draft creation, receipt rejection, scope/MFA/roles, duplicate/idempotency, exact SKU/unit mapping, From Invoice draft order, original hash binding, approval/payment gates, stale protection, zero receipt/stock writes.');

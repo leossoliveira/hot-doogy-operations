@@ -26,3 +26,9 @@ export function filterInvoices(invoices,{status='all',supplier='all',start='',en
    && norm(`${invoice.supplierName||''} ${invoice.number||''}`).includes(search);
  });
 }
+
+export function compareInvoices(a,b,key='date',direction='desc'){
+ if((a.status==='draft')!==(b.status==='draft'))return a.status==='draft'?-1:1;
+ const av=a[key],bv=b[key];if(!av)return bv?1:0;if(!bv)return -1;
+ return (direction==='asc'?1:-1)*String(av).localeCompare(String(bv))||String(a.id).localeCompare(String(b.id));
+}

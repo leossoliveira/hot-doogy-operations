@@ -41,7 +41,7 @@ export function createInvoiceIntake({extract=extractOpenClawInvoice,config=openC
   const match=url.pathname.match(/^\/api\/invoices\/([a-f0-9-]{36})\/approve-draft$/);
   if(match&&req.method==='POST'){
    const body=await jsonBody(req,4096);if(body.confirmed!==true||!['unpaid','paid'].includes(body.paymentStatus))throw new ApiError(422,'Confirm approval and choose Unpaid or Paid.');
-   const result=await auth.request('/rest/v1/rpc/approve_invoice_draft_payment',{token:session.token,method:'POST',body:{p_invoice:match[1],p_expected_updated_at:body.expectedUpdatedAt,p_payment_status:body.paymentStatus,p_payment_date:body.paymentDate||null,p_payment_method:body.paymentMethod||null}});return reply(res,200,result);
+   const result=await auth.request('/rest/v1/rpc/approve_invoice_review',{token:session.token,method:'POST',body:{p_invoice:match[1],p_expected_updated_at:body.expectedUpdatedAt,p_payment_status:body.paymentStatus,p_payment_date:body.paymentDate||null,p_payment_method:body.paymentMethod||null,p_receiving_status:body.receivingStatus,p_received_by:body.receivedBy||null,p_received_date:body.receivedDate||null}});return reply(res,200,result);
   }
   throw new ApiError(404,'Resource not found.');
  };
