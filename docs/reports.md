@@ -40,7 +40,7 @@ Tables provide sortable columns, 25/50/100/all pagination, CSV export of all mat
 
 ## Visual summaries
 
-Every report has a chart area above its filters. It uses all filtered rows, independent of pagination and table sorting. The chart updates with dates, locations and other filters; Clear Filters restores the defaults. Charts include focusable marks with values, tooltips (immediate hover/focus values on daily lines), and print styling. Narrow screens can scroll the plot horizontally.
+Every report places filters first, business metric cards next (when available), then charts and results. The generic Matching rows card and yellow coverage panel are removed. It uses all filtered rows, independent of pagination and table sorting. The chart updates with dates, locations and other filters; Clear Filters restores the defaults. Charts include focusable marks with values, tooltips (immediate hover/focus values on daily lines), and print styling. Narrow screens can scroll the plot horizontally.
 
 | Reports | Chart |
 | --- | --- |
@@ -57,7 +57,7 @@ Every report has a chart area above its filters. It uses all filtered rows, inde
 
 Unknown values are never plotted as zero. Monetary aggregation uses USD only. Shared supplier demand is deduplicated by item/location. Ratios avoid summing quantities in incompatible units; missing or nonpositive denominators are excluded. Price and count rankings retain signed changes. COGS charts measure data coverage, not cost totals. Empty reports display a no-data state without fabricated marks.
 
-The date/location explanatory line beneath report controls has been removed. Relevant calculation caveats remain with the chart, report notes and exports. Filter-clearing actions use **Clear Filters** with the reset icon throughout Reports, Invoices, Purchasing History and Food Cost. Pagination uses **Items per page**.
+The date/location explanatory line beneath report controls has been removed. Relevant calculation caveats remain with the charts and exports. Filter-clearing actions use **Clear Filters** with the reset icon throughout Reports, Invoices, Purchasing History and Food Cost. Pagination uses **Items per page**.
 
 ## US quick-service operations review — October 2026
 
@@ -74,3 +74,28 @@ References used for report selection:
 - Restaurant365 recipe costing: https://radar.help.restaurant365.com/support/solutions/articles/12000084054-theoretical-item-cost-by-recipe
 
 These references guide report names and operational purpose; they do not supply HOT DOOGY financial data or benchmark targets.
+
+## Expanded analytics and multiple selections
+
+Toast Sales Summary and Square Sales Summary / Sales Trends informed the metric switching, time grouping, store comparisons and prior-period overlays. The implementation uses HOT DOOGY data and definitions rather than assuming that POS metrics reconcile identically.
+
+- Daily sales: net sales, gross sales or items sold; daily or Monday-based weekly grouping; lines or grouped columns; location series or a previous equal-calendar-length period aligned by day offset. Prior-period tooltips show original dates. Edge weeks are partial. Recorded totals stay visible; growth is suppressed without complete import coverage, known values for each date/store in both periods, and a positive previous total. Missing filtered sales days remain unknown, even where they could represent zero, to avoid implying unsupported completeness.
+- PMIX: top 10/20 ranking plus Pareto bars and a cumulative-share line using the complete filtered population. Nonpositive/unknown/negative populations do not get misleading cumulative percentages. Changing revenue/quantity updates both charts.
+- Recipe cost: cost/price scatter plot with a 25% house target and contribution dollars; one point per item using the highest known store percentage. This is not a profitability quadrant or net-profit calculation.
+- Hourly sales: heatmap plus house dayparts (overnight, breakfast, lunch, afternoon, dinner, late night), using recorded totals rather than per-day averages.
+- Inventory, preparation, receiving, transfers, ingredient usage, order guide and vendor price changes: reference-dot comparisons normalized to 100%, ranked by absolute relative gap, with original quantities and units in accessible tooltips. Above/below colors indicate direction rather than good/bad performance. No aggregation of unlike units.
+- Vendor purchases, supplier payments, payables and recorded waste: secondary breakdowns for purchase days, payment methods, unpaid vendors and loss days. USD only for monetary invoice aggregations; unknown values are excluded, never replaced with zero.
+
+Item and Category use the existing searchable checkbox picker wherever those filters apply. Choices within a filter are OR; item and category filters intersect. None yields no results, All restores all options. Arrays are retained in CSV filter metadata. Filters apply to charts, metrics and rows before pagination.
+
+References:
+- https://squareup.com/help/us/en/article/5381-in-app-summaries-and-reports
+- https://support.toasttab.com/en/article/Sales-Summary-Report
+
+`tests/report-analytics.test.mjs` covers comparison completeness, calendar alignment across DST, weekly grouping, Pareto denominators, worst-store recipe selection, reference ratios and safe rendering. Report tests cover multiselection and shared page ordering.
+
+All Report results retain tabular rows at every viewport width. The shared responsive enhancer respects `data-table-layout=rows`, so reports opt out of card conversion while preserving table roles, sorting and pagination. Narrow screens use a keyboard-focusable horizontal scroll region.
+
+Pages with two charts use equal side-by-side panels on desktop (1200px and wider). Below that width, charts stack vertically. SVG labels and gutters adapt to the desktop columns; each chart retains its own heading and legend. Print stacks the panels.
+
+The per-row Notes/Calculation notes/Coverage/Readiness column is excluded from report columns. Source records and report-level export metadata remain intact.

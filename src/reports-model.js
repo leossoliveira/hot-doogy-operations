@@ -26,7 +26,7 @@ export const REPORTS=[
  template('pnl','Profit & loss','Costs','Readiness for a complete income statement including operating expenses.',[],'Accounting period'),
 ];
 export const reportRoute=id=>`report-${id}`;
-export const defaultReportFilters=()=>({start:'',end:'',supplier:'all',category:'all',item:'all',area:'all',status:'all',destination:'all',reason:'all',method:'all',weekday:'all',hour:'all',dateBasis:'invoice',query:'',metric:'netSales',sort:'',direction:'asc',page:1,pageSize:25});
+export const defaultReportFilters=()=>({start:'',end:'',supplier:'all',category:'all',item:'all',area:'all',status:'all',destination:'all',reason:'all',method:'all',weekday:'all',hour:'all',dateBasis:'invoice',query:'',metric:'netSales',chartCompare:'locations',chartInterval:'day',chartView:'line',chartLimit:'10',sort:'',direction:'asc',page:1,pageSize:25});
 const num=v=>v===null||v===undefined||v===''||!Number.isFinite(Number(v))?null:Number(v);
 const subtract=(a,b)=>num(a)==null||num(b)==null?null:Number(a)-Number(b);
 const sum=(rows,key)=>rows.length&&rows.every(r=>num(r[key])!=null)?rows.reduce((s,r)=>s+Number(r[key]),0):null;
@@ -37,7 +37,7 @@ const dateCol=col('date','Date','date'),locationCol=col('location','Location'),i
 function selected(row,f,location){
  if(location!=='all'&&row.locationId!==location&&row.fromLocationId!==location)return false;
  for(const [filter,key] of Object.entries({supplier:'supplierId',category:'categoryId',item:'itemId',area:'areaId',status:'status',destination:'toLocationId',reason:'reason',method:'method',weekday:'weekday',hour:'hour'})){
-  if(f[filter]&&f[filter]!=='all'&&String(row[key])!==String(f[filter]))return false;
+  if(f[filter]&&f[filter]!=='all'&&!(Array.isArray(f[filter])?f[filter]:[f[filter]]).map(String).includes(String(row[key])))return false;
  }
  return inRange(row.date,f)&&(!f.query||norm(Object.values(row).filter(v=>typeof v==='string').join(' ')).includes(norm(f.query)));
 }
@@ -81,7 +81,7 @@ export function buildReport(id,data,filters={},location='all',local={}){
   columns.push(col('quantity','Quantity','number'),col('grossSales','Gross sales','money'),col('discounts','Discounts','money'),col('netSales','Net sales','money'));
   metrics.push({label:'Net sales',value:sum(rows,'netSales'),type:'money'},{label:'Units sold',value:sum(rows,'quantity'),type:'number'});
  }else if(id==='food-cost'){
-  rows=foodCostRows(data,local,location).map(r=>({locationId:r.location.id,location:r.location.name,itemId:r.recipe.id,name:r.recipe.name,categoryIds:r.categories.map(c=>c.id),category:r.categories.map(c=>c.name).join(', '),status:r.status,version:r.recipe.version,recipeStatus:r.recipe.status,cost:r.cost.total,price:r.cost.sellingPrice,foodCost:r.cost.foodCostPercent,margin:r.cost.grossMargin,optimalPrice:r.optimalPrice,note:r.cost.issues.join(' · ')})).filter(r=>f.category==='all'||r.categoryIds.includes(f.category));
+  rows=foodCostRows(data,local,location).map(r=>({locationId:r.location.id,location:r.location.name,itemId:r.recipe.id,name:r.recipe.name,categoryIds:r.categories.map(c=>c.id),category:r.categories.map(c=>c.name).join(', '),status:r.status,version:r.recipe.version,recipeStatus:r.recipe.status,cost:r.cost.total,price:r.cost.sellingPrice,foodCost:r.cost.foodCostPercent,margin:r.cost.grossMargin,optimalPrice:r.optimalPrice,note:r.cost.issues.join(' · ')})).filter(r=>f.category==='all'||(Array.isArray(f.category)?f.category:[f.category]).some(id=>r.categoryIds.includes(id)));
   columns=[locationCol,itemCol,col('version','Recipe version','number'),col('recipeStatus','Recipe status'),col('cost','Unit cost','money'),col('price','Selling price','money'),col('foodCost','Food cost','percent'),col('margin','Theoretical margin','percent'),col('optimalPrice','Price at 25% target','money'),col('status','Target status'),col('note','Calculation notes')];
   warnings.push('Current catalog calculation, not historical profitability. Uses the latest displayed recipe version, including drafts, and a 25% target. Margin excludes operating expenses.');
  }else if(['usage','reorder'].includes(id)){
@@ -97,7 +97,7 @@ export function buildReport(id,data,filters={},location='all',local={}){
   const invoices=(data.invoices||[]).map(i=>({...i,location:loc(i.locationId),supplier:i.supplierName,status:financialStatus(i),date:reportDay(id==='cash'?i.paymentDate:f.dateBasis==='due'&&id==='payables'?i.dueDate:i.date||i.invoiceDate),method:i.paymentMethod||'Not recorded'}));
   if(id==='purchases'){
    const eligible=invoices.filter(i=>!['draft','cancelled'].includes(i.status));
-   const missing=eligible.filter(i=>(location==='all'||i.locationId===location)&&selected({...i,itemId:f.item,categoryId:f.category},f,location)&&!i.lines?.length).length;
+   const missing=eligible.filter(i=>(location==='all'||i.locationId===location)&&selected(i,{...f,item:'all',category:'all'},location)&&!i.lines?.length).length;
    if(missing)warnings.push(`${missing} matching invoices have no item lines and are excluded from the item breakdown.`);
    rows=eligible.flatMap(i=>(i.lines||[]).map(l=>({...itemInfo(l.itemId||l.inventoryItemId),date:i.date,locationId:i.locationId,location:i.location,supplierId:i.supplierId,supplier:i.supplier,number:i.number,status:i.status,quantity:l.quantity??l.qty,unit:l.uom||l.uomName||l.sourceUnit,unitPrice:l.unitPrice,lineTotal:l.lineTotal,currency:i.currency||'USD'})));
    columns=[...base,col('supplier','Supplier'),col('number','Invoice'),col('status','Status'),col('quantity','Quantity','number'),unitCol,col('unitPrice','Unit price','money'),col('lineTotal','Line total','money'),col('currency','Currency')];
@@ -166,6 +166,7 @@ export function buildReport(id,data,filters={},location='all',local={}){
  if(id==='payables')metrics.push({label:'Unpaid invoice totals (USD)',value:sum(rows.filter(r=>['unpaid','overdue'].includes(r.status)&&r.currency==='USD'),'total'),type:'money'});
  if(id==='cash')metrics.push({label:'Dated paid invoice totals (USD)',value:sum(rows.filter(r=>r.currency==='USD'),'total'),type:'money'});
  if(id==='waste')metrics.push({label:'Recorded estimated loss',value:sum(rows,'cost'),type:'money'});
+ columns=columns.filter(c=>c.key!=='note');
  if(f.sort&&columns.some(c=>c.key===f.sort)){
   const direction=f.direction==='desc'?-1:1;
   rows.sort((a,b)=>{const av=a[f.sort],bv=b[f.sort];if(av==null||bv==null)return av==null?(bv==null?0:1):-1;return direction*(typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),'en-US',{numeric:true}));});

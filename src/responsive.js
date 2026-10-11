@@ -35,9 +35,10 @@ function enhanceTables() {
     const headers = [...(table.tHead?.rows[0]?.cells || [])];
     if (!headers.length) continue;
     table.parentElement.classList.add('responsive-table-container');
-    table.classList.add('responsive-table');
-    table.classList.toggle('responsive-table-wide', headers.length > 5);
-    table.classList.toggle('responsive-table-extra-wide', headers.length > 9);
+    const cards=table.dataset.tableLayout!=='rows';
+    table.classList.toggle('responsive-table',cards);
+    table.classList.toggle('responsive-table-wide', cards && headers.length > 5);
+    table.classList.toggle('responsive-table-extra-wide', cards && headers.length > 9);
     // Explicit roles preserve table navigation when CSS changes the visual layout.
     table.setAttribute('role', 'table');
     table.tHead.setAttribute('role', 'rowgroup');

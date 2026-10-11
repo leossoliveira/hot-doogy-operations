@@ -78,3 +78,19 @@ test('PMIX consolidates stores, switches quantity ranking and preserves revenue 
  assert.equal(buildReport('mix',d,{},'a').rows.find(r=>r.itemId==='m').netSales,100);
  assert.ok(!revenue.columns.some(c=>c.key==='location'));
 });
+
+test('multi-item and multi-category filters intersect, including none and legacy single values',()=>{
+ const d=base();d.costInputs.menus.push({id:'m2',name:'Fries',categoryId:'sides'},{id:'m3',name:'Soda',categoryId:'drinks'});
+ d.salesPeriods.facts=[sale(),sale({menuItemId:'m2',netSales:5}),sale({menuItemId:'m3',netSales:3})];
+ assert.equal(buildReport('mix',d,{item:['m','m2'],category:['food','sides']}).rows.length,2);
+ assert.equal(buildReport('mix',d,{item:['m','m2'],category:['food']}).rows.length,1);
+ assert.equal(buildReport('sales',d,{item:[]}).rows.length,0);assert.equal(buildReport('sales',d,{category:[]}).rows.length,0);
+ assert.equal(buildReport('mix',d,{item:'m'}).rows.length,1);
+ assert.match(reportCsv(buildReport('mix',d,{item:['m','m2']})),/m2/);
+});
+test('all report pages place filters before metrics and charts, omit generic row and coverage panels',()=>{
+ const d=base(),s={route:'report-sales',store:'all'};d.salesPeriods.facts=[sale()];
+ const ui=createReportsUI({data:()=>d,local:()=>({}),state:()=>s,render:()=>{},heading:()=>'',btn:()=>'',icon:()=>'',download:()=>{}});
+ for(const r of REPORTS){s.route=reportRoute(r.id);const html=ui.page();assert.ok(html.indexOf('report-filter-panel')<html.indexOf('panel report-chart'));assert.ok(html.indexOf('report-summary')<html.indexOf('panel report-chart'));assert.doesNotMatch(html,/Matching rows|aria-label="Report coverage"/);}
+ s.route='report-sales';assert.match(ui.page(),/report-item-select/);assert.match(ui.page(),/report-category-select/);
+});
