@@ -27,3 +27,11 @@ The gear opens the conversation's existing `systemPrompt` and group mention rule
 Interactive calls require `HOT_DOOGY_OPENCLAW_SSH_HOST`; the metadata-only export does not support chat or settings. The server resolves the requested conversation against actual WhatsApp sessions and never accepts an arbitrary destination or RPC method from the browser. Sending uses a stable gateway idempotency key scoped to actor, conversation and request. An uncertain send retains the same text/key for retry. No real messages were sent and no live rules changed during validation. Gateway availability and its own retained idempotency state remain prerequisites for retry protection.
 
 Validation: 248 passing application tests; live read-only history/settings verification; UI history and settings checks. Production interactive connection setup remains part of deployment, not included in this local preview.
+
+## Production bridge
+
+Production supports interactive calls through `HOT_DOOGY_OPENCLAW_SOCKET=/run/hot-doogy-openclaw/bridge.sock`. Install `deploy/hot-doogy-openclaw.service` and the application drop-in `deploy/openclaw-bridge.conf`. The bridge runs under the existing OpenClaw identity and exposes only directory/history/settings/send operations over a root:hotdoogy 0660 Unix socket in a 0750 runtime directory. It binds no TCP port. The restricted web process still authenticates the Supabase session and requires owner/admin; it receives no SSH keys, gateway tokens, raw configuration, arbitrary RPC or shell capability.
+
+Each conversation is re-resolved from WhatsApp sessions. Settings patches are built server-side and limited to its prompt and mention rule. The code is loaded from the active root-owned release. `PartOf=hot-doogy.service` restarts the bridge with releases/rollbacks; the app's drop-in starts it when needed. Never make release source writable by the web user. The older metadata exporter remains an optional read-only alternative, not the production interactive path.
+
+Deployment checks: service state, private socket permissions, directory/history/settings read as the web-service user, public authenticated API boundary, and release SHA. Sending and configuration writes are covered by isolated tests rather than posting real messages or changing live conversation rules.

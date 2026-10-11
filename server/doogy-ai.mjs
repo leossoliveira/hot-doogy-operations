@@ -1,3 +1,4 @@
+import {bridgeRequest} from './doogy-bridge-client.mjs';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {readFile} from 'node:fs/promises';
@@ -16,6 +17,7 @@ export function sanitizeWhatsappDirectory(value){
 let cached=null,pending=null;
 export async function readWhatsappDirectory(role,path=process.env.HOT_DOOGY_WHATSAPP_DIRECTORY||'/var/lib/hot-doogy/whatsapp-directory.json'){
  if(!['owner','admin'].includes(role))throw new ApiError(403,'Doogy AI is available to administrators only.');
+ if(process.env.HOT_DOOGY_OPENCLAW_SOCKET)return bridgeRequest('directory');
  if(process.env.HOT_DOOGY_OPENCLAW_SSH_HOST){
   if(cached&&Date.now()-Date.parse(cached.syncedAt)<30000)return {...cached,stale:false};
   if(!pending)pending=(async()=>{

@@ -1,3 +1,4 @@
+import {bridgeRequest} from './doogy-bridge-client.mjs';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {createHash} from 'node:crypto';
@@ -77,4 +78,10 @@ export function createConversationService(call=openClawCall){
   }
  };
 }
-export const conversationService=createConversationService();
+const sshConversationService=createConversationService();
+export const conversationService=Object.fromEntries(['history','settings','saveSettings','send'].map(action=>[action,async(role,...args)=>{
+ if(!['owner','admin'].includes(role))throw new ApiError(403,'Doogy AI is available to administrators only.');
+ if(!process.env.HOT_DOOGY_OPENCLAW_SOCKET)return sshConversationService[action](role,...args);
+ const payload=action==='send'?{actor:args[0],id:args[1],input:args[2]}:action==='history'?{id:args[0],offset:args[1]}:{id:args[0],input:args[1]};
+ return bridgeRequest(action,payload);
+}]));

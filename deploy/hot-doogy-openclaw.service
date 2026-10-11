@@ -1,0 +1,27 @@
+[Unit]
+Description=HOT DOOGY restricted OpenClaw conversation bridge
+After=network-online.target
+PartOf=hot-doogy.service
+
+[Service]
+Type=simple
+User=root
+Group=hotdoogy
+WorkingDirectory=/opt/hot-doogy/current
+Environment=HOME=/root
+RuntimeDirectory=hot-doogy-openclaw
+RuntimeDirectoryMode=0750
+ExecStart=/usr/bin/node server/doogy-bridge.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/root/.openclaw
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+UMask=0007
+MemoryMax=512M
