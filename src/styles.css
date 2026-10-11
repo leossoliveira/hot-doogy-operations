@@ -186,3 +186,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .food-cost-sort{border:0;background:none;color:inherit;font:inherit;text-align:left;padding:0;display:inline-flex;align-items:center;gap:6px}.food-cost-sort span{font-size:13px}
 
 :is(.catalog-sort,.invoice-sort,.prep-sort,.food-cost-sort){display:inline-flex;align-items:center;gap:6px}:is(.catalog-sort,.invoice-sort,.prep-sort,.food-cost-sort) .icon{width:14px;height:14px;flex-shrink:0}
+
+[data-action="food-clear-filters"]{height:var(--control-height,44px);min-height:var(--control-height,44px);box-sizing:border-box}
