@@ -174,3 +174,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .store-picker,.date-control{padding-top:0;padding-bottom:0;min-height:var(--control-height)}
 .store-picker select,.date-control select{height:calc(var(--control-height) - 2px)!important;min-height:0!important}
 @media(max-width:1024px),(pointer:coarse){:root{--control-font-size:16px}}
+
+.invoice-review-section{border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}.invoice-review-section>summary{font-size:15px;font-weight:600;cursor:pointer}.invoice-review-section[open]>summary{margin-bottom:16px}.invoice-review-section>summary:focus-visible{outline:2px solid #d2b324;outline-offset:4px}
