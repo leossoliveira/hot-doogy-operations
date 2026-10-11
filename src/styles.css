@@ -184,3 +184,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .food-cost-alert{background:#fff6f4}.food-cost-alert td:first-child{box-shadow:inset 3px 0 var(--red)}
 
 .food-cost-sort{border:0;background:none;color:inherit;font:inherit;text-align:left;padding:0;display:inline-flex;align-items:center;gap:6px}.food-cost-sort span{font-size:13px}
+
+:is(.catalog-sort,.invoice-sort,.prep-sort,.food-cost-sort){display:inline-flex;align-items:center;gap:6px}:is(.catalog-sort,.invoice-sort,.prep-sort,.food-cost-sort) .icon{width:14px;height:14px;flex-shrink:0}
