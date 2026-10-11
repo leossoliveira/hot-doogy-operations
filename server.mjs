@@ -15,7 +15,7 @@ import {readTables,projectData} from './server/live-data.mjs';
 import {photos} from './server/photo-api.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),port=Number(process.env.PORT||4173),auth=createAuth();
 const allowedHosts=new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
+const mime={'.mjs':'text/javascript; charset=utf-8','.wasm':'application/wasm','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
 http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost');
@@ -54,6 +54,6 @@ http.createServer(async(req,res)=>{
   const relative=part==='/'?'index.html':part.startsWith('/src/')?part.slice(1):'public'+part,file=path.resolve(root,relative);
   if(file.startsWith(path.join(root,'public','data')+path.sep)||!file.startsWith(root+path.sep))throw new ApiError(403,"Access denied.");
   const body=await readFile(file);
-  res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"});res.end(req.method==='HEAD'?undefined:body);
+  res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"});res.end(req.method==='HEAD'?undefined:body);
  }catch(error){reply(res,error.status||500,{error:error.status?error.message:"Unable to complete the request. Try again."});}
 }).listen(port,'127.0.0.1',()=>console.log(`HOT DOOGY Operations → http://127.0.0.1:${port}`));
