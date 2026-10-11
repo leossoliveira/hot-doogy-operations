@@ -374,7 +374,7 @@ function markInvoicePaid(el){
  const invoice=records('invoices').find(x=>x.id===el.dataset.id);
  if(!invoice||!canEditInvoiceStatus(session?.role)||!['unpaid','overdue'].includes(financialStatus(invoice)))return;
  const today=new Date().toLocaleDateString('en-CA');
- openModal('Record payment',`<p>Invoice ${e(invoice.number)} · ${e(invoice.supplierName)}</p><label class="field">Payment date<input id="invoice-payment-date" type="date" required value="${today}"></label><p id="invoice-payment-error" class="error-text" role="alert"></p>`,btn('Cancel','invoice','','',`data-id="${e(invoice.id)}"`)+btn('Save payment','invoice-payment-save','check','invoice-paid-button',`data-id="${e(invoice.id)}"`));
+ openModal('Payment Date',`<p>Invoice ${e(invoice.number)} · ${e(invoice.supplierName)}</p><label class="field"><input aria-label="Payment date" id="invoice-payment-date" type="date" required value="${today}"></label><p id="invoice-payment-error" class="error-text" role="alert"></p>`,btn('Cancel','invoice','','',`data-id="${e(invoice.id)}"`)+btn('Save payment','invoice-payment-save','check','invoice-paid-button',`data-id="${e(invoice.id)}"`));
 }
 async function saveInvoicePayment(el){
  const invoice=records('invoices').find(x=>x.id===el.dataset.id),input=$('#invoice-payment-date');
