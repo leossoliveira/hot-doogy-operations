@@ -62,7 +62,7 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
     const stored=financialStatus(x),paid=(x.dbStatus??x.status)==='paid';
     let body=intro(x)+grid([["INVOICE DATE",when(x.date,true)],["Due Date",when(x.dueDate,true)]]);
     body+=section("Invoice amounts",grid([['Subtotal',amount(x.subtotal)],["Tax",amount(x.tax)],["Fees",amount(x.fees)],['Total',amount(x.total)]]));
-    if(paid&&x.paymentDate)body+=grid([["Payment date",when(x.paymentDate,true)],["Payment method",text(({credit_card:"Credit card",debit_card:"Debit card",bank_transfer:"Bank transfer"})[x.paymentMethod]||"Not specified")]]);
+    if(paid&&x.paymentDate)body+='<div class="invoice-payment-details">'+grid([["Payment date",when(x.paymentDate,true)],["Payment method",text(({credit_card:"Credit card",debit_card:"Debit card",bank_transfer:"Bank transfer"})[x.paymentMethod]||"Not specified")]])+'</div>';
     if(paid&&!x.paymentDate)body+="<p class=\"operation-help\">This invoice is marked as paid in the database. The historical payment date was not recorded.</p>";
     body+=section("Invoice items",(list(x.lines).length?table(["Product / SKU","Quantity","Unit","Unit price","Total"],x.lines.map(l=>row([product(l),number(l.quantity??l.qty),text(l.uom),amount(x.intakeSource==='llm'?l.unitPrice:l.catalogUnitPrice),amount(l.lineTotal)])))+'<p class="operation-help">Invoice totals remain as recorded. Review the original document before approval.</p>':emptyLines())+'<p class="invoice-item-count">Total items <strong>'+number(x.lineCount??list(x.lines).length)+'</strong></p>');
     const declared=x.extraction?.receiving;
