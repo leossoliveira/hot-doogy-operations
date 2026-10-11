@@ -176,3 +176,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 @media(max-width:1024px),(pointer:coarse){:root{--control-font-size:16px}}
 
 .invoice-review-section{border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}.invoice-review-section>summary{font-size:15px;font-weight:600;cursor:pointer}.invoice-review-section[open]>summary{margin-bottom:16px}.invoice-review-section>summary:focus-visible{outline:2px solid #d2b324;outline-offset:4px}
+
+.invoice-review-editor .invoice-review-header-fields{grid-template-columns:repeat(4,minmax(0,1fr))}.invoice-summary .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.invoice-summary .invoice-summary-amounts{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:16px}.invoice-summary label{font-size:12px;min-width:0}.invoice-summary input,.invoice-summary select{width:100%;min-width:0}@media(max-width:600px){.invoice-review-editor .invoice-review-header-fields,.invoice-summary .invoice-summary-amounts{grid-template-columns:repeat(2,minmax(0,1fr))}}
