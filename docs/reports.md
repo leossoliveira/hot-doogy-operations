@@ -13,7 +13,7 @@ The report catalog and computations live in `src/reports-model.js`; UI/filter st
 
 ## Filters and output
 
-Each report preserves its own filters during the browser session. The top-bar location filter applies to every report; transfers match either origin or destination. Compatible reports expose supplier, item, category, area, status, destination, reason, payment method, weekday or hour. Accounts payable supports invoice-date or due-date filtering.
+Each report preserves its own filters during the browser session. Date-enabled reports use the shared calendar with Single date and Date range modes. Filter names appear inside their controls, Item precedes Category, and reports have no search field. The top-bar location filter applies to every report; transfers match either origin or destination. Compatible reports expose supplier, item, category, area, status, destination, reason, payment method, weekday or hour. Accounts payable supports invoice-date or due-date filtering.
 
 Date boundaries are inclusive calendar dates in America/New_York. A missing boundary is open-ended. Usage and replenishment require both boundaries because their estimates need a defined sales period. Food cost uses the current catalog and latest displayed recipe version, and deliberately does not offer historical date filtering. Production uses completion dates for completed batches and creation dates for other batches. Missing reporting dates remain visible without date filters and are excluded, with a count notice, when dates are selected.
 

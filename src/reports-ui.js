@@ -1,3 +1,4 @@
+import {openDatePicker,dateTriggerContent} from './date-picker.js';
 import {REPORTS,reportRoute,defaultReportFilters,buildReport,reportCsv,reportDay} from './reports-model.js';
 import {escape as e} from './model.js';
 import {usDate} from './locale.js';
@@ -36,9 +37,12 @@ export function createReportsUI({data,local,state,render,heading,btn,icon,downlo
   return [];
  }
  function controls(spec,f){
-  const select=(key,rows)=>`<label>${e(labels[key])}<select data-report-filter="${key}">${key==='dateBasis'?'':'<option value="all">All</option>'}${rows.slice().sort((a,b)=>key==='weekday'||key==='hour'?0:a.name.localeCompare(b.name)).map(r=>`<option value="${e(r.id)}" ${f[key]===r.id?'selected':''}>${e(r.name)}</option>`).join('')}</select></label>`;
-  return `<section class="panel report-filter-panel" aria-label="Report filters"><div class="report-filters">${spec.dateLabel?`<label>Start date<input type="date" data-report-filter="start" value="${e(f.start)}" aria-label="Start date, inclusive"></label><label>End date<input type="date" data-report-filter="end" value="${e(f.end)}" aria-label="End date, inclusive"></label>`:''}${spec.filters.map(key=>select(key,optionsFor(key,spec))).join('')}<label class="report-search">Search<input type="search" data-report-filter="query" value="${e(f.query)}" placeholder="Search report" aria-label="Search report"></label><div class="report-filter-buttons">${btn('Apply filters','report-apply','filter','primary')}${btn('Reset','report-reset','rotate-ccw')}</div></div><p class="report-filter-help">${e(spec.dateLabel?`Dates are inclusive · America/New_York · ${spec.dateLabel}`:'Current catalog and latest recipe versions · historical date filtering is not available')} · Location: ${e((data().locations||[]).find(l=>l.id===state().store)?.name||'All locations')} (top bar)</p></section>`;
+  const select=(key,rows)=>`<select data-report-filter="${key}" aria-label="${e(labels[key])}">${key==='dateBasis'?'':`<option value="all">${e(labels[key])}: All</option>`}${rows.slice().sort((a,b)=>key==='weekday'||key==='hour'?0:a.name.localeCompare(b.name)).map(r=>`<option value="${e(r.id)}" ${f[key]===r.id?'selected':''}>${e(labels[key])}: ${e(r.name)}</option>`).join('')}</select>`;
+  const ordered=[...spec.filters];
+  if(ordered.includes('item')&&ordered.includes('category')){ordered.splice(ordered.indexOf('item'),1);ordered.splice(ordered.indexOf('category'),0,'item');}
+  return `<section class="panel report-filter-panel" aria-label="Report filters"><div class="report-filters">${spec.dateLabel?`<button class="hd-date-trigger" data-action="report-calendar" aria-label="Date: select a single date or date range" aria-haspopup="dialog" aria-expanded="false">${dateTriggerContent(f.start,f.end)}</button>`:''}${ordered.map(key=>select(key,optionsFor(key,spec))).join('')}<div class="report-filter-buttons">${btn('Apply filters','report-apply','filter','primary')}${btn('Reset','report-reset','rotate-ccw')}</div></div><p class="report-filter-help">${e(spec.dateLabel?`Dates are inclusive · America/New_York · ${spec.dateLabel}`:'Current catalog and latest recipe versions · historical date filtering is not available')} · Location: ${e((data().locations||[]).find(l=>l.id===state().store)?.name||'All locations')} (top bar)</p></section>`;
  }
+
  function page(){
   const id=currentId(),spec=REPORTS.find(r=>r.id===id);if(!spec)return catalog();
   const f=filters();let result,error;
@@ -53,6 +57,7 @@ export function createReportsUI({data,local,state,render,heading,btn,icon,downlo
  }
  return {catalog,page,actions:{
   'report-apply':apply,
+  'report-calendar':anchor=>{const f=filters();openDatePicker({anchor,range:true,start:f.start,end:f.end,onApply:({start,end})=>{f.start=start;f.end=end;f.page=1;render();},onClear:()=>{f.start='';f.end='';f.page=1;render();}});},
   'report-print':()=>{const f=filters(),size=f.pageSize,page=f.page;f.pageSize='all';f.page=1;render();try{window.print();}finally{f.pageSize=size;f.page=page;render();}},
   'report-reset':()=>{saved.set(currentId(),defaultReportFilters());render();},
   'report-sort':el=>{const f=filters();f.direction=f.sort===el.dataset.key&&f.direction==='asc'?'desc':'asc';f.sort=el.dataset.key;render();},
