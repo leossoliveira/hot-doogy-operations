@@ -374,14 +374,14 @@ function markInvoicePaid(el){
  const invoice=records('invoices').find(x=>x.id===el.dataset.id);
  if(!invoice||!canEditInvoiceStatus(session?.role)||!['unpaid','overdue'].includes(financialStatus(invoice)))return;
  const today=new Date().toLocaleDateString('en-CA');
- openModal('Payment Date',`<p>Invoice ${e(invoice.number)} · ${e(invoice.supplierName)}</p><label class="field"><input aria-label="Payment date" id="invoice-payment-date" type="date" required value="${today}"></label><p id="invoice-payment-error" class="error-text" role="alert"></p>`,btn('Cancel','invoice','','',`data-id="${e(invoice.id)}"`)+btn('Save payment','invoice-payment-save','check','invoice-paid-button',`data-id="${e(invoice.id)}"`));
+ openModal('Payment Date',`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label class="field"><input aria-label="Payment date" id="invoice-payment-date" type="date" required value="${today}"></label><select class="filter-select" id="invoice-payment-method" aria-label="Payment method (optional)"><option value="">Payment method (optional)</option value="credit_card">Credit card</option><option value="debit_card">Debit card</option><option value="bank_transfer">Bank transfer</option></select></div><p id="invoice-payment-error" class="error-text" role="alert"></p>`,btn('Cancel','invoice','','',`data-id="${e(invoice.id)}"`)+btn('Save payment','invoice-payment-save','check','invoice-paid-button',`data-id="${e(invoice.id)}"`));
 }
 async function saveInvoicePayment(el){
  const invoice=records('invoices').find(x=>x.id===el.dataset.id),input=$('#invoice-payment-date');
  if(!invoice||!input?.reportValidity())return;
  el.disabled=true;el.textContent='Saving…';
  try{
-  await api('/api/invoices/'+invoice.id+'/status',{status:'paid',paymentDate:input.value,expectedStatus:invoice.dbStatus??invoice.status,expectedUpdatedAt:invoice.updatedAt});
+  await api('/api/invoices/'+invoice.id+'/status',{status:'paid',paymentDate:input.value,paymentMethod:$('#invoice-payment-method').value||null,expectedStatus:invoice.dbStatus??invoice.status,expectedUpdatedAt:invoice.updatedAt});
   try{await refreshData();}catch{closeModal(true);render();toast('Payment saved. Reload to see the updated history.','circle-alert');return;}
   closeModal(true);render();showInvoice(invoice.id);toast('Payment recorded.');
  }catch(error){const box=$('#invoice-payment-error');if(box)box.textContent=error.message;}

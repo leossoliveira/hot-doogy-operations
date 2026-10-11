@@ -15,7 +15,7 @@ test('financial roles save only the requested status with the session token and 
   await updateInvoiceStatus(req({...body,organizationId:'untrusted',total:0}),response,url,{request:async(path,options)=>{call={path,...options};return {id,status:'paid',changed:true};}},{member:{role},token:'test-token'});
   assert.equal(response.status,200);assert.equal(response.body.status,'paid');assert.equal(call.token,'test-token');
   assert.equal(call.path,'/rest/v1/rpc/record_invoice_payment');
-  assert.deepEqual(Object.keys(call.body).sort(),['p_expected_status','p_expected_updated_at','p_invoice_id','p_organization_id','p_payment_date','p_status']);
+  assert.deepEqual(Object.keys(call.body).sort(),['p_expected_status','p_expected_updated_at','p_invoice_id','p_organization_id','p_payment_date','p_payment_method','p_status']);
   assert.equal(call.body.p_invoice_id,id);assert.notEqual(call.body.p_organization_id,'untrusted');assert.equal(call.body.p_expected_updated_at,body.expectedUpdatedAt);
  }
 });
@@ -58,4 +58,11 @@ test('confirmed deletion uses scoped RPC and propagates failures without success
 
 test('payment requires a real calendar date before contacting the database',async()=>{
  for(const paymentDate of ['',undefined,'2026-02-30','10/09/2026'])await assert.rejects(updateInvoiceStatus(req({...body,paymentDate}),res(),url,{request:()=>assert.fail('No mutation')},{member:{role:'admin'}}),e=>e.status===400);
+});
+
+test('payment method accepts one supported value or omission',async()=>{
+ for(const paymentMethod of [null,'credit_card','debit_card','bank_transfer']){
+ let saved;await updateInvoiceStatus(req({...body,paymentMethod}),res(),url,{request:async(p,o)=>{saved=o.body;return {}; }},{member:{role:'admin'}});assert.equal(saved.p_payment_method,paymentMethod);
+ }
+ for(const paymentMethod of ['cash',['credit_card','debit_card']])await assert.rejects(updateInvoiceStatus(req({...body,paymentMethod}),res(),url,{request:()=>assert.fail('No mutation')},{member:{role:'admin'}}),e=>e.status===400);
 });

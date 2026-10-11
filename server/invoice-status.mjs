@@ -9,12 +9,13 @@ export async function updateInvoiceStatus(req, res, url, auth, session) {
   const body = await jsonBody(req, 4096);
   if (!validInvoiceStatusChange(body)) throw new ApiError(400, 'Choose a valid invoice status and reload the invoice before saving.');
   if(body.status==='paid'&&!validPaymentDate(body.paymentDate))throw new ApiError(400,'Choose a valid payment date.');
+  if(body.paymentMethod!=null&&!['credit_card','debit_card','bank_transfer'].includes(body.paymentMethod))throw new ApiError(400,'Choose a valid payment method.');
   const result = await auth.request(body.status==='paid'?'/rest/v1/rpc/record_invoice_payment':'/rest/v1/rpc/update_invoice_status', {
     token: session.token, method: 'POST', body: {
       p_invoice_id: match[1], p_organization_id: ORGANIZATION_ID,
       p_status: body.status, p_expected_status: body.expectedStatus,
       p_expected_updated_at: body.expectedUpdatedAt,
-      ...(body.status==='paid'?{p_payment_date:body.paymentDate}:{}),
+      ...(body.status==='paid'?{p_payment_date:body.paymentDate,p_payment_method:body.paymentMethod??null}:{}),
     },
   });
   reply(res, 200, result);
