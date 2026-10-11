@@ -182,3 +182,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .invoice-review-editor .invoice-review-three-fields{grid-template-columns:repeat(3,minmax(0,1fr))}.invoice-review-numbers .invoice-remove-item{width:44px;height:44px;padding:0}.invoice-summary .invoice-review-warnings{margin-top:20px}.invoice-payment-details{margin-top:16px}@media(max-width:600px){.invoice-review-editor .invoice-review-three-fields{grid-template-columns:1fr}}
 
 .food-cost-alert{background:#fff6f4}.food-cost-alert td:first-child{box-shadow:inset 3px 0 var(--red)}
+
+.food-cost-sort{border:0;background:none;color:inherit;font:inherit;text-align:left;padding:0;display:inline-flex;align-items:center;gap:6px}.food-cost-sort span{font-size:13px}

@@ -567,3 +567,5 @@ document.addEventListener('change',ev=>{if(ev.target.matches('[data-price-page-s
 document.addEventListener('change',ev=>{if(ev.target.matches('[data-price-history-period]'))supplierUI.showInvoicePriceHistory(ev.target.dataset.id,ev.target.value);});
 
 document.addEventListener('change',ev=>{if(ev.target.matches('[data-food-status]')){foodCostView.status=ev.target.value;state.page=1;render();}if(ev.target.matches('[data-food-category]')){foodCostView.category=ev.target.value;state.page=1;render();}if(ev.target.matches('[data-food-per]')){foodCostView.per=ev.target.value==='all'?'all':Number(ev.target.value);state.page=1;render();}});
+
+document.addEventListener('click',ev=>{const el=ev.target.closest('[data-food-sort]');if(!el)return;const key=el.dataset.foodSort;foodCostView.direction=foodCostView.sort===key&&foodCostView.direction==='asc'?'desc':'asc';foodCostView.sort=key;state.page=1;render();});
