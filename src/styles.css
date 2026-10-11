@@ -188,3 +188,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 :is(.catalog-sort,.invoice-sort,.prep-sort,.food-cost-sort){display:inline-flex;align-items:center;gap:6px}:is(.catalog-sort,.invoice-sort,.prep-sort,.food-cost-sort) .icon{width:14px;height:14px;flex-shrink:0}
 
 [data-action="food-clear-filters"]{height:var(--control-height,44px);min-height:var(--control-height,44px);box-sizing:border-box}
+
+.catalog-delete-button{background:#b92318;color:#fff;border-color:#b92318}.catalog-toggle-button{background:#eceeea;color:#454c40;border-color:#d7dbd2}

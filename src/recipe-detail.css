@@ -1,4 +1,4 @@
-.recipe-photo{display:flex;gap:18px;align-items:center;border:1px solid var(--line,#e5e8df);padding:16px;border-radius:14px;margin:0 0 24px;background:#fafbf7}
+.recipe-photo{display:flex;gap:18px;align-items:center;border:1px solid var(--line,#e5e8df);padding:16px;border-radius:14px;margin:24px 0;background:#fafbf7}
 .recipe-photo-preview{width:100px;height:100px;flex-shrink:0;display:grid;place-items:center;border-radius:10px;background:#edf0e5;color:#869575;overflow:hidden}
 .recipe-photo-preview img{width:100%;height:100%;object-fit:cover}
 .recipe-photo-preview>.icon{width:30px;height:30px}

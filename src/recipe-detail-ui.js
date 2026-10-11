@@ -1,7 +1,7 @@
 import {cloudPhotoSource} from './photo-storage.js';
-import {escape as e} from './model.js';
+import {escape as e,date} from './model.js';
 
-const tabs=[['ingredients',"Ingredients"],['packaging',"Packaging"],['cost','Cost'],['steps','Step-by-Step']];
+const tabs=[['ingredients',"Ingredients"],['packaging',"Packaging"],['cost','Cost'],['steps','Step-by-Step'],['history','Version history']];
 const photoSource=photo=>cloudPhotoSource(photo)||(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo?.src||'')?photo.src:null);
 export function recipePhotoView(recipe,photo,readOnly=false){
   const src=photoSource(photo);
@@ -16,6 +16,8 @@ export function recipeDetailTabs(recipe,componentsView,costView){
     ingredients:`<div class="section-title recipe-section-title"><div>Ingredients <span class="pill-count">${ingredients.length}</span><p>Quantities reflect this version’s yield.</p></div></div>${componentsView({...recipe,components:ingredients})}`,
     packaging:`<div class="section-title recipe-section-title"><div>Packaging <span class="pill-count">${packaging.length}</span><p>Materials used for packing and serving.</p></div></div>${!recipe.componentsLoaded?componentsView(recipe):packaging.length?componentsView({...recipe,components:packaging}):"<div class=\"recipe-empty\"><h3>No packaging added</h3><p>Use Edit ingredients to add a Packaging item.</p></div>"}`,
     cost:costView,
+    history:`<div class="section-title">Version history</div>${recipe.versions?.length?`<div class="table-wrap"><table><thead><tr><th>Version</th><th>Status</th><th>Created</th><th>Notes</th></tr></thead><tbody>${recipe.versions.map(v=>`<tr><td>${e(v.version)}${v.id===recipe.versionId?' · Current':''}</td><td>${e(v.status||'—')}</td><td>${v.createdAt?date(v.createdAt):'—'}</td><td>${e(v.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">No version history available.</p>'}`,
+
     steps:`<div class="section-title">Prep instructions</div>${steps.length?`<ol class="recipe-steps">${steps.map((s,i)=>`<li><span class="recipe-step-number">${i+1}</span><div><h3>${e(s.title||`Step ${i+1}`)}</h3><p>${e(s.instructions||'')}</p></div></li>`).join('')}</ol>`:"<div class=\"recipe-empty\"><h3>No instructions added</h3><p>This version has no prep instructions yet.</p></div>"}${recipe.notes?`<div class="section-title">Recipe notes</div><p class="recipe-step-notes">${e(recipe.notes)}</p>`:''}`
   };
   return `<div class="recipe-detail-tabs" role="tablist" aria-label="Recipe details">${tabs.map(([id,label],i)=>`<button id="recipe-tab-${id}" type="button" role="tab" aria-selected="${i===0}" aria-controls="recipe-panel-${id}" tabindex="${i===0?0:-1}" data-action="recipe-detail-tab" data-tab="${id}">${label}</button>`).join('')}</div>${tabs.map(([id],i)=>`<section id="recipe-panel-${id}" class="recipe-detail-panel" role="tabpanel" aria-labelledby="recipe-tab-${id}" tabindex="0" ${i?'hidden':''}>${content[id]}</section>`).join('')}`;

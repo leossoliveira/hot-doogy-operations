@@ -1,0 +1,30 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const {PGlite}=await import(process.env.PGLITE_MODULE_PATH||'@electric-sql/pglite');const db=new PGlite();
+const u=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`,org='6013ed02-626a-497c-b951-619069035532';
+await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;
+create type public.member_role as enum('owner','admin','manager','chef','staff');
+create function auth.uid() returns uuid language sql as $$select '${u(1)}'::uuid$$;
+create function private.mfa_authorized() returns boolean language sql as $$select current_setting('test.mfa',true)='yes'$$;
+create function private.has_org_role(uuid,public.member_role[]) returns boolean language sql as $$select current_setting('test.role',true)=any($2::text[])$$;
+create function private.can_supplier(uuid) returns boolean language sql as $$select true$$;
+create function private.can_location(uuid) returns boolean language sql as $$select true$$;
+create table inventory_items(id uuid primary key,organization_id uuid);
+create table inventory_item_units(id uuid primary key,inventory_item_id uuid references inventory_items(id) on delete cascade);
+create table supplier_items(id uuid primary key,organization_id uuid,supplier_id uuid,inventory_item_id uuid references inventory_items(id),purchase_item_unit_id uuid references inventory_item_units(id));
+create table location_inventory_items(inventory_item_id uuid references inventory_items(id),location_id uuid);
+create table inventory_item_storage_areas(inventory_item_id uuid references inventory_items(id));
+create table inventory_item_tags(inventory_item_id uuid references inventory_items(id));
+create table invoice_lines(inventory_item_id uuid references inventory_items(id),supplier_item_id uuid references supplier_items(id));
+create table recipe_components(component_item_unit_id uuid references inventory_item_units(id));
+create table supplier_item_price_history(supplier_item_id uuid references supplier_items(id) on delete cascade);
+create table audit_logs(organization_id uuid,user_id uuid,action text,entity_type text,entity_id uuid,old_data jsonb);
+insert into inventory_items values('${u(2)}','${org}');insert into inventory_item_units values('${u(3)}','${u(2)}');insert into supplier_items values('${u(4)}','${org}','${u(5)}','${u(2)}','${u(3)}');set test.role='manager';set test.mfa='yes';`);
+await db.exec(fs.readFileSync('supabase/migrations/20261011210808_catalog_item_delete.sql','utf8'));
+const del=()=>db.query(`select public.delete_catalog_item('${u(4)}',true)`);
+await db.exec("set test.role='staff'");await assert.rejects(del(),/permission/);await db.exec("set test.role='manager';set test.mfa='no'");await assert.rejects(del(),/permission/);await db.exec("set test.mfa='yes'");
+await assert.rejects(db.query(`select public.delete_catalog_item('${u(4)}',false)`),/Confirm/);
+for(const [table,column,id] of [['invoice_lines','inventory_item_id',u(2)],['recipe_components','component_item_unit_id',u(3)],['supplier_item_price_history','supplier_item_id',u(4)]]){
+ await db.exec(`insert into ${table}(${column}) values('${id}')`);await assert.rejects(del(),/linked/);assert.equal((await db.query(`select count(*)::int n from ${table}`)).rows[0].n,1);await db.exec(`delete from ${table}`);
+}
+await del();assert.equal((await db.query('select count(*)::int n from inventory_items')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from audit_logs')).rows[0].n,1);
+console.log('Catalog deletion: permissions, confirmation, linked histories, units and deletion verified.');await db.close();
