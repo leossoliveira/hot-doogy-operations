@@ -2,9 +2,9 @@
 
 ## WhatsApp directory
 
-Doogy AI is read-only and restricted to owner/admin. It lists the WhatsApp sessions known to OpenClaw, not all phone contacts or all groups on the WhatsApp account. On 2026-10-11 the gateway returned four groups and three direct conversations. The live directory CLI could not query groups while the existing gateway owned the WhatsApp connection; do not start a competing connection or stop the gateway to work around this.
+Doogy AI is restricted to owner/admin. It lists the WhatsApp sessions known to OpenClaw, not all phone contacts or all groups on the WhatsApp account. On 2026-10-11 the gateway returned four groups and three direct conversations. The live directory CLI could not query groups while the existing gateway owned the WhatsApp connection; do not start a competing connection or stop the gateway to work around this.
 
-Local preview uses `HOT_DOOGY_OPENCLAW_SSH_HOST=vps` and the user's existing unlocked SSH identity. The server runs a fixed read-only `sessions.list` gateway request, strips message content and session internals, and caches the result for 30 seconds. Connection failures show a stale indicator when a previous result exists.
+Local preview uses `HOT_DOOGY_OPENCLAW_SSH_HOST=vps` and the user's existing unlocked SSH identity. The directory runs a fixed read-only `sessions.list` gateway request, strips message content and session internals, and caches the result for 30 seconds. Connection failures show a stale indicator when a previous result exists.
 
 For deployment, use `scripts/export-whatsapp-directory.mjs` on the OpenClaw host under its existing service identity. It atomically exports sanitized metadata only. Configure a periodic service to write a file readable by the app service, then set `HOT_DOOGY_WHATSAPP_DIRECTORY` to that path (default `/var/lib/hot-doogy/whatsapp-directory.json`). This exporter/timer has NOT been installed in production. Do not give the web service the OpenClaw root identity or credentials. The UI marks exports older than three minutes stale.
 
@@ -17,3 +17,13 @@ Authorized roles: owner, admin, manager, chef, with existing MFA/location/storag
 Migration: local `20261011212134_record_waste.sql`; applied remotely as `20261011212739_record_waste` on 2026-10-11. Do not replay it. Isolated test: `supabase/tests/record-waste.mjs` using PGlite. No operational waste was created for testing.
 
 Validation: 243 application tests, syntax/migration checks, isolated atomicity/permission/idempotency tests, local UI location/item/unit selection and live WhatsApp directory. Security advisors reported no new finding for this migration; existing findings remain outside this change.
+
+## Conversation UI
+
+Click a conversation to read `chat.history` (100 source entries per page), load older messages, refresh, or send text through the WhatsApp `send` method. This is OpenClaw's retained conversation, not a full phone backup. Tool results, reasoning, silent replies and non-text attachment payloads are omitted. The type dropdown was removed; search remains.
+
+The gear opens the conversation's existing `systemPrompt` and group mention rule. Saves merge only those fields into that conversation using `config.patch` with the read revision hash. Stale revisions are rejected. Existing tool/access policies are preserved. A session-level activation override is displayed as read-only; the UI does not silently override it. Group settings and direct-chat context are supported by installed OpenClaw 2026.9.4.
+
+Interactive calls require `HOT_DOOGY_OPENCLAW_SSH_HOST`; the metadata-only export does not support chat or settings. The server resolves the requested conversation against actual WhatsApp sessions and never accepts an arbitrary destination or RPC method from the browser. Sending uses a stable gateway idempotency key scoped to actor, conversation and request. An uncertain send retains the same text/key for retry. No real messages were sent and no live rules changed during validation. Gateway availability and its own retained idempotency state remain prerequisites for retry protection.
+
+Validation: 248 passing application tests; live read-only history/settings verification; UI history and settings checks. Production interactive connection setup remains part of deployment, not included in this local preview.
