@@ -86,4 +86,14 @@ if(process.argv[3]){
  assert.equal((await db.query('select count(*)::int n from inventory_transactions')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from purchase_receipts')).rows[0].n,0);
  console.log('PASS: receiving and payment approval, validation, role/MFA, replay rejection, no stock or receipt writes');
 }
+if(process.argv[4]){
+ await db.exec(fs.readFileSync(process.argv[4],'utf8'));
+ const typed={...payload,number:'TYPE-TEST',items:[{...payload.items[0],item_type:'prepared'}]};
+ const draft=(await save(u(50),typed)).rows[0].result;
+ assert.equal((await db.query(`select source_item_type from invoice_lines where invoice_id='${u(50)}'`)).rows[0].source_item_type,'prepared');
+ await db.query('select edit_llm_invoice_draft($1,$2,$3)',[u(50),draft.updatedAt,JSON.stringify({...typed,items:[{...typed.items[0],item_type:'purchased'}]})]);
+ assert.equal((await db.query(`select source_item_type from invoice_lines where invoice_id='${u(50)}'`)).rows[0].source_item_type,'purchased');
+ await assert.rejects(save(u(51),{...typed,number:'INVALID-TYPE',items:[{...typed.items[0],item_type:'invalid'}]}));
+ console.log('PASS: invoice item types persist through create/edit and reject invalid types');
+}
 await db.close();console.log('PASS: draft creation, receipt rejection, scope/MFA/roles, duplicate/idempotency, exact SKU/unit mapping, From Invoice draft order, original hash binding, approval/payment gates, stale protection, zero receipt/stock writes.');
