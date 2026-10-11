@@ -1,0 +1,26 @@
+import {costInfo} from './recipe-cost-model.js';
+import {escape as e,norm} from './model.js';
+
+export function foodCostRows(data,local={},store='all') {
+ const scoped={...data,costInputs:{...data.costInputs,extractedAt:data.costInputs?.extractedAt||data.meta?.extractedAt}};
+ return (data.recipes||[]).filter(r=>r.type==='menu').flatMap(recipe=>{
+  const menus=(data.costInputs?.menus||[]).filter(m=>m.recipeId===recipe.id);
+  const categories=(data.costInputs?.categories||[]).filter(c=>menus.some(m=>m.categoryId===c.id));
+  const locations=(data.locations||[]).filter(l=>(store==='all'||store===l.id)&&(!recipe.applicableLocations?.length||recipe.applicableLocations.some(a=>a.id===l.id)));
+  return (locations.length?locations:store==='all'?[{id:null,name:'No location assigned'}]:[]).map(location=>{
+   const cost=location.id?costInfo(recipe,location.id,scoped,local):{total:null,foodCostPercent:null,target:null,issues:['No location assigned.']};
+   const gap=cost.foodCostPercent!=null&&cost.target!=null?cost.foodCostPercent-cost.target*100:null;
+   return {recipe,location,categories,cost,gap,status:gap==null?'incomplete':gap>0?'above':'within'};
+  });
+ }).sort((a,b)=>({above:0,incomplete:1,within:2}[a.status]-{above:0,incomplete:1,within:2}[b.status])||(b.gap??0)-(a.gap??0)||a.recipe.name.localeCompare(b.recipe.name));
+}
+export function foodCostPage(data,local,state,view,{heading,searchToolbar,btn}) {
+ const all=foodCostRows(data,local,state.store);
+ const rows=all.filter(r=>norm(r.recipe.name).includes(norm(state.q))&&(view.category==='all'||r.categories.some(c=>c.id===view.category)));
+ const categories=data.costInputs?.categories||[];
+ const per=view.per==='all'?Math.max(1,rows.length):view.per,pages=Math.max(1,Math.ceil(rows.length/per));state.page=Math.min(state.page,pages);
+ const dollars=v=>v==null?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v);
+ const pct=v=>v==null?'—':v.toFixed(1)+'%';
+ const count=s=>rows.filter(r=>r.status===s).length;
+ return heading('Menu profitability','Food Cost','Dish Recipes by location · ingredient and packaging costs compared with saved targets.')+`<div class="stats">${[['Dish recipes',new Set(rows.map(r=>r.recipe.id)).size],['Above target',count('above')],['Within target',count('within')],['Needs data',count('incomplete')]].map(([label,value])=>`<div class="stat-card"><div class="stat-top">${label}</div><div class="stat-value">${value}</div></div>`).join('')}</div><section class="panel">${searchToolbar('Search menu items',`<label class="purchasing-page-size">Menu item category<select data-food-category><option value="all">All categories</option>${categories.map(c=>`<option value="${e(c.id)}" ${view.category===c.id?'selected':''}>${e(c.name)}</option>`).join('')}</select></label>`,`<label class="purchasing-page-size">Items per page<select data-food-per>${[25,50,100,'all'].map(n=>`<option value="${n}" ${view.per===n?'selected':''}>${n==='all'?'All':n}</option>`).join('')}</select></label>`)}<div class="table-wrap"><table><thead><tr><th>MENU ITEM / CATEGORY</th><th>LOCATION</th><th>ITEM COST</th><th>SELLING PRICE</th><th>FOOD COST</th><th>TARGET</th><th>GROSS MARGIN</th><th>ANALYSIS</th></tr></thead><tbody>${rows.slice((state.page-1)*per,state.page*per).map(r=>`<tr class="${r.status==='above'?'food-cost-alert':''}"><td><button class="table-name-button" data-action="recipe" data-id="${e(r.recipe.id)}">${e(r.recipe.name)}</button><small>${e(r.categories.map(c=>c.name).join(', ')||'Uncategorized')} · Version ${e(r.recipe.version||'—')} · ${e(r.recipe.status||'No version')}</small></td><td>${e(r.location.name)}</td><td>${dollars(r.cost.total)}</td><td>${dollars(r.cost.sellingPrice)}</td><td><strong>${pct(r.cost.foodCostPercent)}</strong></td><td>${pct(r.cost.target==null?null:r.cost.target*100)}</td><td>${pct(r.cost.grossMargin)}</td><td><span class="status ${r.status==='above'?'red':r.status==='within'?'green':'amber'}">${r.status==='above'?'Above target':r.status==='within'?'Within target':'Needs data'}</span>${r.gap>0?`<small>+${r.gap.toFixed(1)} pp above target</small>`:''}${r.status==='incomplete'?`<small>${e(r.cost.issues?.[0]||(r.cost.sellingPrice==null?'Selling price unavailable or varies by menu.':r.cost.sellingPrice<=0?'Selling price must be positive.':'Location target not configured.'))}</small>`:''}</td></tr>`).join('')||'<tr><td colspan="8">No menu items match these filters.</td></tr>'}</tbody></table></div><div class="pagination"><span>${rows.length?(state.page-1)*per+1:0}–${Math.min(state.page*per,rows.length)} of ${rows.length} item/location results</span><div class="pages">${btn('Previous','page-prev','chevron-left','',state.page===1?'disabled':'')}<span class="btn current">${state.page}</span>${btn('Next','page-next','chevron-right','',state.page===pages?'disabled':'')}</div></div><div class="snapshot-footer">Food cost = ingredients and packaging ÷ selling price. Gross margin excludes operating expenses. Latest recipe versions are shown; draft versions are identified. Above-target items appear first.</div></section>`;
+}
