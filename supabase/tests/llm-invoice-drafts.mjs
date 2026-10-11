@@ -96,4 +96,15 @@ if(process.argv[4]){
  await assert.rejects(save(u(51),{...typed,number:'INVALID-TYPE',items:[{...typed.items[0],item_type:'invalid'}]}));
  console.log('PASS: invoice item types persist through create/edit and reject invalid types');
 }
+if(process.argv[5]){
+ await db.exec(`create table inventory_categories(id uuid primary key,organization_id uuid);insert into inventory_categories values('${u(70)}','${u(2)}'),('${u(71)}','${u(99)}');`);
+ await db.exec(fs.readFileSync(process.argv[5],'utf8'));
+ const categorized={...payload,number:'CATEGORY-TEST',items:[{...payload.items[0],category_id:u(70)}]};
+ const draft=(await save(u(60),categorized)).rows[0].result;
+ assert.equal((await db.query(`select source_category_id from invoice_lines where invoice_id='${u(60)}'`)).rows[0].source_category_id,u(70));
+ await assert.rejects(save(u(61),{...categorized,number:'OTHER-CATEGORY',items:[{...categorized.items[0],category_id:u(71)}]}));
+ await db.query('select edit_llm_invoice_draft($1,$2,$3)',[u(60),draft.updatedAt,JSON.stringify({...categorized,items:[{...categorized.items[0],category_id:null}]})]);
+ assert.equal((await db.query(`select source_category_id from invoice_lines where invoice_id='${u(60)}'`)).rows[0].source_category_id,null);
+ console.log('PASS: invoice category create/edit, clearing, cross-tenant rejection');
+}
 await db.close();console.log('PASS: draft creation, receipt rejection, scope/MFA/roles, duplicate/idempotency, exact SKU/unit mapping, From Invoice draft order, original hash binding, approval/payment gates, stale protection, zero receipt/stock writes.');
