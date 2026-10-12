@@ -25,3 +25,5 @@ Cost layout has two rows: Ingredients + Packaging = Total Cost; then Optimal Pri
 Responsive recipe costs wrap metrics to fit the dialog without horizontal scrolling. On narrow screens the total equation wraps its result below Ingredients + Packaging, while the remaining metrics use two columns. Recipe tabs wrap and component tables and editing controls fit the available width.
 
 Optimal Price uses Ingredients ÷ Food Cost Target + Packaging, applying the target only to ingredients and passing packaging through at cost.
+
+Item selection uses a single search field in new orders, existing-order editing and recipe editing. Lists remain hidden until a query is entered and match names, internal names, product descriptions and SKUs. Arrow keys and Enter select an option; Escape closes the list. A new-order line requires an actual selected catalog item rather than arbitrary typed text. Changing the query clears the prior item and unit. Search fields use a single visible border.

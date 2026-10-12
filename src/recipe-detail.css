@@ -78,3 +78,9 @@
  .recipe-centered .recipe-components table th,.recipe-centered .recipe-components table td{overflow-wrap:anywhere;padding:10px 6px!important}
  .recipe-editor-modal .recipe-edit-controls{grid-template-columns:minmax(0,1fr)}
 }
+
+.inline-item-search{position:relative;min-width:0;width:100%}.inline-item-search .input-wrap{margin:0;width:100%}.inline-item-search input{width:100%;min-width:0}.item-search-options{margin-top:6px;border:1px solid var(--line);border-radius:9px;background:#fff;max-height:300px;overflow-y:auto;overflow-x:hidden}.item-search-options[hidden]{display:none}.item-search-options button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:#fff;padding:12px 14px;color:var(--ink)}.item-search-options button:hover,.item-search-options button[aria-selected=true]{background:#fff9de}.item-search-options strong,.item-search-options small{display:block;overflow-wrap:anywhere}.item-search-options small{color:var(--muted);font-size:11px;margin-top:5px}.item-search-options p{padding:14px;color:var(--muted);margin:0}.recipe-picker{border:0;background:transparent;padding:0;margin:10px 0}.recipe-picker .input-wrap{margin:0}.line-item>.inline-item-host{min-width:0}.order-add-products>.inline-item-host{grid-column:1/-1;width:100%}
+
+#form-lines .line-item{align-items:start}.inline-item-host .input-wrap input{font-size:13px}
+
+.inline-item-search .input-wrap input{border:0!important;background:transparent;box-shadow:none;outline:none}.inline-item-search .input-wrap:focus-within{outline:2px solid #d2b324;outline-offset:1px}
