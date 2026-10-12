@@ -228,3 +228,9 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .hr-form input:not([type=checkbox]),.hr-form select{padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}.hr-form>label:not(.hr-confirm){display:flex;flex-direction:column;gap:8px}.hr-stats{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:700px){.hr-stats{grid-template-columns:1fr}}
 
 .hr-table strong+small{display:block;margin-top:4px}
+
+/* Keep shared search inputs borderless inside their icon container. */
+.hr-toolbar .input-wrap input{border:0;background:transparent}
+.input-wrap .icon{flex-shrink:0}
+
+.hr-stats{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:700px){.hr-stats{grid-template-columns:1fr}}

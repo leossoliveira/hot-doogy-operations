@@ -1,4 +1,5 @@
 import {escape as e,norm} from './model.js';
+const searchIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>';
 const chevron='<svg class="hd-date-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>';
 
 // Reuses the compact Date trigger and the searchable checkbox popover styling.
@@ -41,7 +42,7 @@ export function createMultiSelect({action,label,rows,current,onChange,allSummary
  function open(){
   if(panel){close();return;}beforeOpen();query='';
   panel=document.createElement('section');panel.className='location-popover invoice-multi-popover';panel.setAttribute('role','dialog');panel.setAttribute('aria-label',`Select ${label.toLowerCase()}`);panel.setAttribute('aria-modal','true');
-  panel.innerHTML=`<label class="location-search"><input type="search" placeholder="Search…" aria-label="Search ${label.toLowerCase()}" autocomplete="off"></label><div class="location-options"></div><footer><button type="button" class="btn sm" data-multi-done>Done</button></footer>`;
+  panel.innerHTML=`<label class="location-search">${searchIcon}<input type="search" placeholder="Search…" aria-label="Search ${label.toLowerCase()}" autocomplete="off"></label><div class="location-options"></div><footer><button type="button" class="btn sm" data-multi-done>Done</button></footer>`;
   document.body.append(panel);anchor()?.setAttribute('aria-expanded','true');paint();
   panel.querySelector('[data-multi-done]').addEventListener('click',()=>close());
   panel.addEventListener('input',ev=>{if(ev.target.type==='search'){query=ev.target.value;paint();}});
