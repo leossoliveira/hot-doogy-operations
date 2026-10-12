@@ -1,3 +1,4 @@
+import {myDayAPI} from './server/my-day.mjs';
 import {loadProfile,requireProfileRequest,requireProfileCommand} from './server/permission-profiles.mjs';
 import {hrAPI} from './server/hr.mjs';
 import {insightsService} from './server/doogy-insights.mjs';
@@ -32,6 +33,7 @@ http.createServer(async(req,res)=>{
    const session=await auth.requireSession(req);
    requireStaffRequest(session.member.role,req.method,url.pathname);
    const profile=await loadProfile(auth,session);requireProfileRequest(profile,req.method,url.pathname);
+   if(url.pathname.startsWith('/api/my-day'))return await myDayAPI(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
