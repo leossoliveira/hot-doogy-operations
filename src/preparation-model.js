@@ -17,7 +17,8 @@ export function suggestedProduction(consumed,margin){return isQuantity(consumed)
 export function partialProduction(demand,count){return isQuantity(demand)&&isQuantity(count)?Math.round((Number(demand)-Number(count))*1e6)/1e6:null;}
 // Historical exports record the preparer's name explicitly in the batch notes.
 export function batchPreparedBy(batch){
-  if(typeof batch.preparedBy==='string'&&batch.preparedBy.trim())return batch.preparedBy.trim();
+  if(batch.preparedTeamMemberName)return batch.preparedTeamMemberName;
+  if(typeof batch.preparedBy==='string'&&batch.preparedBy.trim()&&!/^[a-f0-9-]{36}$/.test(batch.preparedBy))return batch.preparedBy.trim();
   return batch.notes?.match(/\bPrepared by\s+([^.;,\n]+?)(?=\s+(?:at|overriding)\b|[.;,\n]|$)/i)?.[1]?.trim()||null;
 }
 export function outputRecipe(itemId,recipes){const rows=recipes.map(r=>r.activeVersionId?{...r,versionId:r.activeVersionId,status:r.activeVersionStatus}:r).filter(r=>r.type==='prep'&&r.outputItemId===itemId&&['active','published'].includes(r.status)&&r.versionId);return rows.length===1?rows[0]:null;}

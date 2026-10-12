@@ -36,4 +36,27 @@ if(process.argv[4]){
  assert.equal((await db.query("select has_function_privilege('anon','public.hr_save_profile(text,integer,jsonb)','execute') allowed")).rows[0].allowed,false);
  console.log('PASS profile versioning, validation, owner/admin/MFA checks and direct write guard');
 }
+
+if(process.argv[5]){
+ await db.exec(`reset role;update organization_members set role='owner' where id='${id(8)}';set test.role='owner';set test.org='${org}';set test.mfa='yes';`);
+ await db.exec(fs.readFileSync(process.argv[5],'utf8'));
+ await db.exec('set role authenticated');
+ await save('team',40,0,{...team,primary_job:'',hourly_rate:'',overtime_rate:'',phone:'+5511999999999',phone_country:'BR'});
+ const optional=(await db.query('select * from hr_team_members where id=$1',[id(40)])).rows[0];
+ assert.equal(optional.primary_job,null);assert.equal(optional.hourly_rate,null);assert.equal(optional.phone_country,'BR');
+ await assert.rejects(save('workday',41,0,{...day,team_member_id:id(40)}));
+ const deactivate=(n,v)=>db.query('select hr_deactivate($1,$2)',[id(n),v]);
+ await assert.rejects(deactivate(10,2));
+ await db.exec("set test.mfa='no'");await assert.rejects(deactivate(10,3));await db.exec("set test.mfa='yes';set test.role='staff'");await assert.rejects(deactivate(10,3));await db.exec("set test.role='owner'");
+ const owner=(await db.query('select id,version from hr_team_members where member_id=$1',[id(7)])).rows[0];
+ await assert.rejects(db.query('select hr_deactivate($1,$2)',[owner.id,owner.version]));
+ await deactivate(10,3);
+ assert.equal((await db.query('select status from hr_team_members where id=$1',[id(10)])).rows[0].status,'inactive');
+ await db.exec('reset role');assert.equal((await db.query('select status from organization_members where id=$1',[id(4)])).rows[0].status,'inactive');
+ assert.equal((await db.query('select hourly_rate from hr_workdays where id=$1',[id(20)])).rows[0].hourly_rate,'20.00');
+ assert.equal((await db.query("select has_function_privilege('anon','public.hr_deactivate(uuid,integer)','execute') allowed")).rows[0].allowed,false);
+ console.log('PASS optional compensation, country phone, deactivation authorization/version/owner protection, membership block and retained wage history');
+}
+if(process.argv[6])await (await import('./team-operations.mjs')).verifyTeamOperations(db,{org,id,save,team,path:process.argv[6]});
+if(process.argv[7])await (await import('./receipt-team.mjs')).verifyReceiptTeam(db,{org,id,path:process.argv[7]});
 await db.close();console.log('PASS HR: team/workday saves, wage history, stale edits, locations, hours, future dates, role assignment, RLS tenant/MFA/staff denial, audit, anonymous denial');

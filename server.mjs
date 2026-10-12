@@ -34,6 +34,7 @@ http.createServer(async(req,res)=>{
    requireStaffRequest(session.member.role,req.method,url.pathname);
    const profile=await loadProfile(auth,session);requireProfileRequest(profile,req.method,url.pathname);
    if(url.pathname.startsWith('/api/my-day'))return await myDayAPI(req,res,url,auth,session);
+   if(['/api/invoices/team-members','/api/preparation/team-members'].includes(url.pathname)&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_team_directory',{token:session.token,method:'POST',body:{p_module:url.pathname.includes('/invoices/')?'purchasing':'preparation'}}));
    if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
@@ -41,6 +42,7 @@ http.createServer(async(req,res)=>{
    if(url.pathname.startsWith('/api/invoices/analysis-jobs')||['/api/invoices/analyze','/api/invoices/draft'].includes(url.pathname)||url.pathname.endsWith('/approve-draft')||url.pathname.endsWith('/edit-draft'))return await invoiceIntake(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/invoices/'))return await invoiceUpload(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/photos'))return await photos(req,res,url,auth,session);
+   if(url.pathname==='/api/preparation/team-member'&&req.method==='POST'){const b=await jsonBody(req,4096);return reply(res,200,await auth.request('/rest/v1/rpc/set_prep_team_member',{token:session.token,method:'POST',body:{p_batch:b.id,p_expected_version:b.expectedVersion,p_team:b.teamMemberId}}));}
    if(url.pathname==='/api/preparation/usage')return preparationUsage(req,res,url,auth,session);
    if(url.pathname==='/api/inventory/count-edit'&&req.method==='POST'){
     const body=await jsonBody(req);
@@ -67,7 +69,7 @@ http.createServer(async(req,res)=>{
    if(url.pathname==='/api/doogy-ai/whatsapp'&&req.method==='GET')return reply(res,200,await readWhatsappDirectory(session.member.role));
    if(url.pathname==='/api/waste'&&req.method==='POST'){const body=await jsonBody(req,8192);return reply(res,200,await auth.request('/rest/v1/rpc/record_waste',{token:session.token,method:'POST',body:{p_id:body.id,p:body.payload}}));}
    if(url.pathname==='/api/catalog/create'&&req.method==='POST'){const body=await jsonBody(req);const result=await auth.request('/rest/v1/rpc/catalog_create',{token:session.token,method:'POST',body:{p_kind:body.kind,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
-   if(url.pathname==='/api/command'&&req.method==='POST'){const body=await jsonBody(req);requireStaffCommand(session.member.role,body);requireProfileCommand(profile,body);const result=await auth.request('/rest/v1/rpc/operations_command',{token:session.token,method:'POST',body:{p_action:body.action,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
+   if(url.pathname==='/api/command'&&req.method==='POST'){const body=await jsonBody(req);requireStaffCommand(session.member.role,body);requireProfileCommand(profile,body);if(body.payload.changes.some(c=>c.action==='receipt'&&!/^[a-f0-9-]{36}$/.test(c.payload?.receiverTeamMemberId||'')))throw new ApiError(422,'Choose the team member who received this order.');const result=await auth.request('/rest/v1/rpc/operations_command',{token:session.token,method:'POST',body:{p_action:body.action,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
    throw new ApiError(404,"Resource not found.");
   }
   // Historical exports are never served, even to logged-in users. Live data uses RLS.
