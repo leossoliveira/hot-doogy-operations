@@ -82,7 +82,7 @@ export function costInfo(recipe, locationId, data, local = {}) {
   const target = beverage ? settings?.beverageTarget : settings?.foodTarget;
   const comparable = cost.total != null && sellingPrice != null && !removal;
   return {...cost, sellingPrice, removal, target: positive(target) ? target : null,
-    optimalPrice: cost.total != null && positive(target) && !removal ? cost.ingredients / target : null,
+    optimalPrice: cost.total != null && positive(target) && !removal ? cost.ingredients / target + cost.packaging : null,
     foodCostPercent: comparable && sellingPrice > 0 ? cost.total / sellingPrice * 100 : null,
     grossProfit: comparable ? sellingPrice - cost.total : null,
     grossMargin: comparable && sellingPrice > 0 ? (sellingPrice - cost.total) / sellingPrice * 100 : null,

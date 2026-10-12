@@ -1,6 +1,6 @@
 # Recipe window and editing
 
-Recipe cards and their editor use a centered wide modal. Ingredient and packaging details display table rows; the desktop editor places item, quantity, unit and type on each row. Smaller screens stack editing controls while keeping the detail table horizontally scrollable.
+Recipe cards and their editor use a centered wide modal. Ingredient and packaging details display table rows; the desktop editor places item, quantity, unit and type on each row. Smaller screens stack editing controls and fit the detail table to the available width.
 
 Both views use one horizontal tab strip: Ingredients, Packaging, Cost, Step-by-Step, Version history. Ingredient and packaging edits retain their original component indices across the two tabs. Changing type moves an item to the corresponding tab. Adding while Packaging is selected creates a packaging component. Cost updates from the edited component draft. Instructions and version history remain visible through the corresponding tabs.
 
@@ -8,7 +8,7 @@ Save uses the existing authenticated recipe command. It creates the next numbere
 
 Validation: application tests and syntax/migration checks; browser verification of centered positioning, table rows, editor controls, Packaging, Cost and version-history tab navigation. Browser verification does not save synthetic changes to business recipes.
 
-The Add item button is visible only on Ingredients and Packaging, including keyboard tab changes. Switching to Cost, Step-by-Step or Version history hides the catalog picker. Editor rows use the original alignment and omit component Notes from the visual form; stored notes remain part of the versioned component. Save uses the green confirmation style. Cost metrics stay in one horizontal row for each location, with horizontal scrolling on narrower screens.
+The Add item button is visible only on Ingredients and Packaging, including keyboard tab changes. Switching to Cost, Step-by-Step or Version history hides the catalog picker. Editor rows use the original alignment and omit component Notes from the visual form; stored notes remain part of the versioned component. Save uses the green confirmation style. Cost metrics stay in one horizontal row for each location, with responsive wrapping on narrower screens.
 
 Cost displays Total Cost, Selling Price, Optimal Price, Food Cost %, Gross Profit and Gross Margin. Net Profit and Net Margin are omitted.
 
@@ -21,3 +21,7 @@ Activation on Save is enforced by the recipe_edits_activate_new_version migratio
 Cost metrics appear as Total Cost, Optimal Price, Selling Price, Food Cost %, Gross Profit and Gross Margin. Food Cost colors use the displayed percentage rounded to two decimals: up to 25.00% green, 25.01–25.99% yellow, 26.00% and above red. Unavailable values have no threshold color.
 
 Cost layout has two rows: Ingredients + Packaging = Total Cost; then Optimal Price, Selling Price, Food Cost %, Gross Profit and Gross Margin. This layout does not change the pricing formula.
+
+Responsive recipe costs wrap metrics to fit the dialog without horizontal scrolling. On narrow screens the total equation wraps its result below Ingredients + Packaging, while the remaining metrics use two columns. Recipe tabs wrap and component tables and editing controls fit the available width.
+
+Optimal Price uses Ingredients ÷ Food Cost Target + Packaging, applying the target only to ingredients and passing packaging through at cost.
