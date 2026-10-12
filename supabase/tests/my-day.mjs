@@ -1,7 +1,7 @@
 import fs from 'node:fs';import assert from 'node:assert/strict';
 const {PGlite}=await import(process.env.PGLITE_MODULE_PATH||'@electric-sql/pglite');const db=new PGlite();
 const org='6013ed02-626a-497c-b951-619069035532',id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
-await db.exec(`create role anon;create role authenticated;create schema auth;create schema private;create type public.member_role as enum('owner','admin','manager','chef','staff');
+await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create schema private;create type public.member_role as enum('owner','admin','manager','chef','staff');
 create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
 create function private.mfa_authorized() returns boolean language sql as $$select current_setting('test.mfa',true)='yes'$$;
 create table organizations(id uuid primary key);create table locations(id uuid primary key,organization_id uuid);create table organization_members(id uuid primary key,organization_id uuid,user_id uuid,role member_role,status text);create table member_location_access(member_id uuid,location_id uuid,primary key(member_id,location_id));create table audit_logs(organization_id uuid,user_id uuid,action text,entity_type text,entity_id uuid,old_data jsonb,new_data jsonb);
@@ -15,6 +15,7 @@ await db.exec(fs.readFileSync('supabase/migrations/20261012005936_hr_team_workda
 await db.exec(`insert into hr_team_members(id,organization_id,first_name,last_name,location_ids,primary_job,hourly_rate,overtime_rate,member_id) values('${id(20)}','${org}','Alice','Cook',array['${id(2)}']::uuid[],'Cook',20,20,'${id(11)}'),('${id(21)}','${org}','Bob','Cook',array['${id(2)}','${id(3)}']::uuid[],'Cook',20,20,null);`);
 await db.exec(fs.readFileSync('supabase/migrations/20261012013607_hr_permission_profiles.sql','utf8'));
 const path=fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_my_day_tasks_procedures.sql'));await db.exec(fs.readFileSync('supabase/migrations/'+path,'utf8'));
+for(const suffix of ['_my_day_recurrence.sql','_my_day_calendar_connections.sql','_private_calendar_feed_wrapper.sql','_parsed_calendar_feed_wrapper.sql','_my_day_event_times.sql']){const file=fs.readdirSync('supabase/migrations').find(x=>x.endsWith(suffix));await db.exec(fs.readFileSync('supabase/migrations/'+file,'utf8'));}
 const save=(kind,n,version,p)=>db.query('select my_day_save($1,$2,$3,$4::jsonb)',[kind,id(n),version,JSON.stringify(p)]);
 const task={title:'Open kitchen',description:'Check equipment',due_date:'2026-10-12',location_id:id(2),assignee_id:id(20),priority:'high',status:'todo'};
 const proc={title:'Opening procedure',purpose:'Start safely',steps:'Wash hands\nCheck equipment',verification:'Equipment ready',location_id:id(2),status:'published'};
@@ -31,7 +32,7 @@ await db.exec("set test.mfa='yes'");await db.query('select hr_save_profile($1,$2
 await db.exec(`set test.uid='${id(1)}'`);await db.query('select hr_save_profile($1,$2,$3)',['staff',1,{'my-day':{view:false,write:false}}]);await db.exec(`set test.uid='${id(5)}'`);assert.equal((await db.query('select * from my_day_tasks')).rows.length,0);
 await db.exec('reset role');for(const func of ['my_day_team()','my_day_save(text,uuid,integer,jsonb)'])assert.equal((await db.query("select has_function_privilege('anon',$1,'execute') ok",[func])).rows[0].ok,false);
 assert.equal((await db.query("select count(*)::int n from audit_logs where action='my-day.save'")).rows[0].n,7);
-await db.exec(fs.readFileSync('supabase/migrations/'+fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_my_day_recurrence.sql')),'utf8'));
+
 await db.exec(`set test.uid='${id(1)}';set role authenticated`);
 const series=(n,extra)=>db.query('select my_day_create_series($1,$2::jsonb) result',[id(n),JSON.stringify({...task,...extra})]);
 let result=await series(60,{due_date:'2028-01-31',recurrence_rule:'monthly',recurrence_until:'2028-04-30'});assert.equal(result.rows[0].result.created,4);
@@ -47,4 +48,26 @@ await assert.rejects(series(66,{recurrence_rule:'daily',recurrence_until:'2026-1
 await db.exec(`set test.uid='${id(5)}'`);await assert.rejects(series(67,{recurrence_rule:'daily',recurrence_until:'2026-10-14'}),/access denied/);
 await db.exec('reset role');assert.equal((await db.query("select has_function_privilege('anon','my_day_create_series(uuid,jsonb)','execute') ok")).rows[0].ok,false);
 console.log('PASS recurring schedules: leap-year month end, weekly/daily/weekdays, independent status, duplicate prevention, rollback, limits and role denial');
+
+await db.exec(`set test.uid='${id(1)}';set role authenticated`);
+const timed={...task,starts_at:'2026-10-12T09:00',ends_at:'2026-10-12T10:30'};
+await save('task',80,0,timed);
+assert.equal((await db.query('select starts_at::text s from my_day_tasks where id=$1',[id(80)])).rows[0].s,'2026-10-12 09:00:00');
+await save('task',80,1,task); // Older clients preserve the schedule.
+assert.equal((await db.query('select starts_at::text s from my_day_tasks where id=$1',[id(80)])).rows[0].s,'2026-10-12 09:00:00');
+await assert.rejects(save('task',81,0,{...timed,ends_at:'2026-10-12T08:00'}),/my_day_event_interval/);
+await assert.rejects(save('task',81,0,{...timed,ends_at:''}),/my_day_event_interval/);
+await assert.rejects(save('task',81,0,{...timed,starts_at:'2027-03-14T02:30',ends_at:'2027-03-14T04:00'}),/my_day_event_interval/);
+await save('task',80,2,{...task,starts_at:'',ends_at:''});
+assert.equal((await db.query('select starts_at s from my_day_tasks where id=$1',[id(80)])).rows[0].s,null);
+await series(82,{due_date:'2026-10-31',starts_at:'2026-10-31T09:00',ends_at:'2026-10-31T10:00',recurrence_rule:'daily',recurrence_until:'2026-11-02'});
+const clocks=(await db.query("select starts_at::text s,extract(hour from starts_at at time zone 'America/New_York' at time zone 'UTC')::int utc from my_day_tasks where recurrence_id=$1 order by starts_at",[id(82)])).rows;
+assert.deepEqual(clocks.map(x=>x.utc),[13,14,14]);assert.ok(clocks.every(x=>x.s.endsWith('09:00:00')));
+await db.exec(`set test.uid='${id(5)}'`);
+await assert.rejects(save('status',80,3,{status:'done',starts_at:'2026-10-12T10:00'}),/Access denied|Only task status/);
+await db.exec('reset role');
+await db.exec(`insert into auth.users values('${id(5)}');insert into private.my_day_calendar_connections(user_id,organization_id,feed_hash) values('${id(5)}','${org}','${'a'.repeat(64)}');delete from hr_permission_profiles where role='staff';set role anon;`);
+const feed=(await db.query('select my_day_calendar_feed($1) f',['a'.repeat(64)])).rows[0].f;
+assert.equal(feed.find(x=>x.id===id(82)).starts_at,'2026-10-31T13:00:00+00:00');
+console.log('PASS event schedule: persistence, legacy compatibility, interval/DST validation, recurring wall clock, staff restrictions and anonymous timed feed.');
 await db.close();console.log('PASS My Day: saves, assignment, procedure linkage, versions, staff status-only, manager location scope, tenant/MFA/profile isolation, directory privacy, audit and anonymous denial.');
