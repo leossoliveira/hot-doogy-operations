@@ -69,4 +69,19 @@ if(process.argv[3]){
  assert.equal((await db.query('select count(*) from purchase_order_lines')).rows[0].count,0);
  assert.equal((await db.query('select total from invoices')).rows[0].total,'100');
 }
+if(process.argv[4]){
+ await db.exec("alter table purchase_orders add column notes text default 'Existing notes'");
+ await db.exec(fs.readFileSync(process.argv[4],'utf8'));
+ const stamp=async()=>(await db.query('select updated_at::text as at from purchase_orders')).rows[0].at;
+ const notesCall=async(notes,at,org=u(2))=>db.query('select public.edit_order_details_with_notes($1,$2,$3,$4,$5,$6)',[u(10),org,at??await stamp(),'NOTES DRAFT','[]',notes]);
+ await notesCall('Arriving 10/13 between 5:39 am - 8:39 am ET');
+ assert.equal((await db.query('select notes from purchase_orders')).rows[0].notes,'Arriving 10/13 between 5:39 am - 8:39 am ET');
+ const audit=(await db.query("select old_data,new_data from audit_logs where new_data ? 'notes' order by new_data->>'number' limit 1")).rows[0];
+ assert.equal(audit.old_data.notes,'Existing notes');assert.equal(audit.new_data.notes,'Arriving 10/13 between 5:39 am - 8:39 am ET');
+ await assert.rejects(notesCall('x'.repeat(4001)));await assert.rejects(notesCall(null));await assert.rejects(notesCall('Bad','2026-09-01'));await assert.rejects(notesCall('Bad',await stamp(),u(20)));
+ await db.exec("set test.role='staff'");await assert.rejects(notesCall('Denied'));await db.exec("set test.role='manager';set test.mfa='no'");await assert.rejects(notesCall('Denied'));await db.exec("set test.mfa='yes';update purchase_orders set status='ordered'");await assert.rejects(notesCall('Denied'));await db.exec("update purchase_orders set status='draft'");
+ await notesCall('');assert.equal((await db.query('select notes from purchase_orders')).rows[0].notes,null);
+ assert.equal((await db.query('select total from invoices')).rows[0].total,'100');
+ assert.equal((await db.query("select has_function_privilege('anon','public.edit_order_details_with_notes(uuid,uuid,timestamptz,text,jsonb,text)','execute') as allowed")).rows[0].allowed,false);
+}
 await db.close();console.log('Order editing: scope, role, MFA, stale versions, validation, totals and audit passed.');
