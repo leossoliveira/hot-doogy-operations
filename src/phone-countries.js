@@ -1,3 +1,4 @@
+import {AsYouType,parsePhoneNumberFromString} from './vendor/libphonenumber.min.js';
 // Country calling codes derived from Google libphonenumber, 2026-10-12.
 // Copyright (C) 2009 The Libphonenumber Authors. Apache-2.0; see licenses/libphonenumber-LICENSE.txt.
 // Source: https://github.com/google/libphonenumber/blob/master/resources/PhoneNumberMetadata.xml
@@ -5,4 +6,12 @@ const metadata=[{"id":"AC","dial":"247","main":false},{"id":"AD","dial":"376","m
 const names=new Intl.DisplayNames(['en'],{type:'region'});
 export const PHONE_COUNTRIES=metadata.map(x=>({...x,name:names.of(x.id),flag:[...x.id].map(c=>String.fromCodePoint(127397+c.charCodeAt(0))).join('')})).sort((a,b)=>a.name.localeCompare(b.name,'en'));
 export function splitPhone(phone='',country){const raw=String(phone||'').trim(),digits=raw.replace(/\D/g,'');let selected=PHONE_COUNTRIES.find(x=>x.id===country);if(raw.startsWith('+')){const candidates=PHONE_COUNTRIES.filter(x=>digits.startsWith(x.dial)).sort((a,b)=>b.dial.length-a.dial.length||Number(b.main)-Number(a.main));if(!selected||!digits.startsWith(selected.dial))selected=candidates[0];return {country:selected?.id||'US',number:selected?digits.slice(selected.dial.length):raw};}selected=selected||PHONE_COUNTRIES.find(x=>x.id==='US');return {country:selected.id,number:selected.dial==='1'&&digits.length===11&&digits.startsWith('1')?digits.slice(1):raw};}
-export function joinPhone(country,number){const selected=PHONE_COUNTRIES.find(x=>x.id===country);if(!selected)throw Error('Select a phone country.');const raw=String(number||'').trim();if(!raw)return '';if(!/^[+\d\s().-]+$/.test(raw))throw Error('Use digits, spaces, parentheses or hyphens for the phone number.');let digits=raw.replace(/\D/g,'');if(raw.startsWith('+')){if(!digits.startsWith(selected.dial))throw Error('The phone number does not match the selected country code.');digits=digits.slice(selected.dial.length);}else if(selected.dial==='1'&&digits.length===11&&digits.startsWith('1'))digits=digits.slice(1);if(digits.length<4||digits.length+selected.dial.length>15)throw Error('Enter a valid phone number with up to 15 digits including the country code.');return '+'+selected.dial+digits;}
+export function joinPhone(country,number){const selected=PHONE_COUNTRIES.find(x=>x.id===country);if(!selected)throw Error('Select a phone country.');const raw=String(number||'').trim();if(!raw)return '';if(!/^[+\d\s().-]+$/.test(raw))throw Error('Use digits, spaces, parentheses or hyphens for the phone number.');let digits=raw.replace(/\D/g,'');if(raw.startsWith('+')){if(!digits.startsWith(selected.dial))throw Error('The phone number does not match the selected country code.');digits=digits.slice(selected.dial.length);}else if(selected.dial==='1'&&digits.length===11&&digits.startsWith('1'))digits=digits.slice(1);if(digits.length<4||digits.length+selected.dial.length>15)throw Error('Enter a valid phone number with up to 15 digits including the country code.');const parsed=parsePhoneNumberFromString(raw,country);if(parsed?.isPossible()&&parsed.countryCallingCode===selected.dial)return parsed.number;return '+'+selected.dial+digits;}
+
+// Format locally using each country's numbering plan, including pasted E.164 numbers.
+export function formatPhone(country,number=''){
+ const raw=String(number||'').trim();if(!raw)return '';
+ const parsed=parsePhoneNumberFromString(raw,country);
+ if(parsed?.isPossible()&&(!raw.startsWith('+')||parsed.country===country||parsed.countryCallingCode===PHONE_COUNTRIES.find(c=>c.id===country)?.dial))return parsed.formatNational();
+ return new AsYouType(country).input(raw);
+}

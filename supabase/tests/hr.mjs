@@ -59,4 +59,5 @@ if(process.argv[5]){
 }
 if(process.argv[6])await (await import('./team-operations.mjs')).verifyTeamOperations(db,{org,id,save,team,path:process.argv[6]});
 if(process.argv[7])await (await import('./receipt-team.mjs')).verifyReceiptTeam(db,{org,id,path:process.argv[7]});
+if(process.env.HR_LOCATION_MIGRATION)await (await import('./team-locations.mjs')).verifyTeamLocations(db,{org,id,save,team,path:process.env.HR_LOCATION_MIGRATION});
 await db.close();console.log('PASS HR: team/workday saves, wage history, stale edits, locations, hours, future dates, role assignment, RLS tenant/MFA/staff denial, audit, anonymous denial');
