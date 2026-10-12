@@ -1,3 +1,4 @@
+import {insightsService} from './server/doogy-insights.mjs';
 import {agentService} from './server/doogy-agent.mjs';
 import {conversationService} from './server/doogy-chat.mjs';
 import {readWhatsappDirectory} from './server/doogy-ai.mjs';
@@ -46,6 +47,8 @@ http.createServer(async(req,res)=>{
    }
    if(url.pathname==='/api/data'&&req.method==='GET'){const raw=await readTables(auth,session.token,session.member.role);const data=projectData(raw);data.access={role:session.member.role};if(['owner','admin','manager','chef'].includes(session.member.role)){const summary=queueSalesSummary(auth,session,raw);data.preparationSales=summary.result?Object.fromEntries(Object.entries(summary.result).filter(([k])=>k!=='purchasingSales')):null;data.purchasingSales=summary.result?.purchasingSales||null;data.meta.preparationSalesStatus=summary.status;if(summary.result){data.meta.pendingImportRows=summary.result.days.reduce((n,x)=>n+x.incompleteLines,0);data.issues=summary.result.issues.map(x=>({...x,count:x.occurrences,label:x.code,locationName:data.locations.find(l=>l.id===x.locationId)?.name}));}}return await replyData(req,res,data);}
    if(url.pathname==='/api/catalog/delete'&&req.method==='POST'){const body=await jsonBody(req,4096);if(body.confirmed!==true||!/^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.test(body.id||''))throw new ApiError(400,'Confirm deletion of a valid item.');return reply(res,200,await auth.request('/rest/v1/rpc/delete_catalog_item',{token:session.token,method:'POST',body:{p_id:body.id,p_confirmed:true}}));}
+   if(url.pathname==='/api/doogy-ai/insights'&&req.method==='POST'){if(!['owner','admin'].includes(session.member.role))throw new ApiError(403,'Insights are available to administrators only.');const body=await jsonBody(req,4096);const data=projectData(await readTables(auth,session.token,session.member.role));return reply(res,200,await insightsService.start(session,data,body.location||'all',body.requestId));}
+   if(url.pathname==='/api/doogy-ai/insights'&&req.method==='GET')return reply(res,200,await insightsService.result(session,url.searchParams.get('id')));
    if(url.pathname==='/api/doogy-ai/agent/history'&&req.method==='GET')return reply(res,200,await agentService.history(session.member.role,session.user.id));
    if(url.pathname==='/api/doogy-ai/agent/send'&&req.method==='POST')return reply(res,200,await agentService.send(session.member.role,session.user.id,await jsonBody(req,20000)));
    if(url.pathname.startsWith('/api/doogy-ai/conversation/')){
