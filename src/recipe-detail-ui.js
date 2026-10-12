@@ -23,6 +23,7 @@ export function recipeDetailTabs(recipe,componentsView,costView,{editing=false}=
   return `<div class="recipe-detail-tabs" role="tablist" aria-label="Recipe details">${tabs.map(([id,label],i)=>`<button id="recipe-tab-${id}" type="button" role="tab" aria-selected="${i===0}" aria-controls="recipe-panel-${id}" tabindex="${i===0?0:-1}" data-action="recipe-detail-tab" data-tab="${id}">${label}</button>`).join('')}</div>${tabs.map(([id],i)=>`<section id="recipe-panel-${id}" class="recipe-detail-panel" role="tabpanel" aria-labelledby="recipe-tab-${id}" tabindex="0" ${i?'hidden':''}>${content[id]}</section>`).join('')}`;
 }
 export function selectRecipeTab(id){
+  const editor=document.querySelector('#recipe-edit-form');if(editor){const items=['ingredients','packaging'].includes(id);editor.querySelector('.recipe-add-bar').hidden=!items;if(!items)editor.querySelector('#recipe-picker')?.classList.add('hidden');}
   document.querySelectorAll('.recipe-detail-tabs [role="tab"]').forEach(button=>{const active=button.dataset.tab===id;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;document.getElementById(button.getAttribute('aria-controls')).hidden=!active;});
 }
 export async function prepareRecipePhoto(file){
