@@ -9,7 +9,7 @@ test('assignment summary is bounded literal text, with scope, dates and recurrin
 test('OpenClaw sends only to a validated direct number using a stable assignment key',async()=>{
  const calls=[];const input={id,phone:'+12025550123',message:'New task'};const call=async(...args)=>{calls.push(args);return {messageId:'fake'};};
  assert.deepEqual(await sendAssignment(input,call),{messageId:'fake'});await sendAssignment(input,call);
- assert.equal(calls[0][0],'send');assert.equal(calls[0][1].channel,'whatsapp');assert.equal(calls[0][1].to,input.phone);assert.equal(calls[0][1].idempotencyKey,calls[1][1].idempotencyKey);
+ assert.equal(calls[0][0],'send');assert.equal(calls[0][1].agentId,'main');assert.equal(calls[0][1].accountId,'default');assert.equal(calls[0][1].channel,'whatsapp');assert.equal(calls[0][1].to,input.phone);assert.equal(calls[0][1].idempotencyKey,calls[1][1].idempotencyKey);
  await assert.rejects(sendAssignment({...input,phone:'group@g.us'},call));await assert.rejects(sendAssignment(input,async()=>({ok:true})),/not confirmed/);
  const bridge=createBridgeDispatch(call);assert.deepEqual(await bridge({action:'task-assignment',input}),{messageId:'fake'});
 });

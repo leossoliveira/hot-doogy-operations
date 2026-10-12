@@ -14,7 +14,7 @@ export function assignmentMessage(job){
 }
 export async function sendAssignment(input,call=openClawCall){
  if(!input||!uuid.test(input.id||'')||!/^\+[1-9]\d{6,14}$/.test(input.phone||'')||typeof input.message!=='string'||!input.message.trim()||input.message.length>2400)throw new ApiError(400,'Invalid task notification.');
- const result=await call('send',{channel:'whatsapp',to:input.phone,message:input.message,idempotencyKey:'my-day-assignment-'+input.id});
+ const result=await call('send',{agentId:'main',accountId:'default',channel:'whatsapp',to:input.phone,message:input.message,idempotencyKey:'my-day-assignment-'+input.id});
  if(result?.error||result?.ok===false||!result?.messageId)throw new ApiError(503,'WhatsApp delivery was not confirmed.');
  return {messageId:String(result.messageId)};
 }
