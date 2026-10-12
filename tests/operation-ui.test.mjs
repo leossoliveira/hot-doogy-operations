@@ -66,5 +66,10 @@ test('order rows sort by Product Description rather than internal item name',()=
  const modal=render('showOrder',{...base,lines:[{id:'1',name:'A internal',productDescription:'Z supplier description',quantity:3},{id:'2',name:'Z internal',productDescription:'A supplier description',quantity:2}]});
  assert.match(modal.body,/data-table-layout="rows"/);assert.match(modal.body,/aria-sort="ascending"/);assert.match(modal.body,/Product Description/);
  assert.ok(modal.body.indexOf('A supplier description')<modal.body.indexOf('Z supplier description'));
- assert.doesNotMatch(modal.body,/A internal/);
+ assert.match(modal.body,/<th>Internal Name<\/th>/);assert.match(modal.body,/<td>A internal<\/td>/);
+});
+
+test('order estimated totals multiply displayed quantity by price, including zero',()=>{
+ const modal=render('showOrder',{...base,total:999,lines:[{quantity:3,estimatedUnitPrice:5,lineTotal:999},{quantity:2,catalogUnitPrice:0}]});
+ assert.match(modal.body,/<td data-line-total>\$15\.00<\/td>/);assert.match(modal.body,/<td data-line-total>\$0\.00<\/td>/);assert.doesNotMatch(modal.body,/999/);
 });

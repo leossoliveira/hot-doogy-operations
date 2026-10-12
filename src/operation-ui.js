@@ -73,9 +73,11 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
     openModal('<span class="invoice-title-number">Invoice '+e(ref(x))+'</span>'+status(stored),body,footer||btn("Close",'close'),{wide:true,className:'operation-modal invoice-detail-modal',kind:'invoice-detail'});
   }
   function showOrder(x,footer=''){
+    const orderLines=list(x.lines);
+    const estimatedTotal=orderLines.length&&orderLines.every(l=>(l.orderedPurchaseQty??l.orderedQuantity??l.quantity??l.qty)!=null&&(l.estimatedUnitPrice??l.catalogUnitPrice)!=null)?orderLines.reduce((sum,l)=>sum+Number(l.orderedPurchaseQty??l.orderedQuantity??l.quantity??l.qty)*Number(l.estimatedUnitPrice??l.catalogUnitPrice),0):null;
     const evidence=x.receiptEvidence||{},labels={confirmed_received:"Received quantities — user confirmation",fully_received:"Fully received on linked lines",partially_received:"Partially received on linked lines",receipt_recorded:"Receipt recorded",no_receipt_recorded:"No linked receipt"};
     const receivers=[...new Set(list(x.receipts).filter(r=>(r.dbStatus??r.status)==='completed').map(r=>r.receiverName||r.receivedByName).filter(Boolean))];
-    let body=intro(x)+grid([["Received by",text(receivers.join(', ')||'Not recorded')],["Saved status",status(x.dbStatus??x.status,x.statusLabel)],["Receipt",text(labels[evidence.computedStatus])],["Ordered on",when(x.orderedAt)],["Expected delivery",when(x.expectedAt)],["Saved items",number(x.lineCount??list(x.lines).length)],["Estimated total",amount(x.total)]]);
+    let body=intro(x)+grid([["Received by",text(receivers.join(', ')||'Not recorded')],["Saved status",status(x.dbStatus??x.status,x.statusLabel)],["Receipt",text(labels[evidence.computedStatus])],["Ordered on",when(x.orderedAt)],["Expected delivery",when(x.expectedAt)],["Saved items",number(x.lineCount??list(x.lines).length)],["Estimated total",amount(estimatedTotal)]]);
     if(x.paymentEvidence?.paidInvoiceCount)body+=notice(e(x.paymentEvidence.paidInvoiceCount)+" linked invoice(s) marked as paid. Payment and receipt of goods are separate records.",true);
     body+=section("Order items",orderItemsTable(x,e,money,preciseNumber));
     if(evidence.comparableLineCount!=null)body+="<p class=\"operation-help\">This review compares "+e(evidence.comparableLineCount)+" of "+e(evidence.orderLineCount??0)+" explicitly linked lines with matching units. Missing fields remain unconfirmed.</p>";
