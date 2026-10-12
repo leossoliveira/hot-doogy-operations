@@ -56,6 +56,7 @@ export function databaseErrorMessage(data){
  if(data?.message?.startsWith('INVOICE_S3_REQUIRED:'))return 'Upload and verify the original invoice document before marking it Approved or Paid.';
  if(data?.code==='40001')return 'This invoice changed. Reload its status before saving.';
 
+ if(data?.code==='P0001'&&data?.message?.startsWith('HR '))return data.message;
  if(messages.has(data?.message))return messages.get(data.message);
  if(data?.code==='42501')return 'You do not have permission to perform this action.';
  if(data?.code==='23505')return 'A record with these details already exists.';

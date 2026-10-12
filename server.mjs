@@ -1,3 +1,4 @@
+import {hrAPI} from './server/hr.mjs';
 import {insightsService} from './server/doogy-insights.mjs';
 import {agentService} from './server/doogy-agent.mjs';
 import {conversationService} from './server/doogy-chat.mjs';
@@ -29,6 +30,7 @@ http.createServer(async(req,res)=>{
   if(url.pathname.startsWith('/api/')){
    const session=await auth.requireSession(req);
    requireStaffRequest(session.member.role,req.method,url.pathname);
+   if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/documents\/[^/]+\/download$/.test(url.pathname))return await invoiceDownload(req,res,url,auth,session);
