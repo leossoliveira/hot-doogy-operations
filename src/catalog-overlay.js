@@ -64,7 +64,7 @@ export function supplierOrderItems(catalog,inventoryRows,local={}, {locationId,s
     if(!row)return [];
     const units=inventoryUnits(item.units||[]);
     return [{...row,id:item.itemId,name:item.name||item.internalName||row.name,supplierItemId:item.supplierItemId,
-      supplierId:item.supplierId,supplierName:item.supplierName,sku:item.sku,brand:item.brand,
+      supplierId:item.supplierId,supplierName:item.supplierName,sku:item.sku,brand:item.brand,productDescription:item.productDescription||item.name,
       supplierActive:item.supplierActive,supplierBusinessActive:item.supplierBusinessActive,
       orderingUnitId:item.orderingUnitId,orderingItemUnitId:item.orderingItemUnitId,
       orderingUom:roleLabel(units,'ordering'),receivingUom:roleLabel(units,'receiving'),stocktakeUom:roleLabel(units,'stocktake'),units,
