@@ -52,3 +52,7 @@
 @media(max-width:760px){.recipe-editor-modal .recipe-edit-row{grid-template-columns:minmax(0,1fr) 36px}.recipe-editor-modal .recipe-edit-item{grid-column:1}.recipe-editor-modal .recipe-edit-controls{grid-column:1;grid-row:2;min-width:0}.recipe-editor-modal .recipe-edit-row>.recipe-remove{grid-column:2;grid-row:1/3}}
 
 .recipe-centered .recipe-components table th:nth-child(2),.recipe-centered .recipe-components table td:nth-child(2){text-align:center}
+
+.cost-metric.cost-good{background:#edf7f0;border-color:#c6e4d0}.cost-metric.cost-good dd{color:#21734c}
+.cost-metric.cost-warning{background:#fff9dd;border-color:#efda85}.cost-metric.cost-warning dd{color:#8b6800}
+.cost-metric.cost-high{background:#fff0ef;border-color:#efc2bf}.cost-metric.cost-high dd{color:#b43c35}
