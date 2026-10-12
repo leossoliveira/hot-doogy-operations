@@ -27,3 +27,9 @@ Starting a count opens the full-screen entry view and locks location and employe
 Count quantity fields show Est. Stock in the selected count unit, using the same latest completed count plus subsequent production reference as the inventory view. Missing or partial totals display a dash rather than zero. Changing the count unit recalculates the displayed estimate.
 
 Count filters use consistent control heights and the native single-location dropdown. UOM fields have a uniform width. Quantity and UOM columns align across sections on desktop. Each item has an icon-only Report issue button and dialog; saving it updates the current count draft, and clearing its text removes the report. Notes at the bottom apply to the whole count. On completion, notes and issues are persisted atomically in the existing count audit record (`audit_logs.new_data`), including issues for items without an entered quantity. The new migration validates text limits and item/location scope. No separate issue notification is sent. The count completion and notes/issues migrations were applied to production on October 8, 2026. Local filenames match the versions assigned by Supabase (20261008125044 and 20261008125059); SQL contents were preserved.
+
+## Include Prep Recipes — October 12, 2026
+
+The initial filter form includes an unchecked **Include Prep Recipes** checkbox. Checking it adds active prepared inventory items for the selected location and storage areas alongside purchased items. Supplier selection applies only to purchased items because prep is produced internally. Unchecking it keeps the count limited to purchased items. Starting from **Count this item** on a prepared item preselects the checkbox.
+
+Prep rows use the existing registered inventory item, count units, conversions and count-saving workflow; recipe ingredients and menu recipes are not duplicated as count rows. Blank quantities remain unrecorded. No schema or production data changes are required.
