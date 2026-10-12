@@ -13,3 +13,5 @@ The Add item button is visible only on Ingredients and Packaging, including keyb
 Cost displays Total Cost, Selling Price, Optimal Price, Food Cost %, Gross Profit and Gross Margin. Net Profit and Net Margin are omitted.
 
 The remove icon appears at the end of each ingredient or packaging row. Cost headings omit the USD label; monetary values keep their dollar formatting.
+
+Component rows show the internal name in bold, then SKU and the corresponding supplier product description. Quantity column headings and values are centered in the recipe card.
