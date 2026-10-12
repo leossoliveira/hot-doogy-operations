@@ -52,7 +52,7 @@ const routes=[['waste','Waste','trash-2'],['doogy-ai','Agents','bot'],['doogy-in
 routes.push(...HR_ROUTES);
 routes.push(...REPORTS.map(r=>[reportRoute(r.id),r.title,'file-chart-column']));
 const navigationModules=[
- {id:'hr',label:'HR',icon:'users-round',routes:HR_ROUTES.map(x=>x[0])},
+ {id:'hr',label:'Team',icon:'users-round',routes:HR_ROUTES.map(x=>x[0])},
  {id:'operations',label:'Operations',icon:'boxes',routes:['preparation','inventory','transfers','waste']},
  {id:'purchasing',label:'Purchasing',icon:'shopping-bag',routes:['suppliers','purchases','invoices','prices']},
  {id:'recipes',direct:true,routes:['recipes']},
