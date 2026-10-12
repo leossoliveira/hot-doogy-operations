@@ -1,3 +1,4 @@
+import {sendAssignment} from './my-day-whatsapp.mjs';
 import {createAgentService} from './doogy-agent.mjs';
 // Private Unix socket bridge. The web service receives no OpenClaw credentials or shell access.
 import http from 'node:http';
@@ -19,6 +20,7 @@ export function createBridgeDispatch(call=localCall){
  return async body=>{
   if(!body||typeof body!=='object')throw new ApiError(400,'Invalid request.');
   switch(body.action){
+   case 'task-assignment':return sendAssignment(body.input,call);
    case 'directory':
     if(cache&&Date.now()-Date.parse(cache.syncedAt)<30000)return {...cache,stale:false};
     if(!pending)pending=call('sessions.list',{limit:10000}).then(v=>{cache=sanitizeWhatsappDirectory(v);return {...cache,stale:false};}).catch(e=>{if(cache)return {...cache,stale:true};throw e;}).finally(()=>{pending=null;});return pending;
