@@ -19,3 +19,5 @@ Component rows show the internal name in bold, then SKU and the corresponding su
 Activation on Save is enforced by the recipe_edits_activate_new_version migration. Existing drafts remain unchanged; subsequent saves become Active. Isolated PostgreSQL validation covers active/archived statuses, preserved yield and steps, optimistic version checks, rollback of invalid components and role denial. Rollback requires a new migration restoring the previous recipe edit command; historical migrations must not be replayed.
 
 Cost metrics appear as Total Cost, Optimal Price, Selling Price, Food Cost %, Gross Profit and Gross Margin. Food Cost colors use the displayed percentage rounded to two decimals: up to 25.00% green, 25.01–25.99% yellow, 26.00% and above red. Unavailable values have no threshold color.
+
+Cost layout has two rows: Ingredients + Packaging = Total Cost; then Optimal Price, Selling Price, Food Cost %, Gross Profit and Gross Margin. This layout does not change the pricing formula.
