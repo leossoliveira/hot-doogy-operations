@@ -4,6 +4,6 @@ test('item search is empty until typing and matches internal name, SKU and produ
  assert.equal(searchItems(rows,'').length,0);assert.equal(searchItems(rows,'  ').length,0);for(const q of ['acai','123','frozen'])assert.deepEqual(searchItems(rows,q).map(x=>x.id),['a']);assert.deepEqual(searchItems(rows,'456').map(x=>x.id),['b']);assert.equal(searchItems(rows,'absent').length,0);
 });
 
-test("item search label uses product description and SKU with internal name",()=>{const item={internalName:"Wrapper",name:"Vendor paper",sku:"123",productDescription:"Small food wrapper",supplierName:"US Foods"};assert.equal(itemSearchTitle(item),"Small food wrapper");assert.equal(itemSearchCaption(item),"123 · Wrapper");assert.equal(itemSearchCaption({name:"Paper"}),"— · Paper");});
+test("item search label uses product description and SKU with internal name",()=>{const item={internalName:"Wrapper",name:"Vendor paper",sku:"123",productDescription:"Small food wrapper",supplierName:"US Foods"};assert.equal(itemSearchTitle(item),"Small food wrapper");assert.equal(itemSearchCaption(item),"SKU 123 · Wrapper");assert.equal(itemSearchCaption({name:"Paper"}),"SKU — · Paper");});
 
 test("item description never substitutes operational notes",()=>{assert.equal(itemSearchTitle({name:"Supplier bacon",internalName:"Sliced Bacon",description:"Source stocktake unit: Bag"}),"Supplier bacon");});

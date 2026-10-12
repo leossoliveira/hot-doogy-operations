@@ -1,6 +1,6 @@
 import {escape as e,norm} from './model.js';
 export const itemSearchTitle=item=>item.productDescription||item.supplierProductName||item.name||item.internalName||'';
-export const itemSearchCaption=item=>`${item.sku||'—'} · ${item.internalName||item.name||'—'}`;
+export const itemSearchCaption=item=>`SKU ${item.sku||'—'} · ${item.internalName||item.name||'—'}`;
 export function searchItems(items,query){const q=norm(query).trim();return q?items.filter(item=>norm([item.name,item.internalName,item.sku,item.productDescription].join(' ')).includes(q)).sort((a,b)=>(a.internalName||a.name||'').localeCompare(b.internalName||b.name||'','en',{sensitivity:'base',numeric:true})):[];}
 export function createItemSearch(root,{items,onSelect,onQueryChange=()=>{},label='Search items',placeholder='Search by name, internal name or SKU',selected=null,required=false}){
  const id='item-search-'+crypto.randomUUID();let matches=[],active=-1,picked=selected,disabled=false;
