@@ -73,3 +73,13 @@ test('order estimated totals multiply displayed quantity by price, including zer
  const modal=render('showOrder',{...base,total:999,lines:[{quantity:3,estimatedUnitPrice:5,lineTotal:999},{quantity:2,catalogUnitPrice:0}]});
  assert.match(modal.body,/<td data-line-total>\$15\.00<\/td>/);assert.match(modal.body,/<td data-line-total>\$0\.00<\/td>/);assert.doesNotMatch(modal.body,/999/);
 });
+
+test('order edit adds a leading accessible trash action without changing read-only rows',async()=>{
+ const {orderItemsTable,orderProductChoices}=await import('../src/order-edit.js');
+ const order={supplierId:'vendor',locationId:'store',lines:[{id:'line',productDescription:'Product',internalName:'Internal',quantity:1}]};
+ assert.match(orderItemsTable(order,e,money,preciseNumber,true),/data-remove-product="line" aria-label="Remove Product"/);
+ assert.doesNotMatch(orderItemsTable(order,e,money,preciseNumber),/data-remove-product/);
+ assert.doesNotMatch(orderItemsTable(order,e,money,preciseNumber,true),/name="price"/);
+ const item={id:'item',supplierId:'vendor',active:true,stores:[{id:'store',locationActive:true}],units:[{ordering:true,itemUnitId:'unit'}]};
+ assert.deepEqual(orderProductChoices([item,{...item,id:'wrong',supplierId:'other'},{...item,id:'inactive',supplierActive:false},{...item,id:'store-off',stores:[{id:'store',locationActive:false}]}],order).map(x=>x.id),['item']);
+});

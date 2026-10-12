@@ -40,4 +40,33 @@ assert.deepEqual((await db.query('select ordered_purchase_qty,line_total from pu
 assert.equal((await db.query('select total from invoices')).rows[0].total,'100');assert.equal((await db.query('select quantity from inventory_transactions')).rows[0].quantity,'5');
 assert.equal((await db.query('select count(*) from audit_logs')).rows[0].count,1);
 assert.equal((await db.query("select has_function_privilege('anon','public.edit_order_details(uuid,uuid,timestamptz,text,jsonb)','execute') as allowed")).rows[0].allowed,false);
+if(process.argv[3]){
+ await db.exec(`create table supplier_items(id uuid primary key,organization_id uuid,supplier_id uuid,inventory_item_id uuid,purchase_item_unit_id uuid,active boolean);
+ create table inventory_items(id uuid primary key,organization_id uuid,active boolean);
+ create table location_inventory_items(inventory_item_id uuid,location_id uuid,active boolean);
+ create table inventory_item_units(id uuid primary key,inventory_item_id uuid,organization_id uuid);
+ alter table purchase_order_lines add column supplier_item_id uuid,add column inventory_item_id uuid,add column purchase_item_unit_id uuid;
+ insert into supplier_items values('${u(30)}','${u(2)}','${u(4)}','${u(31)}','${u(32)}',true);
+ insert into inventory_items values('${u(31)}','${u(2)}',true);
+ insert into location_inventory_items values('${u(31)}','${u(3)}',true);
+ insert into inventory_item_units values('${u(32)}','${u(31)}','${u(2)}');`);
+ await db.exec(fs.readFileSync(process.argv[3],'utf8'));
+ const stamp=async()=>(await db.query('select updated_at::text as at from purchase_orders')).rows[0].at;
+ const added={id:u(33),supplierItemId:u(30),quantity:2,price:7};
+ await call([...lines,added],'ADDED',u(2),await stamp());
+ assert.equal((await db.query('select count(*) from purchase_order_lines')).rows[0].count,2);
+ assert.equal((await db.query('select estimated_total from purchase_orders')).rows[0].estimated_total,'29');
+ await assert.rejects(call([{...added,id:u(34),supplierItemId:u(99)}],'BAD',u(2),await stamp()));
+ await db.exec('update supplier_items set active=false');
+ await assert.rejects(call([{...added,id:u(34)}],'BAD',u(2),await stamp()));
+ await db.exec('update supplier_items set active=true;update location_inventory_items set active=false');
+ await assert.rejects(call([{...added,id:u(34)}],'BAD',u(2),await stamp()));
+ await db.exec('update location_inventory_items set active=true');
+ await call([added],'REMOVED',u(2),await stamp());
+ assert.deepEqual((await db.query('select id from purchase_order_lines')).rows,[{id:u(33)}]);
+ assert.equal((await db.query('select estimated_total from purchase_orders')).rows[0].estimated_total,'14');
+ await call([],'EMPTY DRAFT',u(2),await stamp());
+ assert.equal((await db.query('select count(*) from purchase_order_lines')).rows[0].count,0);
+ assert.equal((await db.query('select total from invoices')).rows[0].total,'100');
+}
 await db.close();console.log('Order editing: scope, role, MFA, stale versions, validation, totals and audit passed.');
