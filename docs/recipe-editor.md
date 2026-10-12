@@ -8,4 +8,6 @@ Save new version uses the existing authenticated recipe command. It creates the 
 
 Validation: application tests and syntax/migration checks; browser verification of centered positioning, table rows, editor controls, Packaging, Cost and version-history tab navigation. Browser verification does not save synthetic changes to business recipes.
 
-The Add item button is visible only on Ingredients and Packaging, including keyboard tab changes. Switching to Cost, Step-by-Step or Version history hides the catalog picker. Editor rows center the item and controls and omit component Notes from the visual form; stored notes remain part of the versioned component. Save new version uses the green confirmation style. Cost metrics stay in one horizontal row for each location, with horizontal scrolling on narrower screens.
+The Add item button is visible only on Ingredients and Packaging, including keyboard tab changes. Switching to Cost, Step-by-Step or Version history hides the catalog picker. Editor rows use the original alignment and omit component Notes from the visual form; stored notes remain part of the versioned component. Save new version uses the green confirmation style. Cost metrics stay in one horizontal row for each location, with horizontal scrolling on narrower screens.
+
+Cost displays Total Cost, Selling Price, Optimal Price, Food Cost %, Gross Profit and Gross Margin. Net Profit and Net Margin are omitted.

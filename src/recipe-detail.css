@@ -43,11 +43,6 @@
 @media(max-width:760px){.recipe-editor-modal .recipe-edit-row{grid-template-columns:1fr;gap:12px}.recipe-editor-modal .recipe-edit-controls .field:last-child{grid-column:auto}.modal.recipe-centered{width:calc(100vw - 24px)}.recipe-centered .recipe-detail-tabs button{padding:12px 10px;font-size:12px}}
 
 .recipe-editor-modal .recipe-add-bar[hidden]{display:none}
-.recipe-editor-modal .recipe-edit-row{align-items:center;text-align:center}
-.recipe-editor-modal .recipe-edit-item{align-items:center;justify-content:center}
-.recipe-editor-modal .recipe-edit-controls .field{align-items:center;text-align:center}
-.recipe-editor-modal .recipe-edit-controls input,.recipe-editor-modal .recipe-edit-controls select{text-align:center;width:100%}
 .recipe-editor-modal [data-action="save-recipe"]{background:var(--green);border-color:var(--green);color:#fff}
 .recipe-editor-modal [data-action="save-recipe"]:hover{background:#1c6c57;border-color:#1c6c57}
 .recipe-centered .cost-metrics:not(.cost-prep){grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(110px,1fr);overflow-x:auto;padding-bottom:4px}
-.recipe-centered .cost-metric{text-align:center}
