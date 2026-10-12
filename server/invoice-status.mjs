@@ -30,3 +30,13 @@ export async function deleteInvoice(req,res,url,auth,session){
  const result=await auth.request('/rest/v1/rpc/delete_invoice',{token:session.token,method:'POST',body:{p_invoice_id:match[1],p_organization_id:ORGANIZATION_ID,p_expected_updated_at:body.expectedUpdatedAt,p_confirmed:true}});
  reply(res,200,result);
 }
+
+export async function deleteOrder(req,res,url,auth,session){
+ const match=url.pathname.match(/^\/api\/orders\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\/delete$/);
+ if(!match||req.method!=='POST')throw new ApiError(404,'Resource not found.');
+ if(!canEditInvoiceStatus(session.member?.role))throw new ApiError(403,'You do not have permission to delete orders.');
+ const body=await jsonBody(req,4096);
+ if(body?.confirmed!==true||typeof body.expectedUpdatedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T/.test(body.expectedUpdatedAt)||!Number.isFinite(Date.parse(body.expectedUpdatedAt)))throw new ApiError(400,'Confirm deletion and reload the order before deleting.');
+ const result=await auth.request('/rest/v1/rpc/delete_order',{token:session.token,method:'POST',body:{p_order_id:match[1],p_organization_id:ORGANIZATION_ID,p_expected_updated_at:body.expectedUpdatedAt,p_confirmed:true}});
+ reply(res,200,result);
+}

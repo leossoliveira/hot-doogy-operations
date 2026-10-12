@@ -23,7 +23,7 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   const emptyLines=()=>notice("This record has no item lines.",true);
   function linesView(lines,kind){
     if(!lines.length)return emptyLines();
-    if(kind==='order')return table(["Product / SKU","Ordered","Received","Unit","Estimated price","Estimated total"],lines.map(l=>row([product(l),number(l.orderedQuantity??l.quantity??l.qty),number(l.receivedQuantity),text(l.uom),amount(l.estimatedUnitPrice??l.unitPrice),amount(l.lineTotal)])));
+    if(kind==='order')return table(["Product / SKU","Ordered","Received / Date","Unit","Item price","Estimated total"],lines.map(l=>row([product(l),number(l.orderedQuantity??l.quantity??l.qty),number(l.receivedQuantity)+(list(l.receivedDates).length?'<small>'+l.receivedDates.map(d=>when(d)).join('<br>')+'</small>':''),text(l.uom),amount(l.catalogUnitPrice),amount(l.lineTotal)])));
     return table(["Product / SKU","Quantity","Unit","Base quantity","Unit price",'Total'],lines.map(l=>row([product(l),number(l.quantity??l.qty),text(l.uom),quantity(l.quantityBase,l.baseUom),amount(l.unitPrice??l.unitCost),amount(l.lineTotal)])));
   }
   function lineReferences(lines,transfer=false){
@@ -73,13 +73,14 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   }
   function showOrder(x,footer=''){
     const evidence=x.receiptEvidence||{},labels={confirmed_received:"Received quantities — user confirmation",fully_received:"Fully received on linked lines",partially_received:"Partially received on linked lines",receipt_recorded:"Receipt recorded",no_receipt_recorded:"No linked receipt"};
-    let body=intro(x)+grid([["Saved status",status(x.dbStatus??x.status,x.statusLabel)],["Receipt",text(labels[evidence.computedStatus])],["Ordered on",when(x.orderedAt)],["Expected delivery",when(x.expectedAt)],["Saved items",number(x.lineCount??list(x.lines).length)],["Estimated total",amount(x.total)]]);
+    const receivers=[...new Set(list(x.receipts).filter(r=>(r.dbStatus??r.status)==='completed').map(r=>r.receiverName||r.receivedByName).filter(Boolean))];
+    let body=intro(x)+grid([["Received by",text(receivers.join(', ')||'Not recorded')],["Saved status",status(x.dbStatus??x.status,x.statusLabel)],["Receipt",text(labels[evidence.computedStatus])],["Ordered on",when(x.orderedAt)],["Expected delivery",when(x.expectedAt)],["Saved items",number(x.lineCount??list(x.lines).length)],["Estimated total",amount(x.total)]]);
     if(x.paymentEvidence?.paidInvoiceCount)body+=notice(e(x.paymentEvidence.paidInvoiceCount)+" linked invoice(s) marked as paid. Payment and receipt of goods are separate records.",true);
-    body+=section("Order items",linesView(list(x.lines),'order'))+lineReferences(list(x.lines));
+    body+=section("Order items",linesView([...list(x.lines)].sort((a,b)=>(a.name||a.itemName||'').localeCompare(b.name||b.itemName||'','en',{sensitivity:'base',numeric:true})),'order'));
     if(evidence.comparableLineCount!=null)body+="<p class=\"operation-help\">This review compares "+e(evidence.comparableLineCount)+" of "+e(evidence.orderLineCount??0)+" explicitly linked lines with matching units. Missing fields remain unconfirmed.</p>";
-    body+=receiptsView(list(x.receipts))+section("Linked invoices",list(x.invoices).length?table(["Note","Issue date","Status",'Total',''],x.invoices.map(i=>row([text(i.number||ref(i)),when(i.date,true),status(i.status),amount(i.total),linkedButton("Open invoice",'invoice',i.id)]))):notice("No invoices linked to this order.",true));
+    body+=section("Linked invoices",list(x.invoices).length?table(["Note","Issue date","Status",'Total',''],x.invoices.map(i=>row([text(i.number||ref(i)),when(i.date,true),status(i.status),amount(i.total),linkedButton("Open invoice",'invoice',i.id)]))):notice("No invoices linked to this order.",true));
     if(list(x.tags).length)body+=section("Tags",'<div class="operation-tags">'+x.tags.map(t=>'<span class="tag">'+e(t.name)+'</span>').join('')+'</div>');
-    body+=ending(x);
+    body+=timelineView(x);
     openModal("Order "+e(ref(x)),body,footer||btn("Close",'close'),{wide:true,className:'operation-modal',kind:'order-detail'});
   }
   function showTransfer(x,footer=''){

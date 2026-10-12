@@ -66,3 +66,19 @@ test('payment method accepts one supported value or omission',async()=>{
  }
  for(const paymentMethod of ['cash',['credit_card','debit_card']])await assert.rejects(updateInvoiceStatus(req({...body,paymentMethod}),res(),url,{request:()=>assert.fail('No mutation')},{member:{role:'admin'}}),e=>e.status===400);
 });
+
+import {deleteOrder} from '../server/invoice-status.mjs';
+const deleteOrderUrl=new URL('http://localhost/api/orders/'+id+'/delete');
+test('deletion requires explicit confirmation, valid version and financial permissions',async()=>{
+ const noDatabase={request:()=>assert.fail('Must not mutate')};
+ for(const payload of [{},{confirmed:false,expectedUpdatedAt:body.expectedUpdatedAt},{confirmed:true,expectedUpdatedAt:'bad'}])
+  await assert.rejects(deleteOrder(req(payload),res(),deleteOrderUrl,noDatabase,{member:{role:'admin'}}),e=>e.status===400);
+ await assert.rejects(deleteOrder(req({confirmed:true,expectedUpdatedAt:body.expectedUpdatedAt}),res(),deleteOrderUrl,noDatabase,{member:{role:'employee'}}),e=>e.status===403);
+});
+test('confirmed deletion uses scoped RPC and propagates failures without success',async()=>{
+ const payload={confirmed:true,expectedUpdatedAt:body.expectedUpdatedAt,organizationId:'fake'};let call;
+ const response=res();
+ await deleteOrder(req(payload),response,deleteOrderUrl,{request:async(path,options)=>{call={path,...options};return {id,deleted:true};}},{member:{role:'admin'},token:'user-token'});
+ assert.equal(response.body.deleted,true);assert.equal(call.path,'/rest/v1/rpc/delete_order');assert.equal(call.token,'user-token');assert.equal(call.body.p_order_id,id);assert.notEqual(call.body.p_organization_id,'fake');
+ const failed=res();await assert.rejects(deleteOrder(req(payload),failed,deleteOrderUrl,{request:async()=>{throw Error('conflict');}},{member:{role:'admin'}}),/conflict/);assert.equal(failed.status,undefined);
+});

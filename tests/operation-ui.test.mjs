@@ -54,3 +54,10 @@ test('empty order keeps its stored status and does not fabricate lines or receip
   assert.match(modal.body,/No linked receipt/);
   assert.doesNotMatch(modal.body,/\$0\.00/);
 });
+
+test('order uses catalog price, alphabetical products and recorded receivers/dates without removed details',()=>{
+ const modal=render('showOrder',{...base,status:'ordered',notes:'Hidden order note',receipts:[{status:'completed',receiverName:'Ana'}],lines:[{name:'Zebra',catalogUnitPrice:8,estimatedUnitPrice:90,receivedQuantity:2,receivedDates:['2026-10-08T16:00:00Z']},{name:'Apple',catalogUnitPrice:0,receivedQuantity:null}]});
+ assert.ok(modal.body.indexOf('Apple')<modal.body.indexOf('Zebra'));
+ assert.match(modal.body,/\$8\.00/);assert.doesNotMatch(modal.body,/\$90\.00/);assert.match(modal.body,/Received \/ Date/);assert.match(modal.body,/10\/08\/2026/);assert.match(modal.body,/Ana/);
+ assert.doesNotMatch(modal.body,/Item units and references|<h3>Receipts|Hidden order note|Linked inventory movements|Record references/);
+});

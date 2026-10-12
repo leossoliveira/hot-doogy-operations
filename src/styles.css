@@ -245,3 +245,9 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .hr-phone-controls{grid-template-columns:105px minmax(0,1fr)}.hr-country-select{position:relative;min-width:0}.hr-country-value{position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink);font-size:13px}.hr-phone-controls .hr-country-select select{color:transparent;cursor:pointer;padding-right:22px}.hr-phone-controls .hr-country-select option{color:var(--ink)}
 
 .hr-sort{border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:0;cursor:pointer;display:inline-flex;align-items:center;gap:8px}.hr-sort:focus-visible{outline:2px solid #e5bd00;outline-offset:4px}
+
+.btn.receipt-confirm-button{background:#218451;border-color:#218451;color:#fff}.btn.receipt-confirm-button:hover{background:#196b41;border-color:#196b41}
+
+.purchasing-filters .purchasing-search input{border:0!important;background:transparent;box-shadow:none;outline:none}.purchasing-filters .purchasing-search:focus-within{outline:2px solid #d2b324;outline-offset:1px}
+
+.purchase-history-filters .purchasing-page-size{margin-left:auto}

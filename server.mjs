@@ -9,7 +9,7 @@ import {invoiceIntake} from './server/invoice-intake.mjs';
 import {requireStaffRequest,requireStaffCommand} from './server/staff-access.mjs';
 import {preparationUsage} from './server/preparation-usage.mjs';
 import {invoiceDownload} from './server/invoice-download.mjs';
-import {updateInvoiceStatus,deleteInvoice} from './server/invoice-status.mjs';
+import {updateInvoiceStatus,deleteInvoice,deleteOrder} from './server/invoice-status.mjs';
 import {replyData} from './server/compressed-json.mjs';
 import {queueSalesSummary} from './server/sales-summary.mjs';
 import {invoiceUpload} from './server/invoice-api.mjs';
@@ -36,6 +36,7 @@ http.createServer(async(req,res)=>{
    if(url.pathname.startsWith('/api/my-day'))return await myDayAPI(req,res,url,auth,session);
    if(['/api/invoices/team-members','/api/preparation/team-members'].includes(url.pathname)&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_team_directory',{token:session.token,method:'POST',body:{p_module:url.pathname.includes('/invoices/')?'purchasing':'preparation'}}));
    if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
+   if(/^\/api\/orders\/[^/]+\/delete$/.test(url.pathname))return await deleteOrder(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/documents\/[^/]+\/download$/.test(url.pathname))return await invoiceDownload(req,res,url,auth,session);
