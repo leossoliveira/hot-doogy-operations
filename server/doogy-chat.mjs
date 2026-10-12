@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {ApiError} from './auth.mjs';
 
 const quote=value=>"'"+String(value).replaceAll("'","'\\''")+"'";
-const methods=new Set(['sessions.list','chat.history','send','config.get','config.patch']);
+const methods=new Set(['sessions.list','chat.history','chat.send','send','config.get','config.patch']);
 export async function openClawCall(method,params){
  if(!methods.has(method))throw new ApiError(400,'Unsupported conversation action.');
  const host=process.env.HOT_DOOGY_OPENCLAW_SSH_HOST;

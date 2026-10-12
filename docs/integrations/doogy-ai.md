@@ -35,3 +35,11 @@ Production supports interactive calls through `HOT_DOOGY_OPENCLAW_SOCKET=/run/ho
 Each conversation is re-resolved from WhatsApp sessions. Settings patches are built server-side and limited to its prompt and mention rule. The code is loaded from the active root-owned release. `PartOf=hot-doogy.service` restarts the bridge with releases/rollbacks; the app's drop-in starts it when needed. Never make release source writable by the web user. The older metadata exporter remains an optional read-only alternative, not the production interactive path.
 
 Deployment checks: service state, private socket permissions, directory/history/settings read as the web-service user, public authenticated API boundary, and release SHA. Sending and configuration writes are covered by isolated tests rather than posting real messages or changing live conversation rules.
+
+## Direct agent chat
+
+Doogy AI is a direct sidebar module. Owner/admin users also see the yellow bot launcher in the lower-right corner. Its popup has a matching bot header and editable starter questions about sales, menu margins, stock priorities and waste. Clicking a suggestion fills the composer; only Send submits it.
+
+The `/api/doogy-ai/agent/history` and `/api/doogy-ai/agent/send` endpoints retain the existing authentication and owner/admin restriction. Session keys are derived server-side from the authenticated user's ID, with an application-specific namespace under the main OpenClaw agent. Clients cannot select another session. `chat.send` uses a stable idempotency key and `deliver:false`; replies appear in the popup rather than being sent to a WhatsApp conversation. The private bridge exposes only these two additional fixed actions. See the official [WebChat protocol](https://docs.openclaw.ai/web/webchat).
+
+History polling runs while the popup is open; closing stops further polls, and permission/session errors stop polling. Uncertain send attempts preserve the original text and request ID for retry. Real remote history/send was not exercised during local verification; tests use a fake gateway, and the installed gateway parameter validator accepted the chat payload. The local server must be restarted to load the new API routes.

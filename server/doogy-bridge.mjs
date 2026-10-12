@@ -1,3 +1,4 @@
+import {createAgentService} from './doogy-agent.mjs';
 // Private Unix socket bridge. The web service receives no OpenClaw credentials or shell access.
 import http from 'node:http';
 import {execFile} from 'node:child_process';
@@ -7,20 +8,22 @@ import {pathToFileURL} from 'node:url';
 import {ApiError} from './auth.mjs';
 import {createConversationService} from './doogy-chat.mjs';
 import {sanitizeWhatsappDirectory} from './doogy-ai.mjs';
-const allowedMethods=new Set(['sessions.list','chat.history','config.get','config.patch','send']);
+const allowedMethods=new Set(['sessions.list','chat.history','chat.send','config.get','config.patch','send']);
 async function localCall(method,params){
  if(!allowedMethods.has(method))throw new ApiError(400,'Unsupported conversation action.');
  try{const {stdout}=await promisify(execFile)('/usr/bin/openclaw',['gateway','call',method,'--json','--timeout','20000','--params',JSON.stringify(params)],{timeout:28000,maxBuffer:10*1024*1024});return JSON.parse(stdout);}
  catch(error){if(method==='config.patch'&&/baseHash|config changed|configuration changed/i.test(error.stderr||''))throw new ApiError(409,'Settings changed. Reopen settings before saving.');throw new ApiError(503,method==='send'?'Delivery could not be confirmed. Retry the same message.':'OpenClaw is unavailable. Try again.');}
 }
 export function createBridgeDispatch(call=localCall){
- const service=createConversationService(call);let cache=null,pending=null;
+ const service=createConversationService(call),agent=createAgentService(call);let cache=null,pending=null;
  return async body=>{
   if(!body||typeof body!=='object')throw new ApiError(400,'Invalid request.');
   switch(body.action){
    case 'directory':
     if(cache&&Date.now()-Date.parse(cache.syncedAt)<30000)return {...cache,stale:false};
     if(!pending)pending=call('sessions.list',{limit:10000}).then(v=>{cache=sanitizeWhatsappDirectory(v);return {...cache,stale:false};}).catch(e=>{if(cache)return {...cache,stale:true};throw e;}).finally(()=>{pending=null;});return pending;
+   case 'agent-history':return agent.history('owner',body.actor);
+   case 'agent-send':return agent.send('owner',body.actor,body.input);
    case 'history':return service.history('owner',body.id,body.offset??0);
    case 'settings':return service.settings('owner',body.id);
    case 'saveSettings':return service.saveSettings('owner',body.id,body.input);
