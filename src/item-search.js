@@ -1,8 +1,10 @@
 import {escape as e,norm} from './model.js';
+export const itemSearchTitle=item=>item.internalName||item.name||'';
+export const itemSearchCaption=item=>`SKU (${item.sku||'—'}) · ${item.productDescription||item.description||item.name||'—'}`;
 export function searchItems(items,query){const q=norm(query).trim();return q?items.filter(item=>norm([item.name,item.internalName,item.sku,item.productDescription].join(' ')).includes(q)).sort((a,b)=>(a.internalName||a.name||'').localeCompare(b.internalName||b.name||'','en',{sensitivity:'base',numeric:true})):[];}
 export function createItemSearch(root,{items,onSelect,onQueryChange=()=>{},label='Search items',placeholder='Search by name, internal name or SKU',selected=null,required=false}){
  const id='item-search-'+crypto.randomUUID();let matches=[],active=-1,picked=selected,disabled=false;
- const title=item=>item.internalName||item.name||'',caption=item=>[`SKU ${item.sku||'—'}`,item.productDescription||item.name!==title(item)&&item.name||''].filter(Boolean).join(' · ');
+ const title=itemSearchTitle,caption=itemSearchCaption;
  root.innerHTML=`<div class="inline-item-search"><div class="input-wrap"><i data-lucide="search" class="icon" aria-hidden="true"></i><input type="search" role="combobox" aria-label="${e(label)}" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}" autocomplete="off" placeholder="${e(placeholder)}" value="${e(selected?title(selected):'')}" ${required?'required':''}></div><div id="${id}" class="item-search-options" role="listbox" aria-label="${e(label)} results" hidden></div></div>`;
  const input=root.querySelector('input'),list=root.querySelector('[role=listbox]');
  const close=()=>{list.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1;};
