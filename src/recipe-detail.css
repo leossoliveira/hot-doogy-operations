@@ -22,3 +22,22 @@
 .inventory-photo:hover{border-color:#d3ad00;background:#fff9dc}
 .inventory-photo img{width:100%;height:100%;object-fit:cover}
 .inventory-photo .icon{width:22px;height:22px}
+
+/* Recipe detail and editing share the standard centered dialog. */
+.modal.recipe-centered{width:min(1120px,calc(100vw - 40px));max-width:1120px}
+.recipe-centered .recipe-detail-tabs{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px}
+.recipe-centered .recipe-detail-tabs button{flex:0 0 auto;white-space:nowrap;overflow-wrap:normal}
+.recipe-editor-modal .recipe-edit-row{display:grid;grid-template-columns:minmax(240px,1.5fr) minmax(360px,1.6fr);align-items:center;gap:20px;border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;padding:16px 0}
+.recipe-editor-modal .recipe-edit-item{margin:0;align-items:center}
+.recipe-editor-modal .recipe-edit-controls{grid-template-columns:minmax(85px,.7fr) minmax(100px,1fr) minmax(110px,1fr)}
+.recipe-editor-modal .component-observation{grid-column:1/-1}
+.recipe-centered .recipe-components table{display:table;min-width:560px!important;table-layout:fixed}
+.recipe-centered .recipe-components table>thead{display:table-header-group;position:static;width:auto;height:auto;overflow:visible;clip-path:none}
+.recipe-centered .recipe-components table>thead>tr,.recipe-centered .recipe-components table>tbody>tr{display:table-row}
+.recipe-centered .recipe-components table>tbody{display:table-row-group;padding:0}
+.recipe-centered .recipe-components table th,.recipe-centered .recipe-components table td{display:table-cell;position:static;width:auto;border-radius:0}
+.recipe-centered .recipe-components table td[data-column-label]::before{display:none}
+.recipe-centered .recipe-components table th:first-child{width:60%}
+.recipe-centered .recipe-components{overflow-x:auto}
+.recipe-editor-modal .modal-foot{flex-wrap:wrap}
+@media(max-width:760px){.recipe-editor-modal .recipe-edit-row{grid-template-columns:1fr;gap:12px}.recipe-editor-modal .recipe-edit-controls .field:last-child{grid-column:auto}.modal.recipe-centered{width:calc(100vw - 24px)}.recipe-centered .recipe-detail-tabs button{padding:12px 10px;font-size:12px}}
