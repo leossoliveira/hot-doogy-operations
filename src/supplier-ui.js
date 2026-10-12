@@ -16,7 +16,7 @@ export function createSupplierUI(ctx) {
   let selected=null, sortKey='name', direction='asc', itemStatus='active', editor=null;
   const catalog=()=>ctx.catalog();
   const forms=createSupplierForms(ctx);
-  const items=()=>catalog()?.items.map(x=>supplierItemWithEdits(x,ctx.local()))||[];
+  const items=()=>catalog()?.items.map(x=>({...supplierItemWithEdits(x,ctx.local()),supplierName:x.supplierName||ctx.suppliers?.().find(s=>s.id===x.supplierId)?.name}))||[];
   const scopedRows=()=>filterSupplierItems(items(),{supplierId:selected,storeId:ctx.state().store,query:ctx.state().q,status:itemStatus,sortKey,direction});
   const unitName=(row,id)=>row.units?.find(u=>u.id===id)?.name||catalog()?.units?.find(u=>u.id===id)?.name||null;
   const supplier=()=>ctx.suppliers().find(x=>x.id===selected);
