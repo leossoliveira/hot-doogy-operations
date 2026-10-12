@@ -4,13 +4,15 @@ import {ApiError} from './auth.mjs';
 const uuid=/^[a-f0-9-]{36}$/i;
 const clean=(value,limit)=>String(value||'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,limit);
 export function assignmentMessage(job){
- const date=value=>value?String(value).replace('T',' ').slice(0,16):'';
- return [ `HOT DOOGY · Nova tarefa atribuída`, `Olá, ${clean(job.name,160)}!`, '',clean(job.title,160),
- `Escopo: ${clean(job.scope,900)||'Consulte os detalhes da tarefa no Activity Board.'}`,
- `Local: ${clean(job.location,100)}`,`Prazo: ${clean(job.due_date,10)}`,
- ...(job.starts_at?[`Início: ${date(job.starts_at)} · Nova York`,`Fim: ${date(job.ends_at)} · Nova York`]:[]),
- ...(job.occurrences>1?[`Tarefa recorrente: ${job.occurrences} ocorrências até ${clean(job.last_due,10)}.`]:[]),
- '', 'Veja os detalhes e atualize o status:','https://management.hotdoogy.com/#my-day'].join('\n');
+ const firstName=clean(job.name,160).split(/\s+/)[0]||'Team member';
+ const due=clean(job.due_date,10);
+ const dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?`${due.slice(5,7)}/${due.slice(8,10)}/${due.slice(0,4)}`:due;
+ const end=clean(job.ends_at,32);
+ const timeMatch=end.match(/T(\d{2}):(\d{2})/);
+ const completionTime=timeMatch?`${String((Number(timeMatch[1])%12)||12).padStart(2,'0')}:${timeMatch[2]} ${Number(timeMatch[1])>=12?'PM':'AM'}`:'';
+ return [`Olá, ${firstName}!`,'','Nova tarefa atribuída:','',clean(job.title,160),
+ clean(job.scope,900)||'Consulte os detalhes da tarefa no Activity Board.','',
+ `Local: ${clean(job.location,100)}`,'',`Prazo: ${dueDate}${completionTime?` · ${completionTime}`:''}`].join('\n');
 }
 export async function sendAssignment(input,call=openClawCall){
  if(!input||!uuid.test(input.id||'')||!/^\+[1-9]\d{6,14}$/.test(input.phone||'')||typeof input.message!=='string'||!input.message.trim()||input.message.length>2400)throw new ApiError(400,'Invalid task notification.');
