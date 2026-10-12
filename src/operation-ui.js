@@ -1,3 +1,4 @@
+import {orderItemsTable} from './order-edit.js';
 import {financialStatus} from './invoice-financial.js';
 export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,notice,btn,openModal}){
   const list=x=>Array.isArray(x)?x:[];
@@ -76,7 +77,7 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
     const receivers=[...new Set(list(x.receipts).filter(r=>(r.dbStatus??r.status)==='completed').map(r=>r.receiverName||r.receivedByName).filter(Boolean))];
     let body=intro(x)+grid([["Received by",text(receivers.join(', ')||'Not recorded')],["Saved status",status(x.dbStatus??x.status,x.statusLabel)],["Receipt",text(labels[evidence.computedStatus])],["Ordered on",when(x.orderedAt)],["Expected delivery",when(x.expectedAt)],["Saved items",number(x.lineCount??list(x.lines).length)],["Estimated total",amount(x.total)]]);
     if(x.paymentEvidence?.paidInvoiceCount)body+=notice(e(x.paymentEvidence.paidInvoiceCount)+" linked invoice(s) marked as paid. Payment and receipt of goods are separate records.",true);
-    body+=section("Order items",linesView([...list(x.lines)].sort((a,b)=>(a.name||a.itemName||'').localeCompare(b.name||b.itemName||'','en',{sensitivity:'base',numeric:true})),'order'));
+    body+=section("Order items",orderItemsTable(x,e,money,preciseNumber));
     if(evidence.comparableLineCount!=null)body+="<p class=\"operation-help\">This review compares "+e(evidence.comparableLineCount)+" of "+e(evidence.orderLineCount??0)+" explicitly linked lines with matching units. Missing fields remain unconfirmed.</p>";
     body+=section("Linked invoices",list(x.invoices).length?table(["Note","Issue date","Status",'Total',''],x.invoices.map(i=>row([text(i.number||ref(i)),when(i.date,true),status(i.status),amount(i.total),linkedButton("Open invoice",'invoice',i.id)]))):notice("No invoices linked to this order.",true));
     if(list(x.tags).length)body+=section("Tags",'<div class="operation-tags">'+x.tags.map(t=>'<span class="tag">'+e(t.name)+'</span>').join('')+'</div>');

@@ -1,3 +1,4 @@
+import {editOrder} from './server/order-edit.mjs';
 import {myDayAPI} from './server/my-day.mjs';
 import {loadProfile,requireProfileRequest,requireProfileCommand} from './server/permission-profiles.mjs';
 import {hrAPI} from './server/hr.mjs';
@@ -38,6 +39,7 @@ http.createServer(async(req,res)=>{
    if(url.pathname.startsWith('/api/my-day'))return await myDayAPI(req,res,url,auth,session);
    if(['/api/invoices/team-members','/api/preparation/team-members'].includes(url.pathname)&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_team_directory',{token:session.token,method:'POST',body:{p_module:url.pathname.includes('/invoices/')?'purchasing':'preparation'}}));
    if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
+   if(/^\/api\/orders\/[^/]+\/edit$/.test(url.pathname))return await editOrder(req,res,url,auth,session);
    if(/^\/api\/orders\/[^/]+\/delete$/.test(url.pathname))return await deleteOrder(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
