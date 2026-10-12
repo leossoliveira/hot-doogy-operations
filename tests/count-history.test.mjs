@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {countSessions,historyRows,historyDateTime,countDetailRows} from '../src/count-history.js';
 import {projectData} from '../server/live-data.mjs';
+test('completed count uses the employee recorded on matching observations',()=>{
+ const data=projectData({stock_counts:[{id:'s',location_id:'l',status:'completed',completed_at:'2026-10-12T14:09:00Z'}],store_count_observations:[{id:'o',session_id:'s',location_id:'l',inventory_item_id:'i',employee_name:'Maria Maia',quantity:3}]});
+ assert.equal(data.inventoryHistory.sessions[0].employeeName,'Maria Maia');
+ assert.equal(data.inventoryHistory.sessions[0].countedAt,'2026-10-12T14:09:00Z');
+});
 test('groups counted items by session and location, excludes unfinished legacy counts',()=>{
  const rows=countSessions([{id:'a',sessionId:'s',locationId:'l',employeeName:'Maria',countedOn:'2026-10-08'},{id:'b',sessionId:'s',locationId:'l'},{id:'c',sessionId:'s',locationId:'other'}],[{id:'draft',status:'draft'},{id:'old',locationId:'l',status:'completed',completedAt:'2026-10-07T15:00:00Z'}]);
  assert.equal(rows.length,3);assert.equal(rows.find(x=>x.id==='s'&&x.locationId==='l').employeeName,'Maria');

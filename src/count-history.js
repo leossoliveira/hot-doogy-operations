@@ -5,7 +5,9 @@ export function countSessions(observations=[],sessions=[],legacyLines=[]){
  for(const o of observations){
   const id=o.sessionId||o.id,key=`${o.locationId}|${id}`;
   if(!rows.has(key))rows.set(key,{id,locationId:o.locationId,status:'completed',employeeName:o.employeeName||'',date:o.countedOn,countedAt:o.countedAt||null,countOffsetMinutes:o.deviceUtcOffsetMinutes,lines:[],source:'observations'});
-  rows.get(key).lines.push({...o,itemId:o.inventoryItemId,qty:o.quantity});
+  const record=rows.get(key);
+  if(!record.employeeName&&o.employeeName)record.employeeName=o.employeeName;
+  record.lines.push({...o,itemId:o.inventoryItemId,qty:o.quantity});
  }
  return [...rows.values()];
 }
