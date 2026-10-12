@@ -4,10 +4,12 @@ Recipe cards and their editor use a centered wide modal. Ingredient and packagin
 
 Both views use one horizontal tab strip: Ingredients, Packaging, Cost, Step-by-Step, Version history. Ingredient and packaging edits retain their original component indices across the two tabs. Changing type moves an item to the corresponding tab. Adding while Packaging is selected creates a packaging component. Cost updates from the edited component draft. Instructions and version history remain visible through the corresponding tabs.
 
-Save new version uses the existing authenticated recipe command. It creates the next numbered draft version, copies the yield and instructions, records its edited components and retains earlier versions. Existing authorization and expected-version checks remain in effect. Duplicate save clicks are blocked; validation opens the tab containing an invalid field. The dialog remains open with the draft and an error if saving fails.
+Save uses the existing authenticated recipe command. It creates the next numbered draft version, copies the yield and instructions, records its edited components and retains earlier versions. Existing authorization and expected-version checks remain in effect. Duplicate save clicks are blocked; validation opens the tab containing an invalid field. The dialog remains open with the draft and an error if saving fails.
 
 Validation: application tests and syntax/migration checks; browser verification of centered positioning, table rows, editor controls, Packaging, Cost and version-history tab navigation. Browser verification does not save synthetic changes to business recipes.
 
-The Add item button is visible only on Ingredients and Packaging, including keyboard tab changes. Switching to Cost, Step-by-Step or Version history hides the catalog picker. Editor rows use the original alignment and omit component Notes from the visual form; stored notes remain part of the versioned component. Save new version uses the green confirmation style. Cost metrics stay in one horizontal row for each location, with horizontal scrolling on narrower screens.
+The Add item button is visible only on Ingredients and Packaging, including keyboard tab changes. Switching to Cost, Step-by-Step or Version history hides the catalog picker. Editor rows use the original alignment and omit component Notes from the visual form; stored notes remain part of the versioned component. Save uses the green confirmation style. Cost metrics stay in one horizontal row for each location, with horizontal scrolling on narrower screens.
 
 Cost displays Total Cost, Selling Price, Optimal Price, Food Cost %, Gross Profit and Gross Margin. Net Profit and Net Margin are omitted.
+
+The remove icon appears at the end of each ingredient or packaging row. Cost headings omit the USD label; monetary values keep their dollar formatting.

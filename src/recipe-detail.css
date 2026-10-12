@@ -46,3 +46,7 @@
 .recipe-editor-modal [data-action="save-recipe"]{background:var(--green);border-color:var(--green);color:#fff}
 .recipe-editor-modal [data-action="save-recipe"]:hover{background:#1c6c57;border-color:#1c6c57}
 .recipe-centered .cost-metrics:not(.cost-prep){grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(110px,1fr);overflow-x:auto;padding-bottom:4px}
+
+.recipe-editor-modal .recipe-edit-row{grid-template-columns:minmax(220px,1.3fr) minmax(360px,1.6fr) 36px;gap:16px}
+.recipe-editor-modal .recipe-edit-row>.recipe-remove{align-self:center;justify-self:end}
+@media(max-width:760px){.recipe-editor-modal .recipe-edit-row{grid-template-columns:minmax(0,1fr) 36px}.recipe-editor-modal .recipe-edit-item{grid-column:1}.recipe-editor-modal .recipe-edit-controls{grid-column:1;grid-row:2;min-width:0}.recipe-editor-modal .recipe-edit-row>.recipe-remove{grid-column:2;grid-row:1/3}}
