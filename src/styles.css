@@ -234,3 +234,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .input-wrap .icon{flex-shrink:0}
 
 .hr-stats{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:700px){.hr-stats{grid-template-columns:1fr}}
+
+.hr-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.hr-profile-table{width:100%;margin:16px 0}.hr-profile-table th,.hr-profile-table td{padding:10px;text-align:left}.hr-profile-member{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}#hr-profile-error{color:#b43535}@media(max-width:700px){.hr-stats{grid-template-columns:1fr}}

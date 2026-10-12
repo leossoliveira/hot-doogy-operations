@@ -23,4 +23,17 @@ if(process.argv[3]){
  await assert.rejects(save('workday',29,0,{...day,team_member_id:person.id}));assert.equal((await db.query('select hr_user_directory() r')).rows[0].r.length,2);
  await db.exec("set test.role='staff'");await assert.rejects(db.query('select hr_import_users()'));await assert.rejects(db.query('select hr_user_directory()'));await db.exec('reset role');
 }
+if(process.argv[4]){
+ await db.exec("set test.org='"+org+"';set test.role='owner';set test.mfa='yes';insert into organization_members values('"+id(8)+"','"+org+"','"+id(1)+"','owner','active');");
+ await db.exec(fs.readFileSync(process.argv[4],'utf8'));
+ const profile=(role,version,permissions)=>db.query('select hr_save_profile($1,$2,$3)',[role,version,permissions]);
+ await db.exec('set role authenticated');await profile('staff',0,{inventory:{view:true,write:false}});
+ await assert.rejects(profile('staff',0,{}));await assert.rejects(profile('owner',0,{}));await assert.rejects(profile('staff',1,{unknown:{view:true,write:true}}));
+ await db.exec("set test.role='admin'");await assert.rejects(profile('admin',0,{}));
+ await db.exec("set test.mfa='no'");await assert.rejects(profile('chef',0,{}));await db.exec("set test.mfa='yes';set test.role='staff'");await assert.rejects(profile('chef',0,{}));
+ await db.exec("reset role;update organization_members set role='staff' where id='"+id(8)+"';");
+ await assert.rejects(db.exec("insert into locations values('"+id(98)+"','"+org+"')"),/permission profile/);
+ assert.equal((await db.query("select has_function_privilege('anon','public.hr_save_profile(text,integer,jsonb)','execute') allowed")).rows[0].allowed,false);
+ console.log('PASS profile versioning, validation, owner/admin/MFA checks and direct write guard');
+}
 await db.close();console.log('PASS HR: team/workday saves, wage history, stale edits, locations, hours, future dates, role assignment, RLS tenant/MFA/staff denial, audit, anonymous denial');
