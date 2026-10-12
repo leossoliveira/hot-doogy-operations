@@ -52,7 +52,3 @@
 @media(max-width:760px){.recipe-editor-modal .recipe-edit-row{grid-template-columns:minmax(0,1fr) 36px}.recipe-editor-modal .recipe-edit-item{grid-column:1}.recipe-editor-modal .recipe-edit-controls{grid-column:1;grid-row:2;min-width:0}.recipe-editor-modal .recipe-edit-row>.recipe-remove{grid-column:2;grid-row:1/3}}
 
 .recipe-centered .recipe-components table th:nth-child(2),.recipe-centered .recipe-components table td:nth-child(2){text-align:center}
-
-.cost-equation{display:grid;grid-template-columns:minmax(110px,1fr) 24px minmax(110px,1fr) 24px minmax(110px,1fr);align-items:stretch;gap:10px;margin:0 0 14px;overflow-x:auto;padding-bottom:4px}
-.cost-price-equation{grid-template-columns:minmax(110px,1fr) 24px minmax(110px,1fr) 24px minmax(110px,1fr) 24px minmax(110px,1fr)}
-.cost-operator{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--muted)}

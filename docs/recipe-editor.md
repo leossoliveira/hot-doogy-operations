@@ -17,5 +17,3 @@ The remove icon appears at the end of each ingredient or packaging row. Cost hea
 Component rows show the internal name in bold, then SKU and the corresponding supplier product description. Quantity column headings and values are centered in the recipe card.
 
 Activation on Save is enforced by the recipe_edits_activate_new_version migration. Existing drafts remain unchanged; subsequent saves become Active. Isolated PostgreSQL validation covers active/archived statuses, preserved yield and steps, optimistic version checks, rollback of invalid components and role denial. Rollback requires a new migration restoring the previous recipe edit command; historical migrations must not be replayed.
-
-Cost Info displays Ingredients + Packaging = Total Cost, followed by Ingredients ÷ Food Cost Target + Packaging = Optimal Price. Suggested price applies the target only to ingredients and adds packaging at cost. Existing sales price and gross metrics remain below the equations.
