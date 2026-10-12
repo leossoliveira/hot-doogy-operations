@@ -1,7 +1,9 @@
+import {calendarAPI} from './my-day-calendar.mjs';
 import {ApiError,jsonBody,reply} from './auth.mjs';
 import {ORGANIZATION_ID} from './supabase-config.mjs';
 import {readPages} from './paginated-read.mjs';
 export async function myDayAPI(req,res,url,auth,session){
+ if(url.pathname.startsWith('/api/my-day/calendar'))return calendarAPI(req,res,url,auth,session);
  const read=path=>auth.request(path,{token:session.token});
  if(url.pathname==='/api/my-day'&&req.method==='GET'){
   const org=`organization_id=eq.${ORGANIZATION_ID}`;

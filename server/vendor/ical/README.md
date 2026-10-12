@@ -1,0 +1,1 @@
+ICAL.js 2.2.1, unmodified dist/ical.js from npm ical.js@2.2.1. Vendored because the deployment archives committed files without installing dependencies. Source: https://github.com/kewisch/ical.js, MPL-2.0 (LICENSE). npm tarball SHA-1: f06fe9b32498d948893ec994e6964379dac6a907.

@@ -253,3 +253,5 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .purchase-history-filters .purchasing-page-size{margin-left:auto}
 
 .purchasing-filters .purchasing-page-size,.invoice-filters .purchasing-page-size{margin-left:auto;display:flex!important;flex-direction:row!important;align-items:center;gap:10px;white-space:nowrap}.purchasing-filters .purchasing-page-size select,.invoice-filters .purchasing-page-size select{width:76px;flex-shrink:0}.invoice-filters .invoice-search{min-width:200px;flex:1 1 260px}
+
+.day-calendar-task.day-icloud-event{border-left:3px solid #8271b8;background:#f1edf9;color:#544476}.day-calendar-legend.icloud:before{background:#8271b8}.day-calendar-settings h3{margin:20px 0 10px}.day-calendar-settings p{margin:12px 0;line-height:1.6}.day-calendar-settings label{display:grid;gap:8px;margin:12px 0}.day-calendar-settings input{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px}.day-calendar-settings .btn{margin-right:8px}

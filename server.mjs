@@ -9,6 +9,7 @@ import {invoiceIntake} from './server/invoice-intake.mjs';
 import {requireStaffRequest,requireStaffCommand} from './server/staff-access.mjs';
 import {preparationUsage} from './server/preparation-usage.mjs';
 import {invoiceDownload} from './server/invoice-download.mjs';
+import {serveTaskCalendar} from './server/my-day-calendar.mjs';
 import {updateInvoiceStatus,deleteInvoice,deleteOrder} from './server/invoice-status.mjs';
 import {replyData} from './server/compressed-json.mjs';
 import {queueSalesSummary} from './server/sales-summary.mjs';
@@ -28,6 +29,7 @@ http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(!allowedHosts.has(req.headers.host)||req.headers['sec-fetch-site']==='cross-site')throw new ApiError(403,"Origin not allowed.");
   if(!['GET','HEAD'].includes(req.method)&&req.headers.origin!==`http://${req.headers.host}`)throw new ApiError(403,"Origin not allowed.");
+  if(url.pathname.startsWith('/calendar/my-day/'))return await serveTaskCalendar(req,res,url,auth);
   if(await auth.handle(req,res,url))return;
   if(url.pathname.startsWith('/api/')){
    const session=await auth.requireSession(req);
