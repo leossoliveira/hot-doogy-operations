@@ -17,7 +17,7 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   const grid=fields=>'<div class="detail-grid operation-detail-grid">'+fields.map(([label,value])=>pair(label,value)).join('')+'</div>';
   const section=(title,body)=>'<section class="operation-section"><h3>'+e(title)+'</h3>'+body+'</section>';
   const row=values=>'<tr>'+values.map(v=>'<td>'+v+'</td>').join('')+'</tr>';
-  const table=(headers,rows)=>'<div class="table-wrap operation-table"><table><thead><tr>'+headers.map(h=>'<th>'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+  const table=(headers,rows,layout)=>'<div class="table-wrap operation-table'+(layout==='rows'?' operation-table-rows':'')+'"><table'+(layout==='rows'?' data-table-layout="rows"':'')+'><thead><tr>'+headers.map(h=>h?.html?h.html:'<th>'+(Array.isArray(h)?'<span class="th-full">'+e(h[0])+'</span><span class="th-short" aria-hidden="true">'+e(h[1])+'</span>':e(h))+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
   const notes=x=>x?section("Notes",'<p class="operation-notes">'+e(x)+'</p>'):'';
   const intro=x=>'<div class="operation-intro"><div class="eyebrow">'+e(x.supplierName||'')+'</div><h3 class="item-detail-title">'+e(x.locationName||'')+'</h3></div>';
   const product=l=>'<strong>'+text(l.name||l.itemName)+'</strong>'+(l.internalName&&l.internalName!==l.name?'<small>'+e(l.internalName)+'</small>':'')+(l.sku?'<small>SKU '+e(l.sku)+'</small>':'')+(l.notes?'<small class="operation-line-note">'+e(l.notes)+'</small>':'');
@@ -88,10 +88,16 @@ export function createOperationUI({e,preciseNumber,money,date,status,icon,pair,n
   }
   function showTransfer(x,footer=''){
     const lines=list(x.lines);
-    let body='<div class="operation-transfer-route"><strong>'+text(x.fromLocationName)+'</strong>'+icon('arrow-right')+'<strong>'+text(x.toLocationName)+'</strong></div>'+grid([["Needed by",when(x.date||x.neededOn,true)],["Requested items",number(x.lineCount??lines.length)],["Shipments",number(list(x.dispatches).length)],["Receipts",number(list(x.receipts).length)]]);
-    body+=section("Quantities by item",lines.length?table(['Item',"Unit","Requested","Approved","Shipped","Received","In transit","To ship"],lines.map(l=>row([product(l),text(l.uom),number(l.requestedQuantity??l.quantity??l.qty),number(l.approvedQuantity),number(l.dispatchedQuantity),number(l.receivedQuantity),number(l.inTransitQuantity),number(l.remainingToDispatch)]))):emptyLines());
+    let body='<div class="operation-transfer-route"><strong>'+text(x.fromLocationName)+'</strong>'+icon('arrow-right')+'<strong>'+text(x.toLocationName)+'</strong></div>'+grid([["Delivery Date",when(x.date||x.neededOn,true)],["Requested items",number(x.lineCount??lines.length)],["Shipments",number(list(x.dispatches).length)],["Receipts",number(list(x.receipts).length)]]);
+    body+=section("Items",lines.length?table([{html:'<th><button type="button" class="table-sort" data-sort="transfer-items" aria-label="Sort Item A–Z">Item <span data-sort-arrow aria-hidden="true">↕</span></button></th>'},"Unit",["Requested","Req."],["Approved","Appr."],["Shipped","Ship."],["Received","Rec."],["In transit","Transit"],["To ship","To ship"]],lines.map(l=>row([product(l)+'<small class="operation-unit-inline">'+text(l.uom)+'</small>',text(l.uom),number(l.requestedQuantity??l.quantity??l.qty),number(l.approvedQuantity),number(l.dispatchedQuantity),number(l.receivedQuantity),number(l.inTransitQuantity),number(l.remainingToDispatch)])),'rows'):emptyLines());
     body+=notes(x.notes)+timelineView(x)+transactionsView(x);
     openModal('<span class="transfer-title-number">Internal transfer '+e(ref(x))+'</span>'+status(x.dbStatus??x.status),body,btn("Print",'transfer-print','printer','','data-id="'+e(x.id)+'"')+(footer||btn("Close",'close')),{wide:true,className:'operation-modal transfer-detail-modal',kind:'transfer-detail'});
+    const sort=typeof document==='undefined'?null:document.querySelector('#overlay-root [data-sort="transfer-items"]');
+    if(sort)sort.onclick=()=>{
+      const table=sort.closest('table'),header=sort.closest('th'),descending=header.getAttribute('aria-sort')==='ascending',name=r=>r.cells[0].querySelector('strong')?.textContent||'';
+      [...table.tBodies[0].rows].sort((a,b)=>(descending?-1:1)*name(a).localeCompare(name(b),'en',{sensitivity:'base',numeric:true})).forEach(r=>table.tBodies[0].append(r));
+      header.setAttribute('aria-sort',descending?'descending':'ascending');sort.querySelector('[data-sort-arrow]').textContent=descending?'↓':'↑';sort.setAttribute('aria-label','Sort Item '+(descending?'A–Z':'Z–A'));
+    };
   }
   return {showInvoice,showOrder,showTransfer};
 }
