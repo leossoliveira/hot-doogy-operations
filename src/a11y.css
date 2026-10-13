@@ -1,0 +1,8 @@
+/* Visible keyboard focus for inputs whose native outline is removed elsewhere. */
+.login-input:focus-within{border-color:#8a7000;box-shadow:0 0 0 3px #fece0780}
+.input-wrap:has(input:focus-visible),
+.location-search:has(input:focus-visible),
+.inline-item-search .input-wrap:has(input:focus-visible),
+.purchasing-search:has(input:focus-visible){border-color:#8a7000!important;box-shadow:0 0 0 3px #fece0780!important}
+:has(>.global-search:focus-visible){box-shadow:0 0 0 3px #fece0780}
+:where(button,a,[role="button"],select,summary,[tabindex]):focus-visible{outline:2px solid #8a7000;outline-offset:2px}
