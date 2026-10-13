@@ -22,6 +22,9 @@ export async function extractOpenClawInvoice(bytes,mime,{config,fetcher=fetch}={
  if(!response.ok)throw new ApiError(response.status===429?429:502,'OpenClaw could not analyze the invoice. No invoice was saved.');
  let result;try{result=await response.json();}catch{throw new ApiError(502,'OpenClaw returned an invalid response.');}
  if(result.status!=='completed'||(result.output||[]).some(x=>x.type==='function_call'))throw new ApiError(502,'OpenClaw analysis was incomplete. No invoice was saved.');
- let parsed;try{parsed=JSON.parse((result.output||[]).flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text).join(''));}catch{throw new ApiError(502,'OpenClaw returned an unreadable analysis.');}
+ // Models sometimes wrap the JSON in a Markdown fence; accept only that exact wrapper.
+ const text=(result.output||[]).flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text).join('').trim();
+ const fenced=text.match(/^```(?:json)?\s*\n([\s\S]*?)\n?```$/i);
+ let parsed;try{parsed=JSON.parse(fenced?fenced[1]:text);}catch{throw new ApiError(502,'OpenClaw returned an unreadable analysis.');}
  return {extraction:validateInvoiceExtraction(parsed),model:'openclaw/'+config.agent};
 }

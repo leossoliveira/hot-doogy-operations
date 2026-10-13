@@ -13,3 +13,8 @@ test('fails closed on invalid JSON, tool calls, receiving proof and oversized do
  for(const result of [{status:'completed',output:[{type:'function_call'}]},{status:'completed',output:[]},{status:'completed',output:[{content:[{type:'output_text',text:'{"document_type":"receiving_proof"}'}]}]}])await assert.rejects(extractOpenClawInvoice(Buffer.from('test'),'application/pdf',{config,fetcher:async()=>({ok:true,json:async()=>result})}));
  await assert.rejects(extractOpenClawInvoice(Buffer.alloc(6*1024*1024),'application/pdf',{config,fetcher:()=>assert.fail('No network')}),/5 MB/);
 });
+test('accepts JSON wrapped in a Markdown fence but rejects surrounding prose',async()=>{
+ const run=text=>extractOpenClawInvoice(Buffer.from('test'),'application/pdf',{config,fetcher:async()=>({ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text}]}]})})});
+ await assert.rejects(run('```json\n{"document_type":"receiving_proof"}\n```'),e=>!/unreadable/.test(e.message));
+ await assert.rejects(run('Here it is: {"document_type":"invoice"}'),/unreadable/);
+});
