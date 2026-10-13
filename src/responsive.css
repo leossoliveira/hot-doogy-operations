@@ -185,7 +185,7 @@ select, input, textarea { max-width: 100%; }
 .responsive-table > tbody > tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .responsive-table > tbody > tr > td { display: block; min-width: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; border: 0; text-align: left !important; font-size: 13px; line-height: 1.6; }
 .responsive-table > tbody > tr > td:first-child, .responsive-table .responsive-cell-wide { grid-column: 1/-1; }
-.responsive-table td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: #5e6756; letter-spacing: .3px; margin-bottom: 5px; }
+.responsive-table td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: var(--olive-50); letter-spacing: .3px; margin-bottom: 5px; }
 .responsive-table td strong, .responsive-table .table-name-button { font-size: 13px; }
 .responsive-table td small { font-size: 11px; max-width: none; }
 .responsive-table td input:not([type=checkbox]), .responsive-table td select { width: 100%; min-width: 0; max-width: 100%; }
@@ -204,7 +204,7 @@ select, input, textarea { max-width: 100%; }
 .responsive-table-wide > tbody > tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .responsive-table-wide > tbody > tr > td { display: block; min-width: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; border: 0; text-align: left !important; font-size: 13px; line-height: 1.6; }
 .responsive-table-wide > tbody > tr > td:first-child, .responsive-table-wide .responsive-cell-wide { grid-column: 1/-1; }
-.responsive-table-wide td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: #5e6756; letter-spacing: .3px; margin-bottom: 5px; }
+.responsive-table-wide td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: var(--olive-50); letter-spacing: .3px; margin-bottom: 5px; }
 .responsive-table-wide td strong, .responsive-table-wide .table-name-button { font-size: 13px; }
 .responsive-table-wide td small { font-size: 11px; max-width: none; }
 .responsive-table-wide td input:not([type=checkbox]), .responsive-table-wide td select { width: 100%; min-width: 0; max-width: 100%; }
@@ -223,7 +223,7 @@ select, input, textarea { max-width: 100%; }
 .responsive-table-extra-wide > tbody > tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .responsive-table-extra-wide > tbody > tr > td { display: block; min-width: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; border: 0; text-align: left !important; font-size: 13px; line-height: 1.6; }
 .responsive-table-extra-wide > tbody > tr > td:first-child, .responsive-table-extra-wide .responsive-cell-wide { grid-column: 1/-1; }
-.responsive-table-extra-wide td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: #5e6756; letter-spacing: .3px; margin-bottom: 5px; }
+.responsive-table-extra-wide td[data-column-label]:not([data-column-label=""])::before { content: attr(data-column-label); display: block; font-size: 10px; font-weight: 600; color: var(--olive-50); letter-spacing: .3px; margin-bottom: 5px; }
 .responsive-table-extra-wide td strong, .responsive-table-extra-wide .table-name-button { font-size: 13px; }
 .responsive-table-extra-wide td small { font-size: 11px; max-width: none; }
 .responsive-table-extra-wide td input:not([type=checkbox]), .responsive-table-extra-wide td select { width: 100%; min-width: 0; max-width: 100%; }
