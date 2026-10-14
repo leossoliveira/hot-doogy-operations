@@ -64,6 +64,8 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
   for(const row of rows){
     const page=pdf.addPage([W,H]);
     const draw=(value,x,top,size,face=font,color=gray)=>page.drawText(printable(value),{x,y:H-top-size,size,font:face,color});
+    // Top position that centers capitals and digits in a box (Helvetica cap height is 0.718 em).
+    const middle=(boxTop,boxHeight,size)=>boxTop+(boxHeight+.718*size)/2-size;
     const rule=(top,thickness=.6,color=light,x=M,w=width)=>page.drawRectangle({x,y:H-top-thickness,width:w,height:thickness,color});
     let y=M;
     if(HEADER){
@@ -80,9 +82,9 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
     const gap=Math.max(MIN_GAP,(barTop-y-blocks)/gaps);
     y+=gap;
     page.drawRectangle({x:M,y:H-y-BOX_H,width,height:BOX_H,borderColor:ink,borderWidth:1.4});
-    draw('USE BY',M+6,y+(BOX_H-7.5)/2,7.5,bold,ink);
+    draw('USE BY',M+6,middle(y,BOX_H,7.5),7.5,bold,ink);
     const boxX=M+44,boxW=width-44-6;
-    if(useByText){const size=Math.min(13,13*boxW/bold.widthOfTextAtSize(useByText,13));draw(useByText,boxX+boxW-bold.widthOfTextAtSize(useByText,size),y+(BOX_H-size)/2+.5,size,bold,ink);}
+    if(useByText){const size=Math.min(13,13*boxW/bold.widthOfTextAtSize(useByText,13));draw(useByText,boxX+boxW-bold.widthOfTextAtSize(useByText,size),middle(y,BOX_H,size),size,bold,ink);}
     else rule(y+BOX_H-7,.8,ink,boxX,boxW);
     y+=BOX_H+gap;
     for(const [label,value] of fields){
@@ -93,7 +95,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
     if(noticeText){
       page.drawRectangle({x:M,y:H-y-NOTICE_H,width,height:NOTICE_H,color:ink});
       const size=Math.min(7.5,7.5*(width-8)/bold.widthOfTextAtSize(noticeText,7.5));
-      draw(noticeText,(W-bold.widthOfTextAtSize(noticeText,size))/2,y+(NOTICE_H-size)/2+.6,size,bold,white);
+      draw(noticeText,M+(width-bold.widthOfTextAtSize(noticeText,size))/2,middle(y,NOTICE_H,size),size,bold,white);
     }
     // Quiet zones of at least ten modules on each side keep the symbol scannable.
     const {bars,width:modules}=code128Bars(row.code),scale=width/(modules+20),x0=M+scale*10;
