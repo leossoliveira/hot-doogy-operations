@@ -34,7 +34,8 @@ export const formatUseBy=value=>value?`${nyParts(value).weekday} ${formatDay(val
 // instruction, and the lot barcode. Header carries the logo and the address.
 // Optional shelf life in days fills Use by with the production moment plus that many days; otherwise it is a blank line to write on.
 export function useByMoment(batch,days){const n=Number(days),at=Date.parse(batchMoment(batch)||'');return days!=null&&days!==''&&Number.isFinite(n)&&n>0&&Number.isFinite(at)?new Date(at+n*86400000).toISOString():null;}
-export const LABEL_ADDRESS=['1300 Worcester St','Natick, MA'];
+// First line is the business name (bold), the rest is the address, set beside the logo.
+export const LABEL_ADDRESS=['Hot Doogy Franchising Corp.','1300 Worcester St','Natick, MA, 01760'];
 export const LABEL_NOTICE='KEEP FROZEN AT 0°F OR BELOW';
 export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedBy,useByDays,logoBytes,address=LABEL_ADDRESS,notice=LABEL_NOTICE}={}){
   const {PDFDocument,StandardFonts,rgb}=await import('./vendor/pdf-lib.esm.min.js');
@@ -51,7 +52,9 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
   const useBy=useByMoment(batch,useByDays),useByText=useBy?printable(formatUseBy(useBy)):null;
   const fields=[['PREPARED',formatMoment(batchMoment(batch))],['BY',who]];
   const addressLines=(address||[]).map(printable).filter(Boolean),noticeText=printable(notice||'');
-  const LOGO_W=54,LOGO_H=logo?logo.height/logo.width*LOGO_W:0,ADDRESS=6.8,HEADER=Math.max(LOGO_H,addressLines.length*(ADDRESS+2.5));
+  const LOGO_W=logo?50:0,LOGO_H=logo?logo.height/logo.width*LOGO_W:0,TEXT_X=M+(logo?LOGO_W+7:0),TEXT_W=W-M-TEXT_X;
+  const ADDRESS=Math.min(7,...addressLines.map((line,i)=>7*TEXT_W/(i?font:bold).widthOfTextAtSize(line,7))),LEADING=ADDRESS+2.2;
+  const HEADER=Math.max(LOGO_H,addressLines.length*LEADING);
   const LABEL=6.5,VALUE=9.5,ROW=VALUE+4,LABEL_W=42,NUMBER=7.5,TEXT=7.5,NOTICE_H=noticeText?14:0,BOX_H=25,MIN_GAP=4;
   const headerHeight=HEADER?HEADER+6:0;
   const topHeight=headerHeight+nameLines.length*nameSize*1.12+3+NUMBER+6;
@@ -65,8 +68,8 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
     let y=M;
     if(HEADER){
       if(logo)page.drawImage(logo,{x:M,y:H-y-LOGO_H,width:LOGO_W,height:LOGO_H});
-      const block=addressLines.length*(ADDRESS+2.5)-2.5;let ay=y+(HEADER-block)/2;
-      for(const line of addressLines){draw(line,W-M-font.widthOfTextAtSize(line,ADDRESS),ay,ADDRESS,font,ink);ay+=ADDRESS+2.5;}
+      const block=addressLines.length*LEADING-2.2;let ay=y+(HEADER-block)/2;
+      addressLines.forEach((line,i)=>{draw(line,TEXT_X,ay,ADDRESS,i?font:bold,ink);ay+=LEADING;});
       y+=HEADER+3;rule(y);y+=3;
     }
     for(const line of nameLines){draw(line,M,y,nameSize,bold,ink);y+=nameSize*1.12;}

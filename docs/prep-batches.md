@@ -22,7 +22,7 @@ Batch numbers and label codes are derived from the batch id and the New York com
 
 `src/prep-labels.js` generates one 2.4 × 3.5 in page per label in a single PDF (`Hot-Doogy-Prep-Labels-<batch number>.pdf`) in the browser, with no upload or database write. The layout follows common U.S. food-service prep labels:
 
-1. Header with the black-and-white logo (`public/brand/hot-doogy-label-logo.png`) and the address (1300 Worcester St, Natick, MA).
+1. Header with the black-and-white logo (`public/brand/hot-doogy-label-logo.png`) and, beside it, Hot Doogy Franchising Corp. in bold with the address 1300 Worcester St, Natick, MA, 01760.
 2. Product name, then `LOT` with the label's own sequential batch number without the `BATCH-` prefix (for example `LOT 261013-22301-001`).
 3. A boxed **USE BY** date with the day of the week (for example `TUE 10/20/2026`), filled when a shelf life in days is given and left as a blank line otherwise.
 4. **PREPARED** date and time (New York) and **BY** (the preparer's registered name).
