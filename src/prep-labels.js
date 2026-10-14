@@ -37,7 +37,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{logoBytes
   function wrap(value,size,face,maxWidth,maxLines){const lines=[];let current='';for(const word of printable(value).split(/\s+/).filter(Boolean)){const candidate=current?current+' '+word:word;if(face.widthOfTextAtSize(candidate,size)>maxWidth&&current){lines.push(current);current=word;}else current=candidate;}if(current)lines.push(current);if(lines.length>maxLines){const kept=lines.slice(0,maxLines);let last=kept[maxLines-1];while(face.widthOfTextAtSize(last+'…',size)>maxWidth&&last.length)last=last.slice(0,-1);kept[maxLines-1]=last.trimEnd()+'…';return kept;}return lines;}
   const nameSize=[13,11,10].find(size=>wrap(name,size,bold,width,2).join(' ')===name)||10,nameLines=wrap(name,nameSize,bold,width,2);
   const who=printable(preparedBy||batchPreparedBy(batch)||'Not specified');
-  const details=[['Produced',formatMoment(batchMoment(batch))],['Prepared by',who],['Location',printable(batch.locationName||'Not provided')]];
+  const details=[['Date/Time',formatMoment(batchMoment(batch))],['Prepared by',who]];
   for(const row of rows){
     const page=pdf.addPage([W,H]);
     const draw=(value,x,top,size,face=font,color=gray)=>page.drawText(printable(value),{x,y:H-top-size,size,font:face,color});
@@ -49,11 +49,11 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{logoBytes
     y+=4;
     const numberSize=Math.min(10,9*width/bold.widthOfTextAtSize(row.number,9));
     draw(row.number,M,y,numberSize,bold,ink);y+=numberSize+3;
-    draw(`UNIT ${String(row.serial).padStart(2,'0')} OF ${String(row.total).padStart(2,'0')}`,M,y,6.5,bold,gray);y+=11;
+    y+=4;
     page.drawRectangle({x:M,y:H-y,width,height:.6,color:light});y+=6;
     for(const [label,value] of details){draw(label,M,y,6.5,bold,gray);const lines=wrap(value,7.5,font,width-56,1);draw(lines[0]||'',M+56,y-.5,7.5,font,ink);y+=11;}
     y+=2;
-    draw('USE BY',M,y,6.5,bold,gray);page.drawRectangle({x:M+56,y:H-y-8,width:width-56,height:.6,color:ink});y+=14;
+    draw('Use by',M,y,6.5,bold,gray);page.drawRectangle({x:M+56,y:H-y-8,width:width-56,height:.6,color:ink});y+=14;
     // Quiet zones of at least ten modules on each side keep the symbol scannable.
     const {bars,width:modules}=code128Bars(row.code),scale=width/(modules+20),barHeight=Math.max(26,H-M-y-11),x0=M+scale*10;
     for(const bar of bars)page.drawRectangle({x:x0+bar.x*scale,y:H-y-barHeight,width:bar.width*scale,height:barHeight,color:ink});

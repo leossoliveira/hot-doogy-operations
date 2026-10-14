@@ -20,6 +20,6 @@ Batch numbers and label codes are derived from the batch id and the New York com
 
 ## Label PDF
 
-`src/prep-labels.js` generates one 2.4 × 3.5 in page per label in a single PDF (`Hot-Doogy-Prep-Labels-<batch number>.pdf`) in the browser, with no upload or database write. Each label carries the logo, prep item name, its own sequential batch number, unit number, production date and time, preparer, location, a blank use-by line and the barcode with its human-readable digits. Labels are downloaded right after saving and can be reprinted from the batch drawer or from Prep → Labels.
+`src/prep-labels.js` generates one 2.4 × 3.5 in page per label in a single PDF (`Hot-Doogy-Prep-Labels-<batch number>.pdf`) in the browser, with no upload or database write. Each label carries the logo, prep item name, its own sequential batch number, then Date/Time (production), Prepared by and a blank Use by line, followed by the barcode with its human-readable digits. Labels are downloaded right after saving and can be reprinted from the batch drawer or from Prep → Labels.
 
 Tests: `tests/code128.test.mjs` and `tests/prep-labels.test.mjs`.
