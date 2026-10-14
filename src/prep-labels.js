@@ -25,6 +25,7 @@ export function labelRows(batch,count=labelCount(batch.actualQty??batch.qty)){
   return Array.from({length:total},(_,i)=>{const serial=String(i+1).padStart(3,'0');return {serial:i+1,total,batchNumber:number,number:`${number}-${serial}`,code:`${digits}${serial}`,text:`${digits.slice(0,6)} ${digits.slice(6)} ${serial}`};});
 }
 export const formatMoment=value=>{if(!value)return 'Not provided';const p=nyParts(value);return `${p.mm}/${p.dd}/20${p.yy} ${p.hh}:${p.min} ${p.period}`;};
+export const formatDay=value=>{if(!value)return 'Not provided';const p=nyParts(value);return `${p.mm}/${p.dd}/20${p.yy}`;};
 // 2.4 in x 3.5 in label, one per page. Generated in the browser; no upload or database write.
 // Layout: prep item and batch number at the top, barcode anchored at the bottom, and the
 // Date/Time, Prepared by and Use by fields spread evenly over the space between them.
@@ -41,10 +42,10 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
   const fits=(size,lines)=>wrap(name,size,bold,width,lines).join(' ')===name;
   const nameSize=[16,14,12].find(size=>fits(size,2))||11,nameLines=wrap(name,nameSize,bold,width,nameSize===11?3:2);
   const who=printable(preparedBy||batchPreparedBy(batch)||'Not specified');
-  const fields=[['DATE/TIME',formatMoment(batchMoment(batch))],['PREPARED BY',who],['USE BY',useByMoment(batch,useByDays)?formatMoment(useByMoment(batch,useByDays)):null]];
+  const fields=[['PRODUCED',formatMoment(batchMoment(batch))],['PREPARED BY',who],['USE BY',useByMoment(batch,useByDays)?formatDay(useByMoment(batch,useByDays)):null]];
   const LABEL=6.5,VALUE=10.5,FIELD=LABEL+4+VALUE+2,TEXT=8,MIN_GAP=7;
   // Fixed top block height, so the barcode takes whatever height is left (between 30 and 56 pt).
-  const topHeight=LABEL+5+nameLines.length*nameSize*1.12+6+12+9;
+  const NUMBER=8.5,topHeight=LABEL+5+nameLines.length*nameSize*1.12+6+NUMBER+9;
   const BAR_H=Math.max(30,Math.min(56,H-M*2-topHeight-fields.length*FIELD-(fields.length+1)*MIN_GAP-TEXT-3)),barTop=H-M-TEXT-3-BAR_H;
   for(const row of rows){
     const page=pdf.addPage([W,H]);
@@ -54,8 +55,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
     draw('PREP ITEM',M,y,LABEL,bold,gray);y+=LABEL+5;
     for(const line of nameLines){draw(line,M,y,nameSize,bold,ink);y+=nameSize*1.12;}
     y+=6;
-    const numberSize=Math.min(12,11*width/bold.widthOfTextAtSize(row.number,11));
-    draw(row.number,M,y,numberSize,bold,ink);y+=numberSize+9;
+    draw(row.number,M,y,NUMBER,bold,gray);y+=NUMBER+9;
     rule(y);
     // Spread the three fields evenly between the divider and the barcode.
     const gap=Math.max(MIN_GAP,(barTop-y-fields.length*FIELD)/(fields.length+1));

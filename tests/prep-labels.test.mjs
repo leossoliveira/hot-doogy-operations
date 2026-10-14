@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {batchCode,batchNumber,labelCount,labelRows,labelFilename,formatMoment,useByMoment,createPrepLabelsPdf} from '../src/prep-labels.js';
+import {batchCode,batchNumber,labelCount,labelRows,labelFilename,formatMoment,formatDay,useByMoment,createPrepLabelsPdf} from '../src/prep-labels.js';
 import {PDFDocument} from '../src/vendor/pdf-lib.esm.min.js';
 
 const batch={id:'0f3a9c1e-5b2d-4e8f-9a7b-123456789abc',name:'Chili con carne — house recipe for hot dogs',qty:6,actualQty:6,uom:'Quart container',locationName:'Sherwood Plaza',completedAt:'2026-10-13T22:30:00Z',preparedTeamMemberName:'Ana Souza'};
@@ -38,6 +38,6 @@ test('the PDF has one 2.4 x 3.5 inch page per label',async()=>{
   assert.equal(plain.getPageCount(),1);
 });
 test('use by is the production moment plus the shelf life, or blank without one',()=>{
-  assert.equal(formatMoment(useByMoment(batch,7)),'10/20/2026 06:30 PM');
+  assert.equal(formatDay(useByMoment(batch,7)),'10/20/2026');
   for(const days of [null,undefined,'',0,-1,'abc'])assert.equal(useByMoment(batch,days),null);
 });
