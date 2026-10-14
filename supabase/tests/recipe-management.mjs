@@ -1,5 +1,5 @@
 // Validates the recipe management migration in isolated PGlite with synthetic records. Never connects to a remote database.
-// Usage: PGLITE_MODULE_PATH=<pglite> node supabase/tests/recipe-management.mjs <recipe management migration>
+// Usage: PGLITE_MODULE_PATH=<pglite> node supabase/tests/recipe-management.mjs <recipe management migration> [follow-up fixes...]
 import fs from 'node:fs';import assert from 'node:assert/strict';
 const {PGlite}=await import(process.env.PGLITE_MODULE_PATH||'@electric-sql/pglite');const db=new PGlite();
 const org='6013ed02-626a-497c-b951-619069035532',other='00000000-0000-0000-0000-0000000000ff',id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
@@ -7,19 +7,20 @@ const org='6013ed02-626a-497c-b951-619069035532',other='00000000-0000-0000-0000-
 await db.exec(`create schema private;create schema auth;create type member_role as enum('owner','admin','manager','chef');create function auth.uid() returns uuid language sql as $$select '${id(1)}'::uuid$$;create function private.has_org_role(uuid,member_role[]) returns boolean language sql as $$select current_setting('test.allowed',true)='yes'$$;create function private.can_location(uuid) returns boolean language sql as $$select true$$;set test.allowed='yes';
 create table supplier_items(id uuid);create table purchase_orders(id uuid);create table purchase_order_lines(id uuid);
 create table units(id uuid primary key,organization_id uuid);
-create table inventory_items(id uuid primary key,organization_id uuid,name text);
+create table inventory_items(id uuid primary key,organization_id uuid,internal_name text not null,updated_at timestamptz);
 create table inventory_item_units(id uuid primary key default gen_random_uuid(),organization_id uuid,inventory_item_id uuid,unit_id uuid,quantity_in_base_unit numeric default 1,is_base_unit boolean default false,is_count_unit boolean default false,check(not is_base_unit or quantity_in_base_unit=1));
 create table recipes(id uuid primary key,organization_id uuid,name text,output_inventory_item_id uuid,updated_at timestamptz);create table recipe_versions(id uuid primary key default gen_random_uuid(),organization_id uuid,recipe_id uuid,version_number integer,status text,effective_from timestamptz,effective_to timestamptz,yield_quantity numeric,yield_item_unit_id uuid,notes text,created_by uuid,unique(recipe_id,version_number),check(effective_to is null or effective_from is null or effective_to>effective_from));
 create table recipe_components(organization_id uuid,recipe_version_id uuid,component_inventory_item_id uuid,component_item_unit_id uuid,quantity numeric,waste_percent numeric,sort_order integer,notes text,location_id uuid,component_type text);
 create table recipe_steps(recipe_version_id uuid,step_number integer,title text,instructions text,media_path text);create table audit_logs(organization_id uuid,user_id uuid,action text,entity_type text,entity_id uuid,new_data jsonb);
 insert into units values('${id(10)}',null),('${id(11)}','${org}'),('${id(12)}',null),('${id(13)}','${other}');
-insert into inventory_items values('${id(6)}','${org}','Panini Mix');
+insert into inventory_items values('${id(6)}','${org}','Panini Mix',null);
 insert into inventory_item_units(id,organization_id,inventory_item_id,unit_id) values('${id(3)}','${org}','${id(4)}','${id(10)}');
 insert into inventory_item_units(id,organization_id,inventory_item_id,unit_id,quantity_in_base_unit,is_base_unit,is_count_unit) values('${id(7)}','${org}','${id(6)}','${id(10)}',1,true,true),('${id(8)}','${org}','${id(6)}','${id(11)}',10,false,true);
 insert into recipes values('${id(2)}','${org}','Panini Mix','${id(6)}',null);insert into recipe_versions(id,organization_id,recipe_id,version_number,status,effective_from,yield_quantity,yield_item_unit_id) values('${id(5)}','${org}','${id(2)}',1,'active',now(),50,'${id(7)}');insert into recipe_steps values('${id(5)}',1,'Step','Prepare','');`);
 const original=fs.readFileSync('supabase/migrations/20261005113923_authenticated_web_operations_and_store_counts.sql','utf8');await db.exec(original.slice(original.indexOf('create or replace function private.web_operation'),original.indexOf('revoke all on function private.web_operation')));
 await db.exec(fs.readFileSync('supabase/migrations/20261012190801_recipe_edits_activate_new_version.sql','utf8'));
 const migration=fs.readFileSync(process.argv[2],'utf8');await db.exec(migration);
+for(const fix of process.argv.slice(3))await db.exec(fs.readFileSync(fix,'utf8'));
 await assert.rejects(db.exec(migration),/already installed/);
 const component={itemId:id(4),itemUnitId:id(3),quantity:9,kind:'ingredient'};
 const one=async sql=>(await db.query(sql)).rows[0];
@@ -36,7 +37,7 @@ await save({});assert.equal((await recipe()).use_by_days,3,'absent key keeps the
 await save({useByDays:null});assert.equal((await recipe()).use_by_days,null,'null clears');
 await save({useByDays:4});
 // Name renames the recipe and its prep item
-await save({name:'  Panini Mix Classic  '});assert.equal((await recipe()).name,'Panini Mix Classic');assert.equal((await one(`select name from inventory_items where id='${id(6)}'`)).name,'Panini Mix Classic');
+await save({name:'  Panini Mix Classic  '});assert.equal((await recipe()).name,'Panini Mix Classic');assert.equal((await one(`select internal_name from inventory_items where id='${id(6)}'`)).internal_name,'Panini Mix Classic');
 // Conversions update existing factors and add new units; the base unit stays at 1
 await save({units:[{unitId:id(11),factor:12},{unitId:id(12),factor:24}]});
 assert.equal((await one(`select quantity_in_base_unit q from inventory_item_units where id='${id(8)}'`)).q,'12');
