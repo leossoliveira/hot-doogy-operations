@@ -277,3 +277,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 @container (max-width:640px){.operation-table-rows .transfer-actions-head{width:100px}.transfer-line-actions{gap:4px}.transfer-line-badge{padding:2px 6px;font-size:10px;gap:3px}.operation-table-rows td:last-child{text-align:right}}
 .transfer-line-progress.not-sent{color:var(--red)}
 .transfer-issue-form .field{margin-top:14px}.transfer-issue-form .form-grid{margin-top:4px}
+.btn.board-more{width:100%;justify-content:center;margin-top:10px}
