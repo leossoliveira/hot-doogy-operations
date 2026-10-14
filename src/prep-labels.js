@@ -11,9 +11,9 @@ export function batchCode(batch){
   const hex=String(batch.id).replace(/-/g,'').slice(0,10);
   const serial=String(parseInt(hex,16)%100000).padStart(5,'0');
   const digits=`${yy}${mm}${dd}${serial}`;
-  return {digits,number:`BATCH-${yy}${mm}${dd}-${serial}`};
+  return {digits,number:`LOT-${yy}${mm}${dd}-${serial}`};
 }
-export const batchNumber=batch=>batch.number||(batch.id&&batchMoment(batch)?batchCode(batch).number:String(batch.id||'').slice(0,8).toUpperCase());
+export const batchNumber=batch=>batch.number?String(batch.number).replace(/^BATCH-/,'LOT-'):(batch.id&&batchMoment(batch)?batchCode(batch).number:String(batch.id||'').slice(0,8).toUpperCase());
 export const MAX_LABELS=500;
 export function labelCount(qty){const n=Math.ceil(Number(qty));return Number.isFinite(n)&&n>0?Math.min(MAX_LABELS,n):1;}
 export const labelFilename=batch=>`Hot-Doogy-Prep-Labels-${batchNumber(batch).replace(/[^a-z0-9_-]/gi,'-')}.pdf`;
@@ -79,7 +79,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
     }
     for(const line of nameLines){draw(line,M,y,nameSize,bold,ink);y+=nameSize*1.12;}
     y+=3;
-    draw('LOT '+row.number.replace(/^BATCH-/,''),M,y,NUMBER,bold,gray);y+=NUMBER+6;
+    draw('LOT '+row.number.replace(/^LOT-/,''),M,y,NUMBER,bold,gray);y+=NUMBER+6;
     rule(y);
     // Spread the use-by box, rows and notice evenly between the divider and the barcode.
     const gap=Math.max(MIN_GAP,(barTop-y-blocks)/gaps);

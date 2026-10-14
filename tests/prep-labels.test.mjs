@@ -9,9 +9,10 @@ test('batch number and code derive from the id and the New York completion date'
   const code=batchCode(batch);
   assert.equal(code.digits.length,11);
   assert.equal(code.digits.slice(0,6),'261013');
-  assert.equal(code.number,`BATCH-261013-${code.digits.slice(6)}`);
+  assert.equal(code.number,`LOT-261013-${code.digits.slice(6)}`);
   assert.equal(batchNumber(batch),code.number);
   assert.equal(batchNumber({...batch,number:'KEEP'}),'KEEP');
+  assert.equal(batchNumber({...batch,number:'BATCH-261013-12345'}),'LOT-261013-12345','pending local batches saved with the old prefix show the new one');
   assert.equal(batchCode({...batch,completedAt:'2026-10-14T03:30:00Z'}).digits.slice(0,6),'261013','late evening in New York stays on the same day');
   assert.notEqual(batchCode({...batch,id:'1f3a9c1e-5b2d-4e8f-9a7b-123456789abc'}).digits,code.digits);
   assert.throws(()=>batchCode({id:'x'}));

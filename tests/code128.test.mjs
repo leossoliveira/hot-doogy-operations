@@ -13,12 +13,12 @@ test('all-digit values use set C with the documented check digit',()=>{
   assert.equal(code128Modules('26101348291303').length,10*6+1);
 });
 test('mixed text starts in set B and switches to set C for long digit runs',()=>{
-  const values=code128Values('BATCH-261013-48291');
+  const values=code128Values('LOT-261013-48291');
   assert.equal(values[0],104);
   assert.ok(values.includes(99),'switches to C');
   assert.equal(values.at(-1),106);
   const data=values.slice(1,-2);
-  assert.equal(data.filter(v=>v!==99&&v!==100).length,'BATCH-'.length+3+'-'.length+1+2);
+  assert.equal(data.filter(v=>v!==99&&v!==100).length,'LOT-'.length+3+'-'.length+1+2);
   assert.deepEqual(code128Values('A'),[104,33,(104+33)%103,106]);
 });
 test('bars alternate from the first module and cover the full width',()=>{
