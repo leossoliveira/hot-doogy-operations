@@ -283,3 +283,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 @media(pointer:coarse){.kbd{display:none}}
 .prep-batch-area-note{grid-column:1/-1;margin:0}
 .waste-full{grid-column:1/-1;margin:0}
+#waste-form .field output{display:block;padding:12px;border-radius:var(--radius-s);background:var(--gray-97);font-size:13px;color:var(--text-muted)}
