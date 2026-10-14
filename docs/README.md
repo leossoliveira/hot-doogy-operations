@@ -14,6 +14,7 @@ This directory is the current source for application documentation. Keep instruc
 - [Responsive layout](responsive-layout.md)
 - [Calendar controls](calendar-controls.md)
 - [Reports, filters and calculation limits](reports.md)
+- [Prep batches and labels](prep-batches.md)
 
 ## Change workflow
 

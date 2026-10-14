@@ -50,6 +50,7 @@ http.createServer(async(req,res)=>{
    if(url.pathname.startsWith('/api/invoices/analysis-jobs')||['/api/invoices/analyze','/api/invoices/draft'].includes(url.pathname)||url.pathname.endsWith('/approve-draft')||url.pathname.endsWith('/edit-draft'))return await invoiceIntake(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/invoices/'))return await invoiceUpload(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/photos'))return await photos(req,res,url,auth,session);
+   if(url.pathname==='/api/preparation/preparer'&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_current_preparer',{token:session.token,method:'POST',body:{}}));
    if(url.pathname==='/api/preparation/team-member'&&req.method==='POST'){const b=await jsonBody(req,4096);return reply(res,200,await auth.request('/rest/v1/rpc/set_prep_team_member',{token:session.token,method:'POST',body:{p_batch:b.id,p_expected_version:b.expectedVersion,p_team:b.teamMemberId}}));}
    if(url.pathname==='/api/preparation/usage')return preparationUsage(req,res,url,auth,session);
    if(url.pathname==='/api/inventory/count-edit'&&req.method==='POST'){
