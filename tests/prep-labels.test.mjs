@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {batchCode,batchNumber,labelCount,labelRows,labelFilename,formatMoment,formatDay,formatUseBy,useByMoment,createPrepLabelsPdf} from '../src/prep-labels.js';
+import {batchCode,batchNumber,labelCount,labelRows,labelFilename,formatMoment,formatDay,formatUseBy,useByMoment,createPrepLabelsPdf,nameTokens} from '../src/prep-labels.js';
 import {PDFDocument} from '../src/vendor/pdf-lib.esm.min.js';
 
 const batch={id:'0f3a9c1e-5b2d-4e8f-9a7b-123456789abc',name:'Chili con carne — house recipe for hot dogs',qty:6,actualQty:6,uom:'Quart container',locationName:'Sherwood Plaza',completedAt:'2026-10-13T22:30:00Z',preparedTeamMemberName:'Ana Souza'};
@@ -41,4 +41,14 @@ test('use by is the production moment plus the shelf life, or blank without one'
   assert.equal(formatDay(useByMoment(batch,7)),'10/20/2026');
   assert.equal(formatUseBy(useByMoment(batch,7)),'TUE 10/20/2026');
   for(const days of [null,undefined,'',0,-1,'abc'])assert.equal(useByMoment(batch,days),null);
+});
+
+test('label names keep a quantity with its unit so the unit never wraps alone',()=>{
+  assert.deepEqual(nameTokens('Mashed Potatos 32 oz'),['Mashed','Potatos','32 oz']);
+  assert.deepEqual(nameTokens('Beef Patty 24/5 oz'),['Beef','Patty','24/5 oz']);
+  assert.deepEqual(nameTokens('Doogy Green Mayo (8 qt)'),['Doogy','Green','Mayo','(8 qt)']);
+  assert.deepEqual(nameTokens('Panini Shredded Chicken 7.5 oz'),['Panini','Shredded','Chicken','7.5 oz']);
+  assert.deepEqual(nameTokens('Grilled Chicken 32 ct'),['Grilled','Chicken','32 ct']);
+  assert.deepEqual(nameTokens('Tomato  Sauce'),['Tomato','Sauce']);
+  assert.deepEqual(nameTokens('Box 2 Boxes'),['Box','2','Boxes']);
 });

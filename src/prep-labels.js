@@ -37,6 +37,9 @@ export function useByMoment(batch,days){const n=Number(days),at=Date.parse(batch
 // First line is the business name (bold), the rest is the address, set beside the logo.
 export const LABEL_ADDRESS=['Hot Doogy Franchising Corp.','1300 Worcester St','Natick, MA, 01760'];
 export const LABEL_NOTICE='KEEP FROZEN AT 0°F OR BELOW';
+// Words that wrap as one unit: a quantity stays with its unit ("32 oz", "24/5 oz", "(8 qt)"), so a unit never starts a line alone.
+const UNIT=/^(oz|fl|lb|lbs|qt|pt|gal|ct|ea|pc|pcs|pk|g|kg|mg|ml|l|in|cup|cups|slice|slices)\.?\)?,?$/i,QUANTITY=/^\(?[\d.,\/x-]*\d[\d.,\/x-]*$/i;
+export function nameTokens(value){const words=String(value??'').split(/\s+/).filter(Boolean),tokens=[];for(const word of words){const prev=tokens.at(-1);if(prev&&UNIT.test(word)&&QUANTITY.test(prev.split(' ').at(-1)))tokens[tokens.length-1]=prev+' '+word;else tokens.push(word);}return tokens;}
 export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedBy,useByDays,logoBytes,address=LABEL_ADDRESS,notice=LABEL_NOTICE}={}){
   const {PDFDocument,StandardFonts,rgb}=await import('./vendor/pdf-lib.esm.min.js');
   const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -45,7 +48,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
   const ink=rgb(.13,.14,.13),gray=rgb(.36,.38,.37),light=rgb(.82,.83,.82),white=rgb(1,1,1);
   const printable=value=>Array.from(String(value??'').normalize('NFC')).map(c=>{try{font.encodeText(c);return c;}catch{return '?';}}).join('');
   const name=printable(batch.name||batch.internalName||'Prep item');
-  function wrap(value,size,face,maxWidth,maxLines){const lines=[];let current='';for(const word of printable(value).split(/\s+/).filter(Boolean)){const candidate=current?current+' '+word:word;if(face.widthOfTextAtSize(candidate,size)>maxWidth&&current){lines.push(current);current=word;}else current=candidate;}if(current)lines.push(current);if(lines.length>maxLines){const kept=lines.slice(0,maxLines);let last=kept[maxLines-1];while(face.widthOfTextAtSize(last+'…',size)>maxWidth&&last.length)last=last.slice(0,-1);kept[maxLines-1]=last.trimEnd()+'…';return kept;}return lines;}
+  function wrap(value,size,face,maxWidth,maxLines){const lines=[];let current='';for(const word of nameTokens(printable(value))){const candidate=current?current+' '+word:word;if(face.widthOfTextAtSize(candidate,size)>maxWidth&&current){lines.push(current);current=word;}else current=candidate;}if(current)lines.push(current);if(lines.length>maxLines){const kept=lines.slice(0,maxLines);let last=kept[maxLines-1];while(face.widthOfTextAtSize(last+'…',size)>maxWidth&&last.length)last=last.slice(0,-1);kept[maxLines-1]=last.trimEnd()+'…';return kept;}return lines;}
   const fits=(size,lines)=>wrap(name,size,bold,width,lines).join(' ')===name;
   const nameSize=[16,14,12].find(size=>fits(size,2))||11,nameLines=wrap(name,nameSize,bold,width,nameSize===11?3:2);
   const who=printable(preparedBy||batchPreparedBy(batch)||'Not specified');
