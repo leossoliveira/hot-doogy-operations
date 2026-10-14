@@ -20,6 +20,15 @@ Batch numbers and label codes are derived from the batch id and the New York com
 
 ## Label PDF
 
-`src/prep-labels.js` generates one 2.4 × 3.5 in page per label in a single PDF (`Hot-Doogy-Prep-Labels-<batch number>.pdf`) in the browser, with no upload or database write. Each label carries the prep item name and its own sequential batch number at the top, then Produced (date and time), Prepared by and Use by (date only when a shelf life is given, otherwise a blank line) spread evenly, and the barcode at the bottom with its human-readable digits. Labels are downloaded right after saving and can be reprinted from the batch drawer or from Prep → Labels.
+`src/prep-labels.js` generates one 2.4 × 3.5 in page per label in a single PDF (`Hot-Doogy-Prep-Labels-<batch number>.pdf`) in the browser, with no upload or database write. The layout follows common U.S. food-service prep labels:
+
+1. Header with the black-and-white logo (`public/brand/hot-doogy-label-logo.png`) and the address (1300 Worcester St, Natick, MA).
+2. Product name, then `LOT` with the label's own sequential batch number without the `BATCH-` prefix (for example `LOT 261013-22301-001`).
+3. A boxed **USE BY** date with the day of the week (for example `TUE 10/20/2026`), filled when a shelf life in days is given and left as a blank line otherwise.
+4. **PREPARED** date and time (New York) and **BY** (the preparer's registered name).
+5. The storage notice on a black bar: `KEEP FROZEN AT 0°F OR BELOW`.
+6. The Code 128 barcode with its human-readable digits.
+
+Address and notice are currently the same on every label (`LABEL_ADDRESS` and `LABEL_NOTICE`). Labels are downloaded right after saving and can be reprinted from the batch drawer or from Prep → Labels.
 
 Tests: `tests/code128.test.mjs` and `tests/prep-labels.test.mjs`.
