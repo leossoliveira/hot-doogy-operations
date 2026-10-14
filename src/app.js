@@ -262,7 +262,7 @@ function recipeItemReference(c){const item=ingredientItems().find(x=>x.id===c.it
 function recipeBase(id){return data.recipes.find(x=>x.id===id);}
 function recipeCurrent(id){const r=recipeBase(id);return r?recipeWithEdits(r,local.recipeEdits):null;}
 function recipeOutputItem(r){return r?.outputItemId?ingredientItems().find(x=>x.id===r.outputItemId)||null:null;}
-// The management fields need migration 20261014121928; before it, the save command would silently ignore them.
+// The management fields need migration 20261014122848; before it, the save command would silently ignore them.
 function recipeManageReady(r){return r?.type==='prep'&&Object.hasOwn(r,'useByDays');}
 function recipeManageView(r){return r.type==='prep'?manageView(r,recipeOutputItem(r)):null;}
 function recipeYield(r){return r.yieldQuantity==null?"Not specified":`${preciseNumber(r.yieldQuantity)} ${e(r.yieldUom||'')}`;}
