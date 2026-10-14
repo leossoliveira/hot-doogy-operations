@@ -276,3 +276,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .transfer-line-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}.transfer-line-badge svg{width:12px;height:12px}.transfer-line-badge.shipped{background:#e7f3ec;color:var(--green-55)}.transfer-line-badge.not-sent{background:#fbefee;color:var(--red);cursor:help}.transfer-line-progress{display:block;margin-top:3px;font-size:10px;color:var(--muted)}
 @container (max-width:640px){.operation-table-rows .transfer-actions-head{width:100px}.transfer-line-actions{gap:4px}.transfer-line-badge{padding:2px 6px;font-size:10px;gap:3px}.operation-table-rows td:last-child{text-align:right}}
 .transfer-line-progress.not-sent{color:var(--red)}
+.transfer-issue-form .field{margin-top:14px}.transfer-issue-form .form-grid{margin-top:4px}

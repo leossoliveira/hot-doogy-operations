@@ -18,6 +18,7 @@ export async function reportTransferIssue(req,res,url,auth,session){
  const body=await jsonBody(req,8192);
  if(body.type!=='not_sent'||!uuid.test(body.lineId))throw new ApiError(400,'Select the item and the issue.');
  if(typeof body.reason!=='string'||!body.reason.trim()||body.reason.trim().length>1000)throw new ApiError(400,'Enter a reason up to 1000 characters.');
- const result=await auth.request('/rest/v1/rpc/report_internal_request_line_not_sent',{token:session.token,method:'POST',body:{p_request:match[1],p_organization:ORGANIZATION_ID,p_line:body.lineId,p_reason:body.reason.trim()}});
+ if(body.quantity!==undefined&&(!Number.isFinite(body.quantity)||body.quantity<=0||body.quantity>1e8))throw new ApiError(400,'Enter a quantity not sent greater than zero.');
+ const result=await auth.request('/rest/v1/rpc/report_internal_request_line_not_sent',{token:session.token,method:'POST',body:{p_request:match[1],p_organization:ORGANIZATION_ID,p_line:body.lineId,p_reason:body.reason.trim(),p_quantity:body.quantity??null}});
  reply(res,200,result);
 }

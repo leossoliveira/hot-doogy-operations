@@ -555,13 +555,16 @@ async function shipMarkedItems(el){
 }
 function reportTransferIssue(el){
  const x=data.transfers.find(t=>t.id===el.dataset.id),line=x?.lines.find(l=>l.id===el.dataset.line);if(!line)return;
- openModal("Report issue",`<form id="transfer-issue-form"><p><strong>${e(line.name)}</strong> · ${e(number(line.remainingToDispatch))} ${e(line.uom||'')} left to send</p><div class="field"><label for="transfer-issue-type">Issue</label><select id="transfer-issue-type" required><option value="not_sent">Item not sent</option></select></div><div class="field"><label for="transfer-issue-reason">Reason</label><textarea id="transfer-issue-reason" required maxlength="1000" rows="3" placeholder="e.g., Out of stock at Sherwood Plaza"></textarea></div><p class="muted">The item closes without the remaining quantity. This cannot be undone.</p><p id="transfer-issue-error" role="alert" class="error-text"></p></form>`,btn("Back",'transfer-cancel-back','','',`data-id="${x.id}"`)+btn("Report issue",'transfer-issue-save','info','primary',`data-id="${x.id}" data-line="${line.id}"`),{kind:'transfer-issue'});
+ const left=Number(line.remainingToDispatch);
+ openModal("Report issue",`<form id="transfer-issue-form" class="transfer-issue-form"><p><strong>${e(line.name)}</strong> · ${e(number(left))} ${e(line.uom||'')} left to send</p><div class="form-grid"><div class="field"><label for="transfer-issue-type">Issue</label><select id="transfer-issue-type" required><option value="not_sent">Item not sent</option></select></div><div class="field"><label for="transfer-issue-quantity">Quantity not sent (${e(line.uom||'units')})</label><input id="transfer-issue-quantity" type="number" min="0.000001" max="${left}" step="any" value="${left}" required></div></div><div class="field"><label for="transfer-issue-reason">Reason</label><textarea id="transfer-issue-reason" required maxlength="1000" rows="3" placeholder="e.g., Only 1 bag available at ${e(x.fromLocationName)}"></textarea></div><p class="muted" id="transfer-issue-hint"></p><p id="transfer-issue-error" role="alert" class="error-text"></p></form>`,btn("Back",'transfer-cancel-back','','',`data-id="${x.id}"`)+btn("Report issue",'transfer-issue-save','info','primary',`data-id="${x.id}" data-line="${line.id}"`),{kind:'transfer-issue'});
+ // Explain what stays open, e.g. 2 approved and 1 not sent leaves 1 to ship.
+ const qty=$('#transfer-issue-quantity'),hint=()=>{const rest=left-Number(qty.value||0);$('#transfer-issue-hint').textContent=rest>0?`${number(rest)} ${line.uom||''} stays open to ship. This cannot be undone.`:"The item closes without the remaining quantity. This cannot be undone.";};qty.oninput=hint;hint();
 }
 async function saveTransferIssue(el){
  const form=$('#transfer-issue-form');if(!form.reportValidity())return;
  const reason=$('#transfer-issue-reason').value.trim();if(!reason){$('#transfer-issue-error').textContent="Enter a reason.";return;}
  el.disabled=true;
- try{await api(`/api/transfers/${el.dataset.id}/issue`,{type:$('#transfer-issue-type').value,lineId:el.dataset.line,reason});await refreshData();closeModal(true);render();showTransfer(el.dataset.id);toast("Issue reported.");}catch(error){el.disabled=false;$('#transfer-issue-error').textContent=error.message;}
+ try{await api(`/api/transfers/${el.dataset.id}/issue`,{type:$('#transfer-issue-type').value,lineId:el.dataset.line,reason,quantity:Number($('#transfer-issue-quantity').value)});await refreshData();closeModal(true);render();showTransfer(el.dataset.id);toast("Issue reported.");}catch(error){el.disabled=false;$('#transfer-issue-error').textContent=error.message;}
 }
 async function approveTransfer(el){
  const transfer=data.transfers.find(x=>x.id===el.dataset.id);if(!transfer)return;
