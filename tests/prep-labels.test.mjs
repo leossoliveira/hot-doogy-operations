@@ -24,7 +24,8 @@ test('each label gets a unique 14-digit code with the unit serial',()=>{
   const rows=labelRows(batch);
   assert.equal(rows.length,6);
   assert.equal(new Set(rows.map(r=>r.code)).size,6);
-  rows.forEach((r,i)=>{assert.match(r.code,/^\d{14}$/);assert.equal(r.code.slice(-3),String(i+1).padStart(3,'0'));assert.equal(r.serial,i+1);assert.equal(r.total,6);});
+  assert.equal(new Set(rows.map(r=>r.number)).size,6);
+  rows.forEach((r,i)=>{assert.equal(r.number,`${batchNumber(batch)}-${String(i+1).padStart(3,'0')}`);assert.equal(r.batchNumber,batchNumber(batch));assert.match(r.code,/^\d{14}$/);assert.equal(r.code.slice(-3),String(i+1).padStart(3,'0'));assert.equal(r.serial,i+1);assert.equal(r.total,6);});
   assert.equal(labelRows(batch,2).length,2);
   assert.equal(labelFilename(batch),`Hot-Doogy-Prep-Labels-${batchNumber(batch)}.pdf`);
   assert.equal(formatMoment('2026-10-13T22:30:00Z'),'10/13/2026 06:30 PM');

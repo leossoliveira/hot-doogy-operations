@@ -17,14 +17,14 @@ export const batchNumber=batch=>batch.number||(batch.id&&batchMoment(batch)?batc
 export const MAX_LABELS=500;
 export function labelCount(qty){const n=Math.ceil(Number(qty));return Number.isFinite(n)&&n>0?Math.min(MAX_LABELS,n):1;}
 export const labelFilename=batch=>`Hot-Doogy-Prep-Labels-${batchNumber(batch).replace(/[^a-z0-9_-]/gi,'-')}.pdf`;
-// One row per produced unit. Each code is unique: batch digits plus a three-digit unit serial.
+// One row per produced unit. Each label has its own sequential batch number (batch number plus a
+// three-digit serial) and a matching unique barcode (batch digits plus the same serial).
 export function labelRows(batch,count=labelCount(batch.actualQty??batch.qty)){
   const total=Math.min(MAX_LABELS,Math.max(1,Math.floor(Number(count)||1)));
   const {digits,number}=batchCode(batch);
-  return Array.from({length:total},(_,i)=>{const serial=String(i+1).padStart(3,'0');return {serial:i+1,total,number,code:`${digits}${serial}`,text:`${digits.slice(0,6)} ${digits.slice(6)} ${serial}`};});
+  return Array.from({length:total},(_,i)=>{const serial=String(i+1).padStart(3,'0');return {serial:i+1,total,batchNumber:number,number:`${number}-${serial}`,code:`${digits}${serial}`,text:`${digits.slice(0,6)} ${digits.slice(6)} ${serial}`};});
 }
 export const formatMoment=value=>{if(!value)return 'Not provided';const p=nyParts(value);return `${p.mm}/${p.dd}/20${p.yy} ${p.hh}:${p.min} ${p.period}`;};
-const quantityText=batch=>{const qty=Number(batch.actualQty??batch.qty);return Number.isFinite(qty)?`${qty.toLocaleString('en-US',{maximumFractionDigits:2})} ${batch.uom||''}`.trim():'Not provided';};
 // 2.4 in x 3.5 in label, one per page. Generated in the browser; no upload or database write.
 export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{logoBytes,preparedBy}={}){
   const {PDFDocument,StandardFonts,rgb}=await import('./vendor/pdf-lib.esm.min.js');
@@ -37,7 +37,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{logoBytes
   function wrap(value,size,face,maxWidth,maxLines){const lines=[];let current='';for(const word of printable(value).split(/\s+/).filter(Boolean)){const candidate=current?current+' '+word:word;if(face.widthOfTextAtSize(candidate,size)>maxWidth&&current){lines.push(current);current=word;}else current=candidate;}if(current)lines.push(current);if(lines.length>maxLines){const kept=lines.slice(0,maxLines);let last=kept[maxLines-1];while(face.widthOfTextAtSize(last+'…',size)>maxWidth&&last.length)last=last.slice(0,-1);kept[maxLines-1]=last.trimEnd()+'…';return kept;}return lines;}
   const nameSize=[13,11,10].find(size=>wrap(name,size,bold,width,2).join(' ')===name)||10,nameLines=wrap(name,nameSize,bold,width,2);
   const who=printable(preparedBy||batchPreparedBy(batch)||'Not specified');
-  const details=[['Produced',formatMoment(batchMoment(batch))],['Prepared by',who],['Location',printable(batch.locationName||'Not provided')],['Batch qty',printable(quantityText(batch))]];
+  const details=[['Produced',formatMoment(batchMoment(batch))],['Prepared by',who],['Location',printable(batch.locationName||'Not provided')]];
   for(const row of rows){
     const page=pdf.addPage([W,H]);
     const draw=(value,x,top,size,face=font,color=gray)=>page.drawText(printable(value),{x,y:H-top-size,size,font:face,color});
@@ -47,9 +47,9 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{logoBytes
     draw('PREP ITEM',M,y,6,bold,gray);y+=9;
     for(const line of nameLines){draw(line,M,y,nameSize,bold,ink);y+=nameSize+2;}
     y+=4;
-    draw(row.number,M,y,9,bold,ink);
-    const unit=`UNIT ${String(row.serial).padStart(2,'0')} OF ${String(row.total).padStart(2,'0')}`;
-    draw(unit,W-M-bold.widthOfTextAtSize(unit,7),y+1.5,7,bold,gray);y+=14;
+    const numberSize=Math.min(10,9*width/bold.widthOfTextAtSize(row.number,9));
+    draw(row.number,M,y,numberSize,bold,ink);y+=numberSize+3;
+    draw(`UNIT ${String(row.serial).padStart(2,'0')} OF ${String(row.total).padStart(2,'0')}`,M,y,6.5,bold,gray);y+=11;
     page.drawRectangle({x:M,y:H-y,width,height:.6,color:light});y+=6;
     for(const [label,value] of details){draw(label,M,y,6.5,bold,gray);const lines=wrap(value,7.5,font,width-56,1);draw(lines[0]||'',M+56,y-.5,7.5,font,ink);y+=11;}
     y+=2;
@@ -60,7 +60,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{logoBytes
     y+=barHeight+2;
     draw(row.text,(W-font.widthOfTextAtSize(row.text,7))/2,y,7,font,ink);
   }
-  pdf.setTitle('Hot Doogy - Prep labels '+rows[0]?.number);pdf.setAuthor('Hot Doogy');pdf.setSubject('Prep batch labels, 2.4 x 3.5 in, one label per page');
+  pdf.setTitle('Hot Doogy - Prep labels '+rows[0]?.batchNumber);pdf.setAuthor('Hot Doogy');pdf.setSubject('Prep batch labels, 2.4 x 3.5 in, one label per page');
   return pdf.save();
 }
 export async function downloadPrepLabelsPdf(batch,rows,options={}){
