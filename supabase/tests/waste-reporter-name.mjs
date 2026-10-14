@@ -1,0 +1,22 @@
+// Usage: PGLITE_MODULE_PATH=<pglite> node supabase/tests/waste-reporter-name.mjs <waste reporter migration>
+import fs from 'node:fs';import assert from 'node:assert/strict';const {PGlite}=await import(process.env.PGLITE_MODULE_PATH||'@electric-sql/pglite');const db=new PGlite();const id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`,org='6013ed02-626a-497c-b951-619069035532';
+await db.exec(`create role anon;create role authenticated;create schema private;create schema auth;create table auth.users(id uuid,raw_user_meta_data jsonb);insert into auth.users values('${id(1)}','{"full_name":"signup name"}');create type member_role as enum('owner','admin','manager','chef','staff');
+create function auth.uid() returns uuid language sql as $$select '${id(1)}'::uuid$$;
+create function private.mfa_authorized() returns boolean language sql as $$select current_setting('test.mfa',true)='yes'$$;
+create function private.has_org_role(uuid,member_role[]) returns boolean language sql as $$select current_setting('test.role',true)=any($2::text[])$$;
+create function private.can_location(uuid) returns boolean language sql as $$select $1='${id(2)}'::uuid$$;
+create function private.can_storage(uuid) returns boolean language sql as $$select $1='${id(3)}'::uuid$$;
+create function private.internal_request_requester_name(p_org uuid,p_user uuid) returns text language sql as $$select 'Standard Name'$$;
+create table private.web_commands(command_id uuid primary key,actor uuid,payload jsonb,result jsonb);
+create table locations(id uuid,organization_id uuid);create table storage_areas(id uuid,organization_id uuid,location_id uuid);create table inventory_items(id uuid,organization_id uuid,active boolean);create table location_inventory_items(inventory_item_id uuid,location_id uuid,active boolean);create table inventory_item_units(id uuid,organization_id uuid,inventory_item_id uuid,quantity_in_base_unit numeric);
+create table waste_events(id uuid primary key,organization_id uuid,location_id uuid,occurred_at timestamptz,reason text,reported_by uuid,notes text);create table waste_event_lines(waste_event_id uuid,inventory_item_id uuid,storage_area_id uuid,inventory_item_unit_id uuid,quantity numeric,quantity_base numeric);create table inventory_transactions(organization_id uuid,location_id uuid,storage_area_id uuid,inventory_item_id uuid,transaction_type text,quantity_base numeric,source_type text,source_id uuid,occurred_at timestamptz,created_by uuid);create table audit_logs(organization_id uuid,location_id uuid,user_id uuid,action text,entity_type text,entity_id uuid,new_data jsonb);
+insert into locations values('${id(2)}','${org}');insert into storage_areas values('${id(3)}','${org}','${id(2)}');insert into inventory_items values('${id(4)}','${org}',true);insert into location_inventory_items values('${id(4)}','${id(2)}',true);insert into inventory_item_units values('${id(5)}','${org}','${id(4)}',12);set test.role='manager';set test.mfa='yes';`);
+await db.exec(fs.readFileSync('supabase/migrations/20261011212134_record_waste.sql','utf8'));
+const migration=fs.readFileSync(process.argv[2],'utf8');await db.exec(migration);
+await assert.rejects(db.exec(migration),/Unexpected waste reporter/,'refuses to run twice');
+const payload={locationId:id(2),areaId:id(3),itemId:id(4),unitId:id(5),quantity:2,occurredAt:'2026-01-01T12:00:00Z',reason:'Expired',notes:''};
+await db.query('select public.record_waste($1,$2)',[id(8),JSON.stringify(payload)]);
+const row=(await db.query('select reported_by,reported_by_name from waste_events')).rows[0];
+assert.equal(row.reported_by,id(1));assert.equal(row.reported_by_name,'Standard Name');
+await db.exec("set test.role='staff'");await assert.rejects(db.query('select public.record_waste($1,$2)',[id(9),JSON.stringify(payload)]),/permission/);
+console.log('Waste reporter: standard requester name recorded, guard against re-run, permissions unchanged.');await db.close();

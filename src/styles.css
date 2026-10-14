@@ -282,3 +282,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .count-resume-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 @media(pointer:coarse){.kbd{display:none}}
 .prep-batch-area-note{grid-column:1/-1;margin:0}
+.waste-full{grid-column:1/-1;margin:0}

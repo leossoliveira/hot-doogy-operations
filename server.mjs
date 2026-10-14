@@ -76,6 +76,7 @@ http.createServer(async(req,res)=>{
     throw new ApiError(404,'Conversation action not found.');
    }
    if(url.pathname==='/api/doogy-ai/whatsapp'&&req.method==='GET')return reply(res,200,await readWhatsappDirectory(session.member.role));
+   if(url.pathname==='/api/waste/reporter'&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_current_preparer',{token:session.token,method:'POST',body:{}}));
    if(url.pathname==='/api/waste'&&req.method==='POST'){const body=await jsonBody(req,8192);return reply(res,200,await auth.request('/rest/v1/rpc/record_waste',{token:session.token,method:'POST',body:{p_id:body.id,p:body.payload}}));}
    if(url.pathname==='/api/catalog/create'&&req.method==='POST'){const body=await jsonBody(req);const result=await auth.request('/rest/v1/rpc/catalog_create',{token:session.token,method:'POST',body:{p_kind:body.kind,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
    if(url.pathname==='/api/command'&&req.method==='POST'){const body=await jsonBody(req);requireStaffCommand(session.member.role,body);requireProfileCommand(profile,body);if(body.payload.changes.some(c=>c.action==='receipt'&&!/^[a-f0-9-]{36}$/.test(c.payload?.receiverTeamMemberId||'')))throw new ApiError(422,'Choose the team member who received this order.');const result=await auth.request('/rest/v1/rpc/operations_command',{token:session.token,method:'POST',body:{p_action:body.action,p_payload:body.payload,p_command_id:body.commandId}});return reply(res,200,result);}
