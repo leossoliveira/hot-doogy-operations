@@ -28,7 +28,9 @@ export const formatMoment=value=>{if(!value)return 'Not provided';const p=nyPart
 // 2.4 in x 3.5 in label, one per page. Generated in the browser; no upload or database write.
 // Layout: prep item and batch number at the top, barcode anchored at the bottom, and the
 // Date/Time, Prepared by and Use by fields spread evenly over the space between them.
-export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedBy}={}){
+// Optional shelf life in days fills Use by with the production moment plus that many days; otherwise it is a blank line to write on.
+export function useByMoment(batch,days){const n=Number(days),at=Date.parse(batchMoment(batch)||'');return days!=null&&days!==''&&Number.isFinite(n)&&n>0&&Number.isFinite(at)?new Date(at+n*86400000).toISOString():null;}
+export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedBy,useByDays}={}){
   const {PDFDocument,StandardFonts,rgb}=await import('./vendor/pdf-lib.esm.min.js');
   const pdf=await PDFDocument.create(),font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   const W=2.4*72,H=3.5*72,M=12,width=W-M*2;
@@ -39,7 +41,7 @@ export async function createPrepLabelsPdf(batch,rows=labelRows(batch),{preparedB
   const fits=(size,lines)=>wrap(name,size,bold,width,lines).join(' ')===name;
   const nameSize=[16,14,12].find(size=>fits(size,2))||11,nameLines=wrap(name,nameSize,bold,width,nameSize===11?3:2);
   const who=printable(preparedBy||batchPreparedBy(batch)||'Not specified');
-  const fields=[['DATE/TIME',formatMoment(batchMoment(batch))],['PREPARED BY',who],['USE BY',null]];
+  const fields=[['DATE/TIME',formatMoment(batchMoment(batch))],['PREPARED BY',who],['USE BY',useByMoment(batch,useByDays)?formatMoment(useByMoment(batch,useByDays)):null]];
   const LABEL=6.5,VALUE=10.5,FIELD=LABEL+4+VALUE+2,TEXT=8,MIN_GAP=7;
   // Fixed top block height, so the barcode takes whatever height is left (between 30 and 56 pt).
   const topHeight=LABEL+5+nameLines.length*nameSize*1.12+6+12+9;
