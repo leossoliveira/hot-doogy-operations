@@ -84,3 +84,5 @@
 #form-lines .line-item{align-items:start}.inline-item-host .input-wrap input{font-size:13px}
 
 .inline-item-search .input-wrap input{border:0!important;background:transparent;box-shadow:none;outline:none}.inline-item-search .input-wrap:focus-within{outline:2px solid var(--yellow-77);outline-offset:1px}
+@media(min-width:701px){.recipe-metadata.recipe-metadata-prep{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.recipe-manage-form{margin-bottom:8px}

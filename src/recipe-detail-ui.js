@@ -1,14 +1,15 @@
 import {cloudPhotoSource} from './photo-storage.js';
 import {escape as e,date} from './model.js';
 
-const tabs=[['ingredients',"Ingredients"],['packaging',"Packaging"],['cost','Cost'],['steps','Step-by-Step'],['history','Version history']];
+const baseTabs=[['ingredients',"Ingredients"],['packaging',"Packaging"],['cost','Cost'],['steps','Step-by-Step'],['history','Version history']];
 const photoSource=photo=>cloudPhotoSource(photo)||(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo?.src||'')?photo.src:null);
 export function recipePhotoView(recipe,photo,readOnly=false){
   const src=photoSource(photo);
   if(readOnly)return `<section class="recipe-photo"><div class="recipe-photo-preview">${src?`<img src="${e(src)}" alt="Photo of ${e(recipe.name)}">`:'<i data-lucide="image" class="icon" aria-hidden="true"></i>'}</div><div><strong>Item photo</strong>${src?'':'<p>No photo available.</p>'}</div></section>`;
   return `<section class="recipe-photo" data-photo-recipe="${e(recipe.id)}"><div class="recipe-photo-preview">${src?`<img src="${e(src)}" alt="Photo of ${e(recipe.name)}">`:'<i data-lucide="image" class="icon" aria-hidden="true"></i>'}</div><div><strong>Item photo</strong><p>JPG, PNG, or WebP · Up to 5 MB<br>${photo?.storage==='s3'?"✓ Photo verified in storage":src?"Local photo — select it again to upload to storage.":"Upload to private storage."}</p><div class="recipe-photo-actions"><button class="btn sm" data-action="recipe-photo-upload">${src?"Change photo":"Add photo"}</button>${src?"<button class=\"btn sm ghost\" data-action=\"recipe-photo-remove\">Remove photo</button>":''}</div><input type="file" hidden id="recipe-photo-file" data-change="recipe-photo" data-id="${e(recipe.id)}" accept="image/jpeg,image/png,image/webp"><p class="error-text" role="status" id="recipe-photo-message"></p></div></section>`;
 }
-export function recipeDetailTabs(recipe,componentsView,costView,{editing=false}={}){
+export function recipeDetailTabs(recipe,componentsView,costView,{editing=false,manageView=null}={}){
+  const tabs=manageView==null?baseTabs:[...baseTabs,['manage','Management']];
   const ingredients=recipe.components.filter(c=>c.kind!=='packaging');
   const packaging=recipe.components.filter(c=>c.kind==='packaging');
   const steps=[...(recipe.steps||[])].sort((a,b)=>(a.stepNumber||0)-(b.stepNumber||0));
@@ -16,6 +17,7 @@ export function recipeDetailTabs(recipe,componentsView,costView,{editing=false}=
     ingredients:`<div class="section-title recipe-section-title"><div>Ingredients <span class="pill-count">${ingredients.length}</span><p>Quantities reflect this version’s yield.</p></div></div>${componentsView({...recipe,components:ingredients},'ingredients')}`,
     packaging:`<div class="section-title recipe-section-title"><div>Packaging <span class="pill-count">${packaging.length}</span><p>Materials used for packing and serving.</p></div></div>${!recipe.componentsLoaded?componentsView(recipe):(packaging.length||editing)?componentsView({...recipe,components:packaging},'packaging'):"<div class=\"recipe-empty\"><h3>No packaging added</h3><p>Use Edit ingredients to add a Packaging item.</p></div>"}`,
     cost:costView,
+    manage:manageView,
     history:`<div class="section-title">Version history</div>${recipe.versions?.length?`<div class="table-wrap"><table><thead><tr><th>Version</th><th>Status</th><th>Created</th><th>Notes</th></tr></thead><tbody>${recipe.versions.map(v=>`<tr><td>${e(v.version)}${v.id===recipe.versionId?' · Current':''}</td><td>${e(v.status||'—')}</td><td>${v.createdAt?date(v.createdAt):'—'}</td><td>${e(v.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">No version history available.</p>'}`,
 
     steps:`<div class="section-title">Prep instructions</div>${steps.length?`<ol class="recipe-steps">${steps.map((s,i)=>`<li><span class="recipe-step-number">${i+1}</span><div><h3>${e(s.title||`Step ${i+1}`)}</h3><p>${e(s.instructions||'')}</p></div></li>`).join('')}</ol>`:"<div class=\"recipe-empty\"><h3>No instructions added</h3><p>This version has no prep instructions yet.</p></div>"}${recipe.notes?`<div class="section-title">Recipe notes</div><p class="recipe-step-notes">${e(recipe.notes)}</p>`:''}`
