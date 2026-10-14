@@ -285,3 +285,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .waste-full{grid-column:1/-1;margin:0}
 #waste-form .field output{display:block;padding:12px;border-radius:var(--radius-s);background:var(--gray-97);font-size:13px;color:var(--text-muted)}
 .waste-total{color:var(--red-50)}
+.count-detail-table{overflow-x:auto}.count-detail-table table{width:100%;min-width:560px}.count-detail-table th,.count-detail-table td{padding:12px!important;vertical-align:middle}.count-detail-table td:first-child{width:45%;min-width:220px}
