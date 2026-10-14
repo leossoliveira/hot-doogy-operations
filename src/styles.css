@@ -278,3 +278,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .transfer-line-progress.not-sent{color:var(--red)}
 .transfer-issue-form .field{margin-top:14px}.transfer-issue-form .form-grid{margin-top:4px}
 .btn.board-more{width:100%;justify-content:center;margin-top:10px}
+.recipe-editor-modal.transfer-lines .recipe-edit-controls{grid-template-columns:minmax(85px,.7fr) minmax(100px,1fr)}.transfer-lines .recipe-add-bar{margin-top:12px}
