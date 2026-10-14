@@ -281,3 +281,4 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .recipe-editor-modal.transfer-lines .recipe-edit-controls{grid-template-columns:minmax(85px,.7fr) minmax(100px,1fr)}.transfer-lines .recipe-add-bar{margin-top:12px}
 .count-resume-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 @media(pointer:coarse){.kbd{display:none}}
+.prep-batch-area-note{grid-column:1/-1;margin:0}
