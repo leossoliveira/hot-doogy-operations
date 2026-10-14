@@ -30,3 +30,20 @@ test('optimal price divides ingredient cost by target and passes packaging throu
  const x=costInfo(recipe,'store',data);assert.equal(x.ingredients,6);assert.equal(x.packaging,2);assert.equal(x.total,8);assert.equal(x.optimalPrice,26);
  data.costInputs.settings[0].foodTarget=0;assert.equal(costInfo(recipe,'store',data).optimalPrice,null);
 });
+test('waste loss value: purchased items use supplier price without ingredient yield, prep items use recipe cost per yield', async () => {
+  const {itemQuantityValue} = await import('../src/recipe-cost-model.js');
+  const {recipe, data} = recipeCostFixture();
+  const each = {id: 'each', itemUnitId: 'item-each', factor: 1, name: 'Each'};
+  data.ingredientItems[0].units.push({id: 'case', itemUnitId: 'item-case', factor: 12, name: 'Case'});
+  data.ingredientItems[0].yieldPercent = 50;
+  assert.equal(itemQuantityValue({itemId: 'ingredient', itemUnitId: 'item-case', quantity: 1, locationId: 'store'}, data), 24, '1 case = 12 × $2, yield not applied');
+  // Prep item: its recipe uses 3 ingredients ($6) and yields 2 trays; 1 tray wasted = $3.
+  const prep = {...recipe, id: 'prep-recipe', type: 'prep', outputItemId: 'prep', yieldQuantity: 2, yieldItemUnitId: 'prep-tray'};
+  data.recipes.push(prep);
+  data.ingredientItems[0].yieldPercent = null;
+  data.ingredientItems.push({id: 'prep', name: 'Prep', type: 'prepared', subRecipeId: 'prep-recipe', units: [{id: 'tray', itemUnitId: 'prep-tray', factor: 1, name: 'Tray'}]});
+  assert.equal(itemQuantityValue({itemId: 'prep', itemUnitId: 'prep-tray', quantity: 1, locationId: 'store'}, data), 3);
+  assert.equal(itemQuantityValue({itemId: 'ingredient', itemUnitId: 'item-each', quantity: 1, locationId: 'elsewhere'}, data), null, 'no price at that store');
+  assert.equal(itemQuantityValue({itemId: 'ingredient', itemUnitId: 'missing', quantity: 1, locationId: 'store'}, data), null, 'unknown unit');
+  assert.equal(each.factor, 1);
+});

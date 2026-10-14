@@ -6,6 +6,36 @@ const valid = x => x !== null && x !== undefined && x !== '' && Number.isFinite(
 const positive = x => valid(x) && Number(x) > 0;
 const uniqueValue = values => values.length && values.every(valid) && new Set(values.map(Number)).size === 1 ? Number(values[0]) : null;
 
+// Cost of one base unit of a purchased item at a store, from its active suppliers' approved prices.
+// Null when there is no price or when suppliers disagree, so totals are never understated.
+export function supplierBaseCost(item, scope, data, local = {}) {
+  const vendors = (data.supplierCatalog?.items || []).map(row => supplierItemWithEdits(row, local)).filter(row => row.itemId === item.id && row.active !== false && row.supplierActive !== false && row.supplierBusinessActive !== false && row.stores?.some(s => s.id === scope && s.active !== false && s.locationActive !== false));
+  const costs = vendors.map(row => {
+    const price = resolveSupplierPrice(row, scope);
+    const priceUnit = row.units.find(u => u.id === price.unitId);
+    return valid(price.amount) && price.amount >= 0 && positive(priceUnit?.factor) ? price.amount / Number(priceUnit.factor) : null;
+  });
+  return uniqueValue(costs);
+}
+
+// Value of a quantity of any item at a store: purchased items use supplier prices, prep items use their recipe cost
+// per unit of yield. The ingredient yield percent is not applied: waste discards the item as it was stocked.
+export function itemQuantityValue({itemId, itemUnitId, quantity, locationId}, data, local = {}) {
+  const items = ingredientItemsWithEdits(data.ingredientItems || [], local);
+  const item = items.find(i => i.id === itemId), unit = item?.units?.find(u => u.itemUnitId === itemUnitId);
+  if (!item || !positive(unit?.factor) || !positive(quantity)) return null;
+  const base = Number(quantity) * Number(unit.factor);
+  if (item.subRecipeId || item.type === 'prepared') {
+    const child = (data.recipes || []).find(r => r.id === item.subRecipeId) || (data.recipes || []).find(r => r.type === 'prep' && r.outputItemId === item.id);
+    const yieldUnit = item.units?.find(u => u.itemUnitId === child?.yieldItemUnitId);
+    if (!child || !positive(child.yieldQuantity) || !positive(yieldUnit?.factor)) return null;
+    const cost = recipeCost(child, locationId, data, local);
+    return cost.total == null ? null : cost.total * base / (Number(child.yieldQuantity) * Number(yieldUnit.factor));
+  }
+  const baseCost = supplierBaseCost(item, locationId, data, local);
+  return baseCost == null ? null : base * baseCost;
+}
+
 // All costs refer to the displayed version and the selected store. Missing inputs
 // invalidate the total rather than understating it by summing only priced lines.
 export function recipeCost(recipe, locationId, data, local = {}, path = new Set()) {
@@ -38,13 +68,7 @@ export function recipeCost(recipe, locationId, data, local = {}, path = new Set(
       if (c.kind === 'packaging') packaging += cost.total * scale;
       else {ingredients += cost.ingredients * scale; packaging += cost.packaging * scale;}
     } else {
-      const vendors = (data.supplierCatalog?.items || []).map(row => supplierItemWithEdits(row, local)).filter(row => row.itemId === item.id && row.active !== false && row.supplierActive !== false && row.supplierBusinessActive !== false && row.stores?.some(s => s.id === scope && s.active !== false && s.locationActive !== false));
-      const costs = vendors.map(row => {
-        const price = resolveSupplierPrice(row, scope);
-        const priceUnit = row.units.find(u => u.id === price.unitId);
-        return valid(price.amount) && price.amount >= 0 && positive(priceUnit?.factor) ? price.amount / Number(priceUnit.factor) : null;
-      });
-      const baseCost = uniqueValue(costs);
+      const baseCost = supplierBaseCost(item, scope, data, local);
       if (baseCost == null) {issues.push(`${name}: missing approved price or conversion, or supplier costs differ.`); continue;}
       const yieldRatio = item.yieldPercent == null ? 1 : Number(item.yieldPercent) / 100;
       if (!(yieldRatio > 0 && yieldRatio <= 1)) {issues.push(`${name}: invalid ingredient yield.`); continue;}
