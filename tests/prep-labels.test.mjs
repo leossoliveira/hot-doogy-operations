@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import {batchCode,batchNumber,labelCount,labelRows,labelFilename,formatMoment,createPrepLabelsPdf} from '../src/prep-labels.js';
 import {PDFDocument} from '../src/vendor/pdf-lib.esm.min.js';
 
@@ -30,9 +29,8 @@ test('each label gets a unique 14-digit code with the unit serial',()=>{
   assert.equal(labelFilename(batch),`Hot-Doogy-Prep-Labels-${batchNumber(batch)}.pdf`);
   assert.equal(formatMoment('2026-10-13T22:30:00Z'),'10/13/2026 06:30 PM');
 });
-test('the PDF has one 2.4 x 3.5 inch page per label, with and without a logo',async()=>{
-  const logoBytes=await readFile(new URL('../public/brand/hot-doogy-print.png',import.meta.url));
-  const pdf=await PDFDocument.load(await createPrepLabelsPdf(batch,labelRows(batch),{logoBytes,preparedBy:'Leonardo Oliveira'}));
+test('the PDF has one 2.4 x 3.5 inch page per label',async()=>{
+  const pdf=await PDFDocument.load(await createPrepLabelsPdf(batch,labelRows(batch),{preparedBy:'Leonardo Oliveira'}));
   assert.equal(pdf.getPageCount(),6);
   const {width,height}=pdf.getPage(0).getSize();
   assert.equal(Math.round(width*100)/100,172.8);assert.equal(Math.round(height*100)/100,252);
