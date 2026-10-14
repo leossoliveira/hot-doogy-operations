@@ -1,4 +1,4 @@
-const statuses={draft:'Draft',approved:'Approved',dispatched:'Dispatched',in_progress:'In progress',completed:'Completed',received:'Received',cancelled:"Canceled"};
+const statuses={draft:'Draft',approved:'In production',dispatched:'Dispatched',in_progress:'In production',completed:'Completed',received:'Received',cancelled:"Canceled"};
 const present=value=>value!==null&&value!==undefined&&value!=='';
 export const transferReference=x=>String(x.number||String(x.id||'').slice(0,7).toUpperCase()||'Transfer');
 export const transferFilename=x=>`Hot-Doogy-Transfer-${transferReference(x).replace(/[^a-z0-9_-]/gi,'-')}.pdf`;
