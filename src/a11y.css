@@ -5,4 +5,4 @@
 .inline-item-search .input-wrap:has(input:focus-visible),
 .purchasing-search:has(input:focus-visible){border-color:var(--yellow-55)!important;box-shadow:0 0 0 3px #fece0780!important}
 :has(>.global-search:focus-visible){box-shadow:0 0 0 3px #fece0780}
-:where(button,a,[role="button"],select,summary,[tabindex]):focus-visible{outline:2px solid var(--yellow-55);outline-offset:2px}
+:where(button,a,[role="button"],select,summary,[tabindex]):focus-visible{outline:2px solid var(--focus);outline-offset:2px}

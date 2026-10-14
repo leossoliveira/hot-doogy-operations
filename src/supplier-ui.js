@@ -163,7 +163,7 @@ export function createSupplierUI(ctx) {
     try{
       await api('/api/catalog/delete',{id:current.original.supplierItemId,confirmed:true});
       current.dirty=false;current.photoBusy=false;ctx.close(true);editor=null;
-      try{await ctx.refresh();ctx.render();ctx.toast('Item permanently deleted.');}catch{ctx.toast('Item deleted. Reload to refresh the catalog.');}
+      try{await ctx.refresh();ctx.render();ctx.toast('Item permanently deleted.');}catch{ctx.toast('Item deleted. The catalog updates on the next automatic refresh.','info');}
     }catch(error){$('#supplier-item-error').textContent=error.message;$('#supplier-item-error').focus();}
     finally{current.photoBusy=false;}
   }

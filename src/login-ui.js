@@ -29,20 +29,19 @@ export function createLoginUI({icon,goto,icons,onLogin}){
       <section class="login-content" aria-label="Workspace access">
         <header class="login-brand"><img src="/brand/hot-doogy-wordmark.svg" alt="HOT DOOGY"><span>OPERATIONS</span></header>
         <div class="login-form-wrap">
-          ${!login&&!mfa?'<button class="login-back" data-action="login-back">'+icon('arrow-left')+" Back to sign in</button>":''}
           <span class="login-eyebrow">YOUR WORKSPACE</span>
           <h1>${mfa?(pending.mfa.step==='enroll'?"Secure your<br>account.":"Verify it’s<br>you."):login?"Welcome<br>back.":recovery?"Forgot your password?":"Join the team."}</h1>
-          <p class="login-subtitle">${mfa?escape(pending.user.email):login?"Ready for another day at Hot Doogy.":recovery?"Recover access to your workspace.":"Access is for Hot Doogy team members."}</p>
-          ${mfa?mfaForm():`
-          <form id="login-form" data-login-mode="${mode}">
+          <p class="login-subtitle">${mfa?escape(pending.user.email):login?"Ready for another day at Hot Doogy.":recovery?"Your manager resets it for you.":"Access is set up by your manager."}</p>
+          ${mfa?mfaForm():!login?`<div class="login-help">${recovery?`<p>Passwords are reset by your store manager or an administrator. They confirm it’s you before resetting, so nothing is sent from this screen.</p><p>Ask them in person or in the team chat, then sign in here with the new password.</p>`:`<p>Your store manager or an administrator adds Hot Doogy team members to the workspace with their work email.</p><p>Ask them to add you. Once you’re in, sign in here with that email.</p>`}<button type="button" class="login-back" data-action="login-back">${icon('arrow-left')} Back to sign in</button></div>`:`
+          <form id="login-form" data-login-mode="login">
             <label for="login-email">Email</label>
             <div class="login-input">${icon('mail')}<input id="login-email" name="email" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="you@hotdoogy.com" required></div>
-            ${login?`<div class="login-password-label"><label for="login-password">Password</label><button type="button" class="login-text-button" data-action="login-recover">Forgot password?</button></div><div class="login-input">${icon('lock-keyhole')}<input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button type="button" class="login-eye" data-action="login-toggle-password" aria-label="Show password" aria-pressed="false">${icon('eye')}</button></div>`:''}
+            <div class="login-password-label"><label for="login-password">Password</label><button type="button" class="login-text-button" data-action="login-recover">Forgot password?</button></div><div class="login-input">${icon('lock-keyhole')}<input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button type="button" class="login-eye" data-action="login-toggle-password" aria-label="Show password" aria-pressed="false">${icon('eye')}</button></div>
             <p id="login-feedback" class="login-feedback" role="status" aria-live="polite" hidden></p>
-            <button type="submit" class="login-submit">${login?"Sign in":recovery?"Recover access":"Request access"}${icon('arrow-right')}</button>
+            <button type="submit" class="login-submit">Sign in${icon('arrow-right')}</button>
           </form>
           `}
-          ${login?"<p class=\"login-access\">Don’t have access yet? <button class=\"login-text-button\" data-action=\"login-request\">Request access</button></p>":''}
+          ${login?"<p class=\"login-access\">Don’t have access yet? <button type=\"button\" class=\"login-text-button\" data-action=\"login-request\">Request access</button></p>":''}
           
         </div>
         <footer class="login-footer"><span>© ${new Date().getFullYear()} Hot Doogy</span><span>Built for our team.</span></footer>
@@ -69,7 +68,6 @@ export function createLoginUI({icon,goto,icons,onLogin}){
         const value=await api('/api/auth/mfa/verify',{factorId,code:form.elements.code.value});
         form.elements.code.value='';if(version===generation)await accept(value);return true;
       }
-      if(form.dataset.loginMode!=='login'){feedback("Contact your team administrator to recover or request access.");return true;}
       const value=await api('/api/auth/login',{email:form.email.value,password:form.password.value});
       form.password.value='';
       if(version!==generation)return true;
@@ -94,8 +92,6 @@ export function createLoginUI({icon,goto,icons,onLogin}){
     'login-back':()=>goto('login'),
     'login-recover':()=>goto('recover'),
     'login-request':()=>goto('request-access'),
-    
-    'login-google':()=>feedback("Google sign-in is not available. Sign in with your email and password."),
     'login-toggle-password':el=>{const input=document.querySelector('#login-password'),show=input.type==='password';input.type=show?'text':'password';el.setAttribute('aria-label',show?"Hide password":"Show password");el.setAttribute('aria-pressed',String(show));el.innerHTML=icon(show?'eye-off':'eye');icons();}
   };
   return {page,submit,actions,accept,get pending(){return !!pending;}};

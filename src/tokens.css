@@ -67,3 +67,21 @@
   /* Secondary text: at least 4.5:1 on white, paper and tinted surfaces. */
   --text-muted:#566050;
 }
+
+/* Semantic roles. Components reference these; the palette above stays the single source of raw values. */
+:root{
+  --surface:var(--gray-100);
+  --surface-tint:var(--gray-97);
+  --text:#171918;
+  --border:#e9ece7;
+  --accent:var(--yellow-87);
+  --accent-ink:#27240c;
+  --success:#24856c;
+  --warning:#a76811;
+  --danger:var(--red-52);
+  --focus:var(--yellow-55);
+  --radius-s:8px;
+  --radius-m:12px;
+  --radius-l:16px;
+  --control-font-size:12px;
+}
