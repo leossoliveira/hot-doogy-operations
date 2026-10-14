@@ -1,5 +1,5 @@
 import {editOrder} from './server/order-edit.mjs';
-import {editTransfer} from './server/transfer-edit.mjs';
+import {editTransfer,reportTransferIssue} from './server/transfer-edit.mjs';
 import {myDayAPI} from './server/my-day.mjs';
 import {loadProfile,requireProfileRequest,requireProfileCommand} from './server/permission-profiles.mjs';
 import {hrAPI} from './server/hr.mjs';
@@ -42,6 +42,7 @@ http.createServer(async(req,res)=>{
    if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
    if(/^\/api\/orders\/[^/]+\/edit$/.test(url.pathname))return await editOrder(req,res,url,auth,session);
    if(/^\/api\/transfers\/[^/]+\/edit$/.test(url.pathname))return await editTransfer(req,res,url,auth,session);
+   if(/^\/api\/transfers\/[^/]+\/issue$/.test(url.pathname))return await reportTransferIssue(req,res,url,auth,session);
    if(/^\/api\/orders\/[^/]+\/delete$/.test(url.pathname))return await deleteOrder(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/delete$/.test(url.pathname))return await deleteInvoice(req,res,url,auth,session);
    if(/^\/api\/invoices\/[^/]+\/status$/.test(url.pathname))return await updateInvoiceStatus(req,res,url,auth,session);
