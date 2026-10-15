@@ -15,6 +15,18 @@ export function validateInvoiceExtraction(value){
  if(!value.document_complete)throw new ApiError(422,'The document is incomplete or exceeds the analysis page limit. No invoice was saved.');
  if(value.document_type!=='invoice'||value.confidence==='low')throw new ApiError(422,'This file is a receiving proof, another document, or cannot be confirmed as an invoice. It was not saved to storage.');
  for(const key of ['invoice_date','due_date'])if(value[key]){const day=new Date(value[key]+'T12:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(value[key])||!Number.isFinite(day.getTime())||day.toISOString().slice(0,10)!==value[key])value[key]=null;}
+ return reconcileInvoiceTotals(value);
+}
+// The review form recomputes every line as quantity × unit price, so the printed line total wins
+// (catch-weight lines are billed by weight, not by case) and any total that does not add up is flagged.
+export function reconcileInvoiceTotals(value){
+ const cents=n=>Math.round(n*100),money=n=>(cents(n)/100).toFixed(2),checks=[];
+ value.items.forEach((item,index)=>{const {quantity:q,unit_price:p,line_total:t}=item;if(q==null||t==null||q<=0)return;if(p!=null&&cents(q*p)===cents(t))return;item.unit_price=Math.round(t/q*1e6)/1e6;checks.push(`Check line ${index+1} (${item.description.slice(0,60)}): unit price set to ${item.unit_price} so ${q} × price equals the printed line total ${money(t)}${p==null?'':` (document price ${p}; check catch weight or a misread)`}.`);});
+ const lines=value.items.reduce((sum,item)=>sum+cents(item.line_total??0),0);
+ if(value.items.some(item=>item.line_total==null))checks.push('Check: some lines have no printed total; confirm every item and price.');
+ if(value.subtotal!=null&&lines!==cents(value.subtotal))checks.push(`Check: lines add up to ${money(lines/100)} but the printed subtotal is ${money(value.subtotal)}. Items may be missing, duplicated or misread.`);
+ if(value.total!=null){const computed=(value.subtotal!=null?cents(value.subtotal):lines)+cents(value.tax??0)+cents(value.fees??0);if(computed!==cents(value.total))checks.push(`Check: subtotal + tax + fees = ${money(computed/100)} but the printed total is ${money(value.total)}. Review tax, fees and discounts.`);}
+ value.warnings=[...checks,...value.warnings];
  return value;
 }
 export async function extractInvoice(bytes,mime,{config,fetcher=fetch}={}){
