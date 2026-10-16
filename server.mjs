@@ -3,6 +3,7 @@ import {editTransfer,reportTransferIssue} from './server/transfer-edit.mjs';
 import {myDayAPI} from './server/my-day.mjs';
 import {loadProfile,requireProfileRequest,requireProfileCommand} from './server/permission-profiles.mjs';
 import {hrAPI} from './server/hr.mjs';
+import {careersAPI} from './server/careers.mjs';
 import {insightsService} from './server/doogy-insights.mjs';
 import {agentService} from './server/doogy-agent.mjs';
 import {conversationService} from './server/doogy-chat.mjs';
@@ -39,6 +40,7 @@ http.createServer(async(req,res)=>{
    const profile=await loadProfile(auth,session);requireProfileRequest(profile,req.method,url.pathname);
    if(url.pathname.startsWith('/api/my-day'))return await myDayAPI(req,res,url,auth,session);
    if(['/api/invoices/team-members','/api/preparation/team-members'].includes(url.pathname)&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_team_directory',{token:session.token,method:'POST',body:{p_module:url.pathname.includes('/invoices/')?'purchasing':'preparation'}}));
+   if(url.pathname.startsWith('/api/hr/careers'))return await careersAPI(req,res,url,auth,session);
    if(url.pathname.startsWith('/api/hr'))return await hrAPI(req,res,url,auth,session);
    if(/^\/api\/orders\/[^/]+\/edit$/.test(url.pathname))return await editOrder(req,res,url,auth,session);
    if(/^\/api\/transfers\/[^/]+\/edit$/.test(url.pathname))return await editTransfer(req,res,url,auth,session);
