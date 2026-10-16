@@ -34,10 +34,14 @@ function sniff(bytes: Uint8Array): string | null {
  return null;
 }
 
-async function ipHash(req: Request): Promise<string | null> {
- const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("cf-connecting-ip") || "";
- if (!ip) return null;
- const salt = Deno.env.get("CAREERS_IP_SALT") || "hot-doogy-careers";
+// Throttle key. The gateway appends the real client address as the LAST x-forwarded-for
+// entry (a client can prepend fake ones), so take the last. With no address at all, every
+// such request shares one bucket instead of skipping the throttle. The hash is salted with a
+// secret so stored hashes cannot be reversed over the IPv4 space.
+async function ipHash(req: Request): Promise<string> {
+ const forwarded = (req.headers.get("x-forwarded-for") || "").split(",").map((x) => x.trim()).filter(Boolean);
+ const ip = req.headers.get("cf-connecting-ip") || forwarded.at(-1) || "unknown";
+ const salt = Deno.env.get("CAREERS_IP_SALT") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
  return sha256(new TextEncoder().encode(`${salt}:${ip}`));
 }
 
@@ -76,6 +80,7 @@ export async function handler(req: Request): Promise<Response> {
  const reply = (status: number, body: unknown) => Response.json(body, { status, headers: { ...cors, "Cache-Control": "no-store" } });
  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
  if (req.method !== "POST") return reply(405, { error: "POST required" });
+ if (Number(req.headers.get("content-length") || 0) > 2 * MAX_FILE + 64 * 1024) return reply(413, { error: "Request too large" });
  let form: FormData;
  try { form = await req.formData(); } catch { return reply(400, { error: "Expected multipart form data" }); }
  const checked = validate(form);
@@ -99,7 +104,8 @@ export async function handler(req: Request): Promise<Response> {
   const code = (error as { code?: string }).code;
   if (code === "P0002") return reply(429, { error: error.message });
   if (code === "P0003") return reply(409, { error: error.message });
-  if (code === "22023" || code === "23514") return reply(400, { error: error.message });
+  if (code === "22023") return reply(400, { error: error.message });
+  if (code === "23514") return reply(400, { error: "Some answers are invalid. Please review the form." });
   console.error("careers_submit failed", error);
   return reply(500, { error: "We could not save your application. Please try again." });
  }

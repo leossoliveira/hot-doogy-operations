@@ -43,7 +43,7 @@ export function createCareers(ctx){
    ${notes.length?`<section class="careers-section"><h3>Notes</h3><div class="careers-notes">${notes.map(n=>`<div class="careers-note">${e(n.body)}<small>${e(n.author||'Team member')} · ${when(n.created_at)}</small></div>`).join('')}</div></section>`:''}
    <section class="careers-section"><h3>Timeline</h3><ul class="careers-timeline">${events.map(x=>`<li><small>${when(x.created_at)}</small><span>${e(eventText(x))}</span></li>`).join('')||'<li>No activity yet.</li>'}</ul></section>
   </div>`;
-  ctx.openModal(fullName(a),body,'',{kind:'careers',wide:true,subtitle:`${CAREERS_POSITIONS[a.position]||a.position} · ${where(a)}`});
+  ctx.openModal(e(fullName(a)),body,'',{kind:'careers',wide:true,subtitle:e(`${CAREERS_POSITIONS[a.position]||a.position} · ${where(a)}`)});
  }
  function rate(el){const value=el.dataset.rating===''?null:Number(el.dataset.rating);pendingRating=value;document.querySelectorAll('#careers-review [data-rating]').forEach(b=>{if(b.dataset.rating!=='')b.setAttribute('aria-pressed',String(value!=null&&Number(b.dataset.rating)<=value));});}
  async function save(){
