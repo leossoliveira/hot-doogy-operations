@@ -4,8 +4,8 @@ export const CAREERS_STATUSES=[['new','New','amber'],['reviewing','Reviewing',''
 export const CAREERS_OPEN=new Set(['new','reviewing','interview','offer']);
 export const CAREERS_POSITIONS={team_member:'Crew Member',manager:'Manager'};
 export const CAREERS_HOURS={under_15:'Under 15 h/week','15_25':'15–25 h/week','25_35':'25–35 h/week',full_time:'Full-time (35+ h)',flexible:'Flexible hours'};
-export const CAREERS_EXPERIENCE={first_job:'First job',under_1_year:'Less than 1 year','1_3_years':'1–3 years','3_plus_years':'3+ years'};
-export const CAREERS_ENGLISH={basic:'Basic',conversational:'Conversational',fluent:'Fluent',native:'Native'};
+export const CAREERS_EXPERIENCE={first_job:'First job',some_experience:'Some experience',several_years:'Several years of experience'};
+export const CAREERS_ENGLISH={none:'None',basic:'Basic',intermediate:'Intermediate',fluent:'Fluent'};
 export const CAREERS_DAYS=[['sun','Sun','Sunday'],['mon','Mon','Monday'],['tue','Tue','Tuesday'],['wed','Wed','Wednesday'],['thu','Thu','Thursday'],['fri','Fri','Friday'],['sat','Sat','Saturday']];
 export const statusLabel=s=>CAREERS_STATUSES.find(x=>x[0]===s)?.[1]||s;
 export const statusTone=s=>CAREERS_STATUSES.find(x=>x[0]===s)?.[2]||'';

@@ -11,8 +11,8 @@ const MIME_BY_EXT: Record<string, string> = { pdf: "application/pdf", jpg: "imag
 const ENUMS: Record<string, string[]> = {
  position: ["team_member", "cook", "cashier", "shift_lead", "manager"],
  hours_per_week: ["under_15", "15_25", "25_35", "full_time", "flexible"],
- work_experience: ["first_job", "under_1_year", "1_3_years", "3_plus_years"],
- english_proficiency: ["basic", "conversational", "fluent", "native"],
+ work_experience: ["first_job", "some_experience", "several_years"],
+ english_proficiency: ["none", "basic", "intermediate", "fluent"],
  locale: ["en", "pt"],
 };
 
