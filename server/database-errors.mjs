@@ -51,6 +51,7 @@ const messages=new Map([
  ['Comando inválido.','Invalid request.'],
  ['Comando reutilizado com dados diferentes.','This request was already used with different data. Reload and try again.'],
  ['Página inválida.','Invalid page.'],
+ ['An invoice with this number already exists for this supplier','An invoice with this number already exists for this supplier. Check the invoice number field — it may hold the account or customer number.'],
 ]);
 export function databaseErrorMessage(data){
  if(data?.message?.startsWith('INVOICE_S3_REQUIRED:'))return 'Upload and verify the original invoice document before marking it Approved or Paid.';
