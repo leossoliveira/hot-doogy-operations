@@ -16,7 +16,7 @@ export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).ma
 export async function readTables(auth,token,role){
  const result={};let cursor=0;
  await Promise.all(Array.from({length:6},async()=>{while(cursor<TABLES.length){
-  const table=TABLES[cursor++];if(role==='staff'&&!staffTables.has(table)){result[table]=[];continue;}const select=table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':'*';
+  const table=TABLES[cursor++];if(role==='staff'&&!staffTables.has(table)){result[table]=[];continue;}const select=table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
   result[table]=await readPages(url=>auth.request(url,{token}),url,{concurrency:table==='sales_item_facts'?4:1});

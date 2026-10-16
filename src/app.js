@@ -391,10 +391,11 @@ function showTransfer(id){const x=records('transfers').find(x=>x.id===id);if(!x)
 function invoiceDownloadFooter(invoice){
  const documents=(invoice.documents||[]).filter(d=>d.id);
  const downloads=documents.length?documents.map((doc,index)=>btn(documents.length===1?'Download invoice':`Download invoice ${index+1}`,'invoice-download','download','',`data-id="${e(invoice.id)}" data-document-id="${e(doc.id)}" title="${e(doc.fileName||'Invoice document')}"`)).join(''):btn('Upload Invoice','invoice-upload','upload','',`data-id="${e(invoice.id)}" ${['owner','admin','manager'].includes(session?.role)?'':'disabled'}`);
+ const verify=!invoice.local&&canEditInvoiceStatus(session?.role)&&documents.some(d=>d.storageVerified===false)?btn('Verify original','invoice-upload','shield-check','',`data-id="${e(invoice.id)}" data-verify="true" title="This file was attached before storage verification. Upload the original to verify it."`):'';
  const markPaid=!invoice.local&&canEditInvoiceStatus(session?.role)&&['unpaid','overdue'].includes(financialStatus(invoice))?btn('Mark as paid','invoice-mark-paid','check','invoice-paid-button',`data-id="${e(invoice.id)}"`):'';
  const remove=!invoice.local&&canEditInvoiceStatus(session?.role)?btn('Delete invoice','invoice-delete','trash-2','invoice-delete-button',`data-id="${e(invoice.id)}"`):'';
  const approve=invoice.intakeSource==='llm'&&!invoice.humanApprovedAt&&canEditInvoiceStatus(session?.role)?btn('Edit draft','llm-edit','pencil','',`data-id="${e(invoice.id)}"`)+btn('Review and approve','llm-approve','check','primary',`data-id="${e(invoice.id)}"`):'';
- return remove+approve+markPaid+downloads+btn('Close','close');
+ return remove+approve+markPaid+verify+downloads+btn('Close','close');
 }
 let invoiceDeletePending=null;
 let orderDeletePending=null;
@@ -447,7 +448,8 @@ function invoiceReviewValid(){if($('#invoice-document-kind')?.value!=='invoice'|
 function uploadExistingInvoice(el){
  const invoice=records('invoices').find(x=>x.id===el.dataset.id);if(!invoice)return;
  invoiceFile=null;
- openModal('Upload invoice',`<p>Invoice ${e(invoice.number)} · ${e(invoice.locationName)}</p><label class="upload-zone" for="invoice-file">${icon('cloud-upload')}<strong id="upload-name">Choose a PDF or image</strong><small>Invoice document only · Up to 20 MB</small><input class="hidden" id="invoice-file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" data-change="invoice-file"></label>${invoiceDocumentReview()}<p id="form-error" class="error-text" role="alert"></p>`,btn('Cancel','invoice', '', '',`data-id="${e(invoice.id)}"`)+btn('Upload Invoice','invoice-upload-save','upload','primary',`data-id="${e(invoice.id)}"`));
+ const verify=el.dataset.verify==='true';
+ openModal(verify?'Verify invoice original':'Upload invoice',`<p>Invoice ${e(invoice.number)} · ${e(invoice.locationName)}</p>${verify?'<p>The attached file has no storage verification, so this invoice cannot be approved or marked paid. Upload the original supplier invoice to replace and verify it.</p>':''}<label class="upload-zone" for="invoice-file">${icon('cloud-upload')}<strong id="upload-name">Choose a PDF or image</strong><small>Invoice document only · Up to 20 MB</small><input class="hidden" id="invoice-file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" data-change="invoice-file"></label>${invoiceDocumentReview()}<p id="form-error" class="error-text" role="alert"></p>`,btn('Cancel','invoice', '', '',`data-id="${e(invoice.id)}"`)+btn('Upload Invoice','invoice-upload-save','upload','primary',`data-id="${e(invoice.id)}"`));
 }
 async function saveExistingInvoiceDocument(el){
  if(!invoiceReviewValid())return;
