@@ -9,7 +9,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 const MAX_FILE = 5 * 1024 * 1024;
 const MIME_BY_EXT: Record<string, string> = { pdf: "application/pdf", jpg: "image/jpeg", png: "image/png" };
 const ENUMS: Record<string, string[]> = {
- position: ["team_member", "cook", "cashier", "shift_lead", "manager"],
+ position: ["team_member", "manager"],
  hours_per_week: ["under_15", "15_25", "25_35", "full_time", "flexible"],
  work_experience: ["first_job", "some_experience", "several_years"],
  english_proficiency: ["none", "basic", "intermediate", "fluent"],
