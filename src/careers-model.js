@@ -11,7 +11,7 @@ export const statusLabel=s=>CAREERS_STATUSES.find(x=>x[0]===s)?.[1]||s;
 export const statusTone=s=>CAREERS_STATUSES.find(x=>x[0]===s)?.[2]||'';
 export const fullName=a=>[a.first_name,a.last_name].filter(Boolean).join(' ');
 export function availabilityDays(availability){const on=new Set((availability||[]).map(x=>x.day));return CAREERS_DAYS.filter(([id])=>on.has(id)).map(([,short])=>short);}
-export function availabilityLines(availability){return CAREERS_DAYS.flatMap(([id,,long])=>(availability||[]).filter(x=>x.day===id).map(x=>`${long} ${x.from}–${x.to}`));}
+export function availabilityLines(availability){return CAREERS_DAYS.flatMap(([id,,long])=>(availability||[]).filter(x=>x.day===id).map(x=>`${long} ${x.from}–${x.to}${x.to<x.from?' (next day)':''}`));}
 export function filterApplications(rows,{query='',status='open',position='all',location='all'}={}){
  const q=query.trim().toLowerCase();
  return (rows||[]).filter(a=>(status==='all'||(status==='open'?CAREERS_OPEN.has(a.status):a.status===status))

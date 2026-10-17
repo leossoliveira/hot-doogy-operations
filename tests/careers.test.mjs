@@ -55,3 +55,7 @@ test('Careers page renders stats, filters and candidate rows from the API respon
   assert.match(ui.page(),/Carla Dias/);assert.match(ui.page(),/Either location/);
  }finally{globalThis.fetch=originalFetch;}
 });
+
+test('overnight availability is shown on its starting day, including Saturday into Sunday',()=>{
+ assert.deepEqual(availabilityLines([{day:'sat',from:'23:00',to:'04:00'},{day:'mon',from:'11:00',to:'04:00'}]),['Monday 11:00–04:00 (next day)','Saturday 23:00–04:00 (next day)']);
+});
