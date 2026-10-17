@@ -1,5 +1,6 @@
 import {readFile, readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {loadPlan} from './deploy-database.mjs';
 const base = new URL('../supabase/', import.meta.url);
 const manifest = JSON.parse(await readFile(new URL('migration-history.json', base), 'utf8'));
 const files = (await readdir(new URL('migrations/', base))).filter(name => name.endsWith('.sql'));
@@ -15,3 +16,5 @@ for (const entry of manifest.migrations) {
   if (createHash('sha256').update(content).digest('hex') !== entry.sha256) throw new Error(`Applied migration was modified: ${entry.file}`);
 }
 console.log(`Migration filenames verified: ${files.length}; imported checksums verified: ${manifest.migrations.length}. This is not a database replay test.`);
+const plan = loadPlan();
+console.log(`Deployment baseline verified: ${plan.baseline.local.length} frozen files; ${plan.migrations.length} subsequent migrations.`);

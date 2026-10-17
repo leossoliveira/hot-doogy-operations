@@ -18,6 +18,10 @@ jobs:
       - run: npm run check
       - run: npm run test:ci
       - run: npm run test:backup
+      - name: Testar versionamento do banco em PostgreSQL isolado
+        run: |
+          npm install --prefix "$RUNNER_TEMP/db-version-tests" --save-exact @electric-sql/pglite@0.3.14
+          PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/release-versioning.mjs
   version:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate

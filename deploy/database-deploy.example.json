@@ -1,0 +1,8 @@
+{
+  "project_id": "kfnsfnytnnpwptklmbip",
+  "host": "REPLACE_WITH_SESSION_POOLER_HOST",
+  "port": 5432,
+  "user": "postgres.kfnsfnytnnpwptklmbip",
+  "sslrootcert": "/etc/hot-doogy-backup/supabase-ca.crt",
+  "pgpassfile": "/etc/hot-doogy/database-deploy.pgpass"
+}
