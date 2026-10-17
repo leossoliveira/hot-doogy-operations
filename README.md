@@ -37,7 +37,7 @@ Cada conjunto de alterações concluído e verificado deve ser registrado em um 
 
 A automação valida cada atualização de `main`. Quando as verificações passam, cria uma tag e uma GitHub Release com o formato `v0.1.N`, onde N é o número da execução. Cada versão aponta para o commit exato; números podem ter intervalos quando uma execução falha ou valida uma pull request. Reexecutar a mesma execução não cria uma segunda versão.
 
-Pull requests recebem verificações, mas não criam versões. A VPS verifica novas versões a cada aproximadamente dois minutos, executa os testes e instala a versão aprovada. A troca reinicia o sistema e exige novo login. Alterações locais só são enviadas ao GitHub com autorização do usuário, conforme `AGENTS.md`.
+Pull requests recebem verificações, mas não criam versões. A VPS verifica novas versões a cada aproximadamente dois minutos, executa os testes e instala a versão aprovada. A troca reinicia o sistema; sessões persistidas por MFA são preservadas conforme a configuração da VPS. Alterações locais só são enviadas ao GitHub com autorização do usuário, conforme `AGENTS.md`.
 
 O repositório deve ser privado. Exportações do banco, auditorias, capturas de tela, documentos de operações e segredos locais estão excluídos do controle de versão.
 
@@ -58,3 +58,5 @@ Planning uses count units for demand and last physical counts, then converts net
 History supports All, Awaiting receipt (ordered and partially received), Drafts, and Received, with All/25/50/100 items per page. Usage and Planning each have their own All/25/50/100 selector. Planning preserves quantities across pages and includes them all when reviewing an order. History also filters by supplier and inclusive order dates in New York time (creation date for drafts); either date can be left blank. All three tabs use the standard Previous/Next pagination controls. Suppliers are sorted A–Z.
 
 Database prerequisite: the backward-compatible `itemRows` response in `private.web_preparation_sales` from `database/operations-command.sql`. It was applied as `purchasing_usage_extend_preparation_summary`. Existing Prep response rows and access controls are preserved. The server computes both summaries in the same background job, keeping the initial login request nonblocking.
+
+O versionamento conjunto com o Supabase está preparado e suas tabelas administrativas já foram criadas. A ativação do novo atualizador na VPS está pendente. Consulte [o procedimento e o estado da instalação](deploy/README.md#versionamento-conjunto-do-aplicativo-e-supabase).

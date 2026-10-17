@@ -8,7 +8,7 @@ Estas migrações já foram aplicadas no Supabase. Importá-las para o Git não 
 
 O histórico não inclui necessariamente o esquema inicial ou alterações feitas fora de migrações. A reconstrução das 74 migrações foi validada em Supabase local isolado, usando a base recuperada de `bootstrap/` e dois registros sintéticos. Consulte `tests/README.md` para o alcance e as limitações. Os scripts de `../database/` são referências anteriores; não constituem uma segunda sequência para executar sobre estas migrações.
 
-Este diretório não é backup dos dados, das credenciais ou dos arquivos do Storage. Não foi configurada publicação automática do banco. A instância local temporária usada na validação não foi vinculada à produção.
+Este diretório não é backup dos dados, das credenciais ou dos arquivos do Storage. A integração posterior está descrita na seção Versionamento conjunto abaixo. A instância local temporária usada na validação não foi vinculada à produção.
 
 ## Novas alterações
 
@@ -26,3 +26,18 @@ A CLI não estava instalada no computador durante a importação histórica. Os 
 The isolated replay passed: recovered initial schema plus all 74 immutable migrations. Catalog comparison matched 85 tables, 816 columns, 210 public policies and 113 function identities. Synthetic tests passed for application table reads, manager store/tenant isolation, admin MFA enforcement and anonymous denial.
 
 See [the reproducible procedure and scope](tests/README.md) and [the report](tests/replay-report-2026-10-07.json). `bootstrap/` is a recovered test prerequisite, not an additional production migration. No business data was exported; no production write occurred. `npm run check` continues to verify the original migration checksums.
+
+
+## Versionamento conjunto — 16 de outubro de 2026
+
+A migração `20261017030012_application_release_versioning` foi criada pela CLI e aplicada no Supabase, com o histórico e o SQL exato registrados na mesma transação. Cria apenas metadados administrativos no esquema `deployment`; não altera dados operacionais. RLS e privilégios foram verificados. Nenhum aplicativo foi marcado como ativo sem conferir sua instalação.
+
+O publicador preparado aplica novas migrações antes de ativar o código e registra a versão após a checagem de disponibilidade. A ativação na VPS está pendente de acesso SSH e publicação autorizada do código. Consulte [instalação, credenciais e limites](../deploy/README.md#versionamento-conjunto-do-aplicativo-e-supabase). A publicação futura de uma release com migrações autoriza a execução das migrações revisadas daquela release; enviar uma mudança que dependa de banco deve deixar esse efeito claro no resumo para autorização. Não executar `supabase db push` sobre o histórico legado divergente.
+
+`deployment-baseline.json` preserva separadamente o estado histórico local e remoto, sem reparar ou repetir migrações antigas. O publicador recusa alterações desse estado e migrações desconhecidas. A nova migração foi validada em PGlite isolado com usuários sintéticos, sem credenciais de produção. O teste cobre bloqueio de histórico divergente, rollback transacional do lote, repetição segura, alteração de conteúdo, identidade da versão, ativação após preparo e retorno ao aplicativo anterior preservando o esquema.
+
+Para reproduzir, instalar `@electric-sql/pglite@0.3.14` em uma pasta temporária e executar `supabase/tests/release-versioning.mjs` com `PGLITE_MODULE_PATH` apontando para `dist/index.js`. O CI executa esse teste antes de criar a release.
+
+Reversão administrativa: restaurar o atualizador anterior e o aplicativo anterior; preservar as tabelas administrativas e o histórico para auditoria. Não remover a migração aplicada nem desfazer dados do negócio. A ausência de políticas RLS neste esquema é intencional: nenhum usuário da aplicação pode ler ou gravar os registros.
+
+Verificação remota adicional: o preparo gerado pelo publicador passou contra o histórico real em transação encerrada com ROLLBACK. Nenhuma release fictícia, checksum de teste ou versão ativa ficou gravada.

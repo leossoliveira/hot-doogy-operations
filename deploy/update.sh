@@ -19,6 +19,14 @@ sha=$(git --git-dir="$repo" rev-parse "$version^{commit}")
 git --git-dir="$repo" merge-base --is-ancestor "$sha" refs/remotes/origin/main
 target="$base/releases/$sha"
 previous=$(readlink -f "$base/current" || true)
+previous_version=''
+previous_sha=''
+if [[ -n "$previous" ]]; then
+  read -r previous_version previous_sha < "$base/deployed-version"
+  [[ "$previous_version" =~ ^v0\.1\.[0-9]+$ && "$previous_sha" =~ ^[0-9a-f]{40}$ && "$previous" == "$base/releases/$previous_sha" ]] || {
+    echo 'Previous release identity is inconsistent; refusing deployment.' >&2; exit 1;
+  }
+fi
 if [[ "$previous" == "$target" ]]; then
   systemctl is-active --quiet hot-doogy
   echo "Already running $version ($sha)"
@@ -35,6 +43,9 @@ runuser -u hotdoogy -- env -i PATH="$PATH" HOME=/nonexistent \
   /bin/sh -c 'cd "$1" && npm run check && npm run test:ci' sh "$stage"
 chown -R root:root "$stage"
 chmod -R a-w "$stage"
+# The database and migration history commit together before switching application code.
+# No DB credentials are available to the application or the unprivileged test process.
+/usr/bin/node "$stage/scripts/deploy-database.mjs" prepare "$version" "$sha"
 if [[ ! -d "$target" ]]; then mv "$stage" "$target"; fi
 ln -sfn "$target" "$base/current.next"
 mv -Tf "$base/current.next" "$base/current"
@@ -49,7 +60,8 @@ healthy() {
   done
   return 1
 }
-if systemctl restart hot-doogy && healthy; then
+if systemctl restart hot-doogy && healthy && \
+  /usr/bin/node "$target/scripts/deploy-database.mjs" activate "$version" "$sha"; then
   printf '%s %s\n' "$version" "$sha" > "$base/deployed-version"
   echo "Deployed $version ($sha)"
 else
@@ -57,10 +69,15 @@ else
   if [[ -n "$previous" && -d "$previous" ]]; then
     ln -sfn "$previous" "$base/current.rollback"
     mv -Tf "$base/current.rollback" "$base/current"
-    systemctl restart hot-doogy
+    if systemctl restart hot-doogy && healthy; then
+      /usr/bin/node "$target/scripts/deploy-database.mjs" rollback "$version" "$sha" "$previous_version" "$previous_sha"
+    else
+      /usr/bin/node "$target/scripts/deploy-database.mjs" failed "$version" "$sha"
+    fi
   else
     systemctl stop hot-doogy
     rm -f "$base/current"
+    /usr/bin/node "$target/scripts/deploy-database.mjs" failed "$version" "$sha"
   fi
   exit 1
 fi

@@ -27,7 +27,7 @@ Para reconstruir o HTTPS em outra VPS:
 
 A cada aproximadamente dois minutos, `hot-doogy-update.timer` busca tags `v0.1.N` do repositório privado. Essas tags são criadas pelo GitHub após os testes de `main`. A VPS usa uma chave de implantação com leitura apenas deste repositório; não pode enviar alterações ao GitHub.
 
-O atualizador escolhe a versão numericamente mais recente que pertença ao histórico de `main`, executa novamente a verificação de sintaxe e os testes sem privilégios de root, troca o diretório ativo e reinicia o serviço. Se o teste de disponibilidade falhar, restaura o diretório anterior. As versões anteriores ficam em `/opt/hot-doogy/releases`.
+O atualizador versionado escolhe a versão numericamente mais recente que pertença ao histórico de `main` e executa novamente a verificação de sintaxe e os testes sem privilégios de root. Com a integração de banco instalada e configurada conforme a seção abaixo, confere o histórico remoto e aplica somente migrações posteriores à referência inicial, em transação única, antes de trocar o diretório ativo. Depois reinicia o serviço, verifica a disponibilidade e registra a versão ativa no Supabase. Se falhar, restaura o aplicativo anterior e registra o resultado; não desfaz o esquema do banco. As versões anteriores ficam em `/opt/hot-doogy/releases`.
 
 Alterações locais continuam exigindo autorização antes do envio ao GitHub. Uma vez enviada e aprovada nos testes, a versão é instalada automaticamente na VPS. Com `HOT_DOOGY_SESSION_DIR` configurado, sessões verificadas por MFA são preservadas de forma criptografada fora das releases e duram 30 dias desde a verificação, sem renovação desse prazo por uso. O banco permanece no Supabase.
 
@@ -96,3 +96,31 @@ Para reverter, restaure a versão anterior e o serviço anterior; as sessões se
 ## Doogy AI / OpenClaw
 
 Install `deploy/hot-doogy-openclaw.service` as `/etc/systemd/system/hot-doogy-openclaw.service` and `deploy/openclaw-bridge.conf` as `/etc/systemd/system/hot-doogy.service.d/openclaw-bridge.conf`, then reload systemd and restart `hot-doogy` after activating a release containing `server/doogy-bridge.mjs`. This uses the existing OpenClaw installation at `/usr/bin/openclaw` and its root-owned state in `/root/.openclaw`. It does not create a public listener or copy gateway/SSH credentials into the application. The Unix socket is restricted to root and the application group. See [integration details](../docs/integrations/doogy-ai.md).
+
+
+## Versionamento conjunto do aplicativo e Supabase
+
+Implementação preparada em 16 de outubro de 2026 (horário de Nova York). A migração `20261017030012_application_release_versioning` foi aplicada e verificada no Supabase. A instalação do novo atualizador na VPS ainda está pendente: a conexão SSH de manutenção foi recusada. O atualizador instalado anteriormente continua operando conforme sua versão. Nenhuma versão ativa foi presumida ou inserida no banco.
+
+O esquema administrativo `deployment`, fora da Data API, contém `current_release`, `release_events` e `migration_checksums`. Registra versão, commit exato, versão do esquema e horários. As tabelas têm RLS sem políticas e sem privilégios para anon, authenticated e service_role: o acesso é exclusivamente administrativo. O aviso informativo do Advisor sobre ausência de políticas é intencional ([explicação](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)).
+
+`supabase/deployment-baseline.json` congela separadamente os arquivos locais históricos por SHA-256 e os registros remotos por versão, nome e fingerprint dos comandos. Há divergências históricas de identificação; a referência preserva o estado observado, não afirma equivalência entre SQL local e remoto. Arquivos históricos não são reaplicados nem renomeados. Histórico desconhecido, alterado, ausente ou migração nova com data anterior à referência bloqueia a publicação. Qualquer reconciliação futura precisa de revisão explícita; não executar repair/reset/replay automático. Migrações posteriores têm comparação exata do SQL registrado e checksum.
+
+### Instalação administrativa, após publicação autorizada
+
+1. Instalar o cliente PostgreSQL (`/usr/bin/psql`) na VPS. Confirmar o host real do pooler em modo de sessão (porta 5432) no painel Supabase; não presumir que o exemplo corresponde ao projeto.
+2. Preparar `/etc/hot-doogy/database-deploy.json` a partir de `database-deploy.example.json`, com proprietário root e modo 0600. Preparar `/etc/hot-doogy/database-deploy.pgpass`, também root/0600, com credencial administrativa autorizada para migrações. Não reutilizar a credencial de backup se ela for somente leitura. O certificado CA deve existir no caminho configurado; a conexão exige TLS verify-full. Esses arquivos nunca entram no Git ou no ambiente do serviço web.
+3. Após autorizar o envio e passar o CI, usar o checkout da nova versão aprovada para instalar `deploy/update.sh` em `/usr/local/sbin/hot-doogy-update`. O `deploy/install.sh` também instala os serviços e exige os arquivos de conexão. Não instalar o atualizador antes de a nova release estar disponível: versões anteriores não contêm `scripts/deploy-database.mjs`.
+4. Executar `systemctl start hot-doogy-update` e verificar o journal, `/opt/hot-doogy/deployed-version`, `deployment.current_release` e a disponibilidade pública. Não marcar uma versão como ativa manualmente.
+
+A migração e o registro de histórico são confirmados na mesma transação, protegida por lock administrativo. Falha de migração mantém o aplicativo anterior. A marcação ativa só ocorre após o teste de disponibilidade. Se o registro de ativação falhar, o aplicativo também volta à versão anterior. Se a recuperação falhar, o registro ativo é removido; uma falha de conexão durante a recuperação exige conferir banco e VPS antes de confiar no registro. `prepared` indica preparação, não instalação concluída. Falhas anteriores ao commit da preparação aparecem apenas no journal, pois a transação inteira é desfeita.
+
+Novas migrações precisam ser compatíveis com o aplicativo anterior: alterações destrutivas ou remoção de colunas exigem rollout separado e revisão. A reversão do código preserva o esquema expandido e os dados. Esse controle de versão não é backup nem restauração de dados e não versiona automaticamente arquivos do Storage, credenciais, Auth ou Edge Functions.
+
+Consulta administrativa:
+
+```sql
+select * from deployment.current_release;
+select * from deployment.release_events order by id desc limit 20;
+select * from deployment.migration_checksums order by version desc;
+```

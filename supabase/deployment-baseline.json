@@ -1,0 +1,1156 @@
+{
+  "project_id": "kfnsfnytnnpwptklmbip",
+  "captured_at": "2026-10-17T03:00:00Z",
+  "remote": [
+    {
+      "version": "20260912174625",
+      "name": "006_012_inventory_suppliers",
+      "statements_md5": "dd1ab3e5dc02332253f7c2e0ed861638"
+    },
+    {
+      "version": "20260912174651",
+      "name": "013_018_purchasing_receiving_prices",
+      "statements_md5": "76d85ea5a5972ca95511192a675bb532"
+    },
+    {
+      "version": "20260912174738",
+      "name": "019_026_recipes_menu_modifiers",
+      "statements_md5": "4dda4bec86c3137ca8d611f7e8600165"
+    },
+    {
+      "version": "20260912174803",
+      "name": "027_033_sales_csv_pos",
+      "statements_md5": "2c77d31c6b3da4336275f219eed01b62"
+    },
+    {
+      "version": "20260912175005",
+      "name": "034_040_inventory_ledger_counts",
+      "statements_md5": "65a1e4443023ea3758c6bc6e721518dc"
+    },
+    {
+      "version": "20260912175219",
+      "name": "041_048_prep_forecasts_ai",
+      "statements_md5": "7a1b87b4334107640ff48768af124f15"
+    },
+    {
+      "version": "20260912175246",
+      "name": "049_051_triggers_rls_helpers",
+      "statements_md5": "430753748bd2ff5acc32077f0738afb1"
+    },
+    {
+      "version": "20260912180522",
+      "name": "052_access_integrity_indexes",
+      "statements_md5": "9fb770907d8920a36bf94b3a52bdf54f"
+    },
+    {
+      "version": "20260912213005",
+      "name": "inventory_item_yield_percent",
+      "statements_md5": "a266b313579a2d5aab974745cd3cbfee"
+    },
+    {
+      "version": "20260912215706",
+      "name": "menu_category_parent_relationship",
+      "statements_md5": "d909b1b140f5b99dc2f7e900e973ddf8"
+    },
+    {
+      "version": "20260912221845",
+      "name": "menu_item_location_availability",
+      "statements_md5": "4d8cc652bfdd8aaa400732db8cc1306a"
+    },
+    {
+      "version": "20260912223834",
+      "name": "inventory_item_multiple_storage_areas",
+      "statements_md5": "40506c4d60e1a7e73d4443f242538f3c"
+    },
+    {
+      "version": "20260912224410",
+      "name": "storage_area_inventory_totals",
+      "statements_md5": "3af9efd85769a38eb2f2d6ff011285a1"
+    },
+    {
+      "version": "20260913135321",
+      "name": "recipe_central_production_location",
+      "statements_md5": "a9197f1e4e109a4e5377e17683d69768"
+    },
+    {
+      "version": "20260914000715",
+      "name": "recipe_operational_classification",
+      "statements_md5": "ec2cba4f995bc9aa8ffc07c959ad0361"
+    },
+    {
+      "version": "20260918003544",
+      "name": "invoice_intake_and_approval_workflow",
+      "statements_md5": "43e3df7ec093834b3bfd8dcb2f6fe0f1"
+    },
+    {
+      "version": "20260918003730",
+      "name": "revoke_anon_invoice_approval_execution",
+      "statements_md5": "4c331a3da0b1a1603f8e12e0ed913e3e"
+    },
+    {
+      "version": "20260918003942",
+      "name": "require_invoice_location_separation",
+      "statements_md5": "05cc582f6c4c248a0772db2a0c44dcb4"
+    },
+    {
+      "version": "20260918004413",
+      "name": "allow_invoice_approval_without_item_mapping",
+      "statements_md5": "f2d2c5dfddbad1366da019f334606ea5"
+    },
+    {
+      "version": "20260918004607",
+      "name": "require_invoice_due_date",
+      "statements_md5": "7c8ec373937ce1be5260440b9512f331"
+    },
+    {
+      "version": "20260918004856",
+      "name": "add_optional_supplier_item_photos",
+      "statements_md5": "c58bc36a42fa91919c6c7cbea711c0cb"
+    },
+    {
+      "version": "20260918012223",
+      "name": "default_invoice_due_date_to_invoice_date",
+      "statements_md5": "8aefe139455472d1342834f2ff15f084"
+    },
+    {
+      "version": "20260918112101",
+      "name": "invoice_document_canonical_path_functions",
+      "statements_md5": "dfce8a7e359c79c8b721132432b2e6f0"
+    },
+    {
+      "version": "20260918112121",
+      "name": "enforce_invoice_document_storage_paths",
+      "statements_md5": "be218bb1e37c8154bb5c24f713aedcc6"
+    },
+    {
+      "version": "20260918112150",
+      "name": "allow_approved_invoice_document_linking",
+      "statements_md5": "90c004563ec5bb6e9c3cfd2d2564bead"
+    },
+    {
+      "version": "20260918112235",
+      "name": "fix_invoice_document_extension_validation",
+      "statements_md5": "633687b8737e2e411a0eb76b3a8e2f12"
+    },
+    {
+      "version": "20260918112540",
+      "name": "require_stored_document_for_invoice_approval",
+      "statements_md5": "d8d03b21e2090808363eca27755cf7c3"
+    },
+    {
+      "version": "20260918112722",
+      "name": "retain_invoice_documents_across_statuses",
+      "statements_md5": "966fe1e799d1651a72b93b08cd73e457"
+    },
+    {
+      "version": "20260918113639",
+      "name": "create_order_for_unlinked_invoices",
+      "statements_md5": "789b63cfc9399d70d35283236181a738"
+    },
+    {
+      "version": "20260918204305",
+      "name": "prepare_square_csv_item_sales_importer",
+      "statements_md5": "18efb5cd4e7868f09fdff9025c81d062"
+    },
+    {
+      "version": "20260918204600",
+      "name": "secure_square_csv_mapping_and_storage",
+      "statements_md5": "14080f505810c94e9dcb87e22694914b"
+    },
+    {
+      "version": "20260918205711",
+      "name": "add_modifier_recipe_classification",
+      "statements_md5": "84984c8bc2a9a2b194571aecf474880a"
+    },
+    {
+      "version": "20260918205736",
+      "name": "modifier_recipe_menu_actions_prices",
+      "statements_md5": "0e03453572545fa6f2f6d9d3a5b35006"
+    },
+    {
+      "version": "20260918232608",
+      "name": "square_csv_modifier_recipe_links",
+      "statements_md5": "f8a2ca417f96e0f44431c7828604a907"
+    },
+    {
+      "version": "20260919231911",
+      "name": "recipe_component_location_scope",
+      "statements_md5": "b785e248fee46065ffed2741c6c9fc65"
+    },
+    {
+      "version": "20260920133824",
+      "name": "recipe_packaging_and_pass_through_pricing",
+      "statements_md5": "11d082f5438b44e327d28bc77b996669"
+    },
+    {
+      "version": "20260923114814",
+      "name": "deterministic_sales_and_preparation_planning_v1",
+      "statements_md5": "cb23ba569cdd75a50db6dce5986416f6"
+    },
+    {
+      "version": "20260923115034",
+      "name": "restaurant_operations_authorized_backend_and_query_execution",
+      "statements_md5": "3fb81ea3671f2b7ebdf70a923bc05fa4"
+    },
+    {
+      "version": "20260923115153",
+      "name": "restaurant_planning_limit_history_scan",
+      "statements_md5": "2d36089d036b3237e8b254e775c4514f"
+    },
+    {
+      "version": "20260923115351",
+      "name": "restaurant_import_auth_role_guard",
+      "statements_md5": "3d864abb7254ae661242ea55ae76a74d"
+    },
+    {
+      "version": "20260923115730",
+      "name": "restaurant_calculation_cache_with_catalog_invalidation",
+      "statements_md5": "056faba1ce954b827dbcf8223e194de3"
+    },
+    {
+      "version": "20260923120925",
+      "name": "restaurant_timestamp_avoid_repeated_timezone_catalog_scan",
+      "statements_md5": "b24bd2e49e044708c82038250c7db28f"
+    },
+    {
+      "version": "20260923124125",
+      "name": "internal_requests_interstore_dispatch_receiving",
+      "statements_md5": "f6899a1528e11a60b021b21878a73112"
+    },
+    {
+      "version": "20260923124237",
+      "name": "internal_request_unit_identifier_fix",
+      "statements_md5": "932276642794c409346b29f187b96c89"
+    },
+    {
+      "version": "20260923124316",
+      "name": "internal_requests_preparation_link_and_unit_precision",
+      "statements_md5": "947e7820209bc2a26e4ba016c960425c"
+    },
+    {
+      "version": "20260924145611",
+      "name": "correct_sku_7779093_leaf_conversions_v2",
+      "statements_md5": "7ce962acafd51d0fe93c5ec311b71038"
+    },
+    {
+      "version": "20260924200627",
+      "name": "invoice_s3_completion_gate",
+      "statements_md5": "0840a1ec4843a2160189f6b2ac8b9bc0"
+    },
+    {
+      "version": "20260924201553",
+      "name": "invoice_s3_administrative_connector",
+      "statements_md5": "280229fe8f7b46e72375767245c9854e"
+    },
+    {
+      "version": "20260925123059",
+      "name": "confirm_purchase_receipt_posts_inventory",
+      "statements_md5": "46a834ab543716481019b07add36f4be"
+    },
+    {
+      "version": "20260925123134",
+      "name": "allow_invoice_approval_after_receipt_confirmation",
+      "statements_md5": "250643af8d419e1a2552c150002c67c1"
+    },
+    {
+      "version": "20260927183544",
+      "name": "support_informational_modifier_rules",
+      "statements_md5": "e0bf47d714f244bba8b2018d116661a9"
+    },
+    {
+      "version": "20260927184809",
+      "name": "normalize_no_tomatos_modifier_spelling",
+      "statements_md5": "3c15f9afaabd4c7d0be26534320cc45d"
+    },
+    {
+      "version": "20260927191016",
+      "name": "support_modifier_recipe_by_store_and_order_context",
+      "statements_md5": "952372a995e53aeddd07ca860b7b740a"
+    },
+    {
+      "version": "20260928140113",
+      "name": "allow_informational_remove_modifiers",
+      "statements_md5": "ced5652867fb3dace1bef88641cdad11"
+    },
+    {
+      "version": "20261004115029",
+      "name": "combo_side_drink_selection_validation",
+      "statements_md5": "36b573c028487a18b0c7bd8804f4560f"
+    },
+    {
+      "version": "20261004120243",
+      "name": "fountain_soda_modifier_selection_validation",
+      "statements_md5": "80047a828359b169e22ce04abe269714"
+    },
+    {
+      "version": "20261004123803",
+      "name": "fountain_self_service_inventory_reconciliation",
+      "statements_md5": "daabf877bdd5685a5d53cef9da6a5ae9"
+    },
+    {
+      "version": "20261005113923",
+      "name": "authenticated_web_operations_and_store_counts",
+      "statements_md5": "f79210aa982ff4e1cec945a932618c7d"
+    },
+    {
+      "version": "20261005122747",
+      "name": "cache_sales_read_authorization_per_query",
+      "statements_md5": "78c8f90446a74e94274c6d6dd50f5482"
+    },
+    {
+      "version": "20261005151230",
+      "name": "purchasing_usage_extend_preparation_summary",
+      "statements_md5": "26644b3a222ba26888170b2824525560"
+    },
+    {
+      "version": "20261005174401",
+      "name": "security_revoke_unnecessary_anonymous_access",
+      "statements_md5": "95a4b7ff982d46e92253a4e3b12be11d"
+    },
+    {
+      "version": "20261005182606",
+      "name": "enforce_administrative_mfa",
+      "statements_md5": "0a98a796cf7aa4ecca78abc2a96d1ce2"
+    },
+    {
+      "version": "20261005183909",
+      "name": "optimize_mfa_read_authorization",
+      "statements_md5": "a838eefd96df40e5081cb18e5f5d0556"
+    },
+    {
+      "version": "20261005234057",
+      "name": "invoice_status_edit",
+      "statements_md5": "0c51181d5b9e597fb7e6bc8f47896a48"
+    },
+    {
+      "version": "20261006004911",
+      "name": "invoice_receipt_receivers",
+      "statements_md5": "4719fcd0c4c9b3715929d4dc9958d3fc"
+    },
+    {
+      "version": "20261006104952",
+      "name": "invoice_financial_status_and_receipt_names",
+      "statements_md5": "113ea3bd54b13c3283531abf9e6c9727"
+    },
+    {
+      "version": "20261006115033",
+      "name": "confirmed_invoice_deletion",
+      "statements_md5": "f56c1335886c6c9b401c4fe3fc81da45"
+    },
+    {
+      "version": "20261006121343",
+      "name": "independent_preparation_usage_period",
+      "statements_md5": "602565f313d7f1221ed752b3abffecc8"
+    },
+    {
+      "version": "20261006121754",
+      "name": "preparation_usage_allow_full_comparison_window",
+      "statements_md5": "d497df6935f1467ae8ec8d3b7e92afb6"
+    },
+    {
+      "version": "20261006160147",
+      "name": "preserve_preparation_order_notes",
+      "statements_md5": "f1022cf27c83d37244cf6eef7c5a6d6b"
+    },
+    {
+      "version": "20261006183319",
+      "name": "unify_item_names_and_enable_supplier_catalog_creation",
+      "statements_md5": "35f935180581ab960539eac16e9cdb0a"
+    },
+    {
+      "version": "20261007010134",
+      "name": "recipe_create_atomic_registration",
+      "statements_md5": "d9b47a152708d4fe9eeb3fa7b28398de"
+    },
+    {
+      "version": "20261007011224",
+      "name": "recipe_multiple_production_locations",
+      "statements_md5": "71b1ed79c455f18bb1ad26b43cb1dd23"
+    },
+    {
+      "version": "20261007012945",
+      "name": "revert_unpublished_recipe_registration",
+      "statements_md5": "9869d86b2c7f0bd204f4e230564bfa04"
+    },
+    {
+      "version": "20261008125044",
+      "name": "inventory_count_device_completion",
+      "statements_md5": "1c415debeb96a946a2fc21bf4341c38d"
+    },
+    {
+      "version": "20261008125059",
+      "name": "inventory_count_notes_issues",
+      "statements_md5": "a9982a56b13922ec7b92f87b1f21af98"
+    },
+    {
+      "version": "20261008135853",
+      "name": "staff_access_role",
+      "statements_md5": "b16a2a8e9bf4f28deab2eed36dc4c024"
+    },
+    {
+      "version": "20261008135903",
+      "name": "staff_readonly_permissions",
+      "statements_md5": "a046e7387a73432ca70c1b59ebc89f4c"
+    },
+    {
+      "version": "20261008234321",
+      "name": "recover_today_count_storage_areas",
+      "statements_md5": "2888e5a58f85befc8e276fe2169ccf44"
+    },
+    {
+      "version": "20261009000302",
+      "name": "inventory_count_detail_notes",
+      "statements_md5": "bd8950385cef883734edb324c58610f6"
+    },
+    {
+      "version": "20261009014307",
+      "name": "edit_inventory_count_quantity_unit",
+      "statements_md5": "b7537015870fd2bf4b868535cb3ad440"
+    },
+    {
+      "version": "20261011142253",
+      "name": "invoice_document_classification_gate",
+      "statements_md5": "b40eac3697a93552d4d6c743550acbda"
+    },
+    {
+      "version": "20261011164248",
+      "name": "invoice_payment_date",
+      "statements_md5": "a934d24106af94828a5e795157925eff"
+    },
+    {
+      "version": "20261011164257",
+      "name": "invoice_payment_method",
+      "statements_md5": "cefcf4497ac9e67bf7e8547985393d28"
+    },
+    {
+      "version": "20261011172215",
+      "name": "llm_invoice_drafts_human_approval",
+      "statements_md5": "040ea60d950b0b97ebc496aa646d6046"
+    },
+    {
+      "version": "20261011172226",
+      "name": "editable_invoice_drafts",
+      "statements_md5": "10c9ea08a5a2f813c4b3e627b7229257"
+    },
+    {
+      "version": "20261011192921",
+      "name": "invoice_review_receiving",
+      "statements_md5": "742753416f9b135987bcb8a56909e26b"
+    },
+    {
+      "version": "20261011195918",
+      "name": "invoice_line_item_type",
+      "statements_md5": "3344fb89088977488a2d8ef8b9becc13"
+    },
+    {
+      "version": "20261011195920",
+      "name": "invoice_line_category",
+      "statements_md5": "b66e78704feb6c2396afd113fa3b4de1"
+    },
+    {
+      "version": "20261011211209",
+      "name": "catalog_item_delete",
+      "statements_md5": "b0102af22e560fd62f649080937311de"
+    },
+    {
+      "version": "20261011212739",
+      "name": "record_waste",
+      "statements_md5": "60945f0429d924dcb81418ae600e84bc"
+    },
+    {
+      "version": "20261012005936",
+      "name": "hr_team_workday_payroll",
+      "statements_md5": "458cd0b482974c17779eb22fcad64755"
+    },
+    {
+      "version": "20261012010924",
+      "name": "hr_link_supabase_users",
+      "statements_md5": "7a014379de27b9953d4ddcb77cf4dc2b"
+    },
+    {
+      "version": "20261012013607",
+      "name": "hr_permission_profiles",
+      "statements_md5": "44ef1c9e55c30ff7767bfb14041e3c7f"
+    },
+    {
+      "version": "20261012103729",
+      "name": "my_day_tasks_procedures",
+      "statements_md5": "bced2e2f4a0e7d50b51622a2ccb356d7"
+    },
+    {
+      "version": "20261012104433",
+      "name": "my_day_recurrence",
+      "statements_md5": "e6122669bf46a28b9c7025c09c0346ac"
+    },
+    {
+      "version": "20261012111302",
+      "name": "hr_optional_job_phone_deactivation",
+      "statements_md5": "fc0e48431427eb383d32369450b04014"
+    },
+    {
+      "version": "20261012111312",
+      "name": "workday_import_and_invoice_team_receiver",
+      "statements_md5": "161e7a5cfb88d16bb1df347e3010ac02"
+    },
+    {
+      "version": "20261012112046",
+      "name": "order_receipt_team_receiver",
+      "statements_md5": "a7ba3597f5cd47c4dbccbce4b0da8239"
+    },
+    {
+      "version": "20261012113615",
+      "name": "confirmed_order_deletion",
+      "statements_md5": "2a59a589a31926f24942cc1555fdcbcc"
+    },
+    {
+      "version": "20261012120631",
+      "name": "my_day_calendar_connections",
+      "statements_md5": "5c61409930c679c1ee659ee0efedb8fb"
+    },
+    {
+      "version": "20261012121130",
+      "name": "private_calendar_feed_wrapper",
+      "statements_md5": "24cbb61e5ec2bdcf14f0d6fa30371d7f"
+    },
+    {
+      "version": "20261012121335",
+      "name": "parsed_calendar_feed_wrapper",
+      "statements_md5": "41b7bf959dcc5363966d3bbdc3282a10"
+    },
+    {
+      "version": "20261012123651",
+      "name": "my_day_event_times",
+      "statements_md5": "4273d3f08fb8d6b84c1348afce2fcb56"
+    },
+    {
+      "version": "20261012124812",
+      "name": "my_day_whatsapp_assignments",
+      "statements_md5": "3bd6ddd84e6c7d943630e926db8a4d83"
+    },
+    {
+      "version": "20261012130523",
+      "name": "hr_team_location_assignment",
+      "statements_md5": "073e15efe3d7ec70eb3a0daf4fac5345"
+    },
+    {
+      "version": "20261012161149",
+      "name": "editable_order_details",
+      "statements_md5": "209add953dab685ed8b7a33c80196550"
+    },
+    {
+      "version": "20261012161502",
+      "name": "order_edit_add_remove_products",
+      "statements_md5": "4e8fac5c67ab95acb0e958efb5fa99fc"
+    },
+    {
+      "version": "20261012190801",
+      "name": "recipe_edits_activate_new_version",
+      "statements_md5": "6e56e831b7d314278105f25970c62364"
+    },
+    {
+      "version": "20261012225111",
+      "name": "editable_draft_order_notes",
+      "statements_md5": "19e9dfa9d12590c04825660244294e03"
+    },
+    {
+      "version": "20261014014609",
+      "name": "edit_submitted_internal_requests",
+      "statements_md5": "e5af7d4c0b598635ab06266c92be01c3"
+    },
+    {
+      "version": "20261014021028",
+      "name": "internal_request_line_not_sent_issues",
+      "statements_md5": "d16b1025a00db33e5dbe4f01c8b9d061"
+    },
+    {
+      "version": "20261014021434",
+      "name": "partial_not_sent_quantity",
+      "statements_md5": "523e71256ce1c6987858e494ffa792f8"
+    },
+    {
+      "version": "20261014024637",
+      "name": "internal_request_requester_name",
+      "statements_md5": "ff6c36c32d6793b53ad26156d481de36"
+    },
+    {
+      "version": "20261014113106",
+      "name": "prep_batch_preparer_from_session",
+      "statements_md5": "b2133bc155165e8cf18f6db94b49d619"
+    },
+    {
+      "version": "20261014122848",
+      "name": "recipe_management_fields",
+      "statements_md5": "fa04fcc5b23ffac87d5c21eb73433164"
+    },
+    {
+      "version": "20261014141659",
+      "name": "waste_reporter_standard_name",
+      "statements_md5": "79e100e01a5cda4f9ac3941c33f3116b"
+    },
+    {
+      "version": "20261014141703",
+      "name": "waste_strip_automatic_notes",
+      "statements_md5": "899d852fb91c2ab7258fbee3f1fbc048"
+    },
+    {
+      "version": "20261014141742",
+      "name": "waste_notes_trigger_security_definer",
+      "statements_md5": "0ab706acd3b9373793432744a5c871e2"
+    },
+    {
+      "version": "20261014142206",
+      "name": "waste_reported_team_member",
+      "statements_md5": "c17a57d7fec4bb8923ce6ebd065637cc"
+    },
+    {
+      "version": "20261015230746",
+      "name": "sales_import_posts_stock_depletion",
+      "statements_md5": "a110dbb6d71f508d75351bf09543c076"
+    },
+    {
+      "version": "20261016125418",
+      "name": "invoice_document_storage_verified",
+      "statements_md5": "57c035acd6031767fb807c0d9010bb16"
+    },
+    {
+      "version": "20261016132036",
+      "name": "careers_applications",
+      "statements_md5": "df11e214cb6ed815257d7bf84eeb84ed"
+    },
+    {
+      "version": "20261016134552",
+      "name": "careers_work_experience_options",
+      "statements_md5": "bf780dd72743753b0a70cba4de43165a"
+    },
+    {
+      "version": "20261016134614",
+      "name": "careers_english_options",
+      "statements_md5": "694fef4b75872a29ca1feea10cb7885d"
+    },
+    {
+      "version": "20261016141445",
+      "name": "careers_uploads_require_mfa",
+      "statements_md5": "257007999ee83d925d27cbd28be6d7f1"
+    },
+    {
+      "version": "20261016141708",
+      "name": "careers_position_options",
+      "statements_md5": "23e025406e97887f8972b5eab519ec7c"
+    }
+  ],
+  "local": [
+    {
+      "file": "20260912174625_006_012_inventory_suppliers.sql",
+      "sha256": "f8641ed94daa37f6c3bb17fe7fba30b0a2d51e7a3af4cde4e584f39399c614b5"
+    },
+    {
+      "file": "20260912174651_013_018_purchasing_receiving_prices.sql",
+      "sha256": "3cb840d42d3413ece59ef962668e4a4447dbd65859a9ff32671e73c2ca21e8eb"
+    },
+    {
+      "file": "20260912174738_019_026_recipes_menu_modifiers.sql",
+      "sha256": "4cb82ab6eb7fe0e4709450638a7682ef8cb5f3519601225b672d638fba3670d8"
+    },
+    {
+      "file": "20260912174803_027_033_sales_csv_pos.sql",
+      "sha256": "33b8d24be53b0a54d9e73cd574b2100f6e0646698d17714a5e7c8a9ccf5d77d6"
+    },
+    {
+      "file": "20260912175005_034_040_inventory_ledger_counts.sql",
+      "sha256": "affde0c2bde6fd422054f143515729e0b4bf04f3ec2c5e18c6fe3604bcfd2145"
+    },
+    {
+      "file": "20260912175219_041_048_prep_forecasts_ai.sql",
+      "sha256": "a0d881d45e6cfff6d8eb42ae8ae2eb4841c44ea50490e9041b9a88c7ec95e410"
+    },
+    {
+      "file": "20260912175246_049_051_triggers_rls_helpers.sql",
+      "sha256": "33361b6778d607ee3582fa6c47567dbad8dada83f3c12b72eae9c0cca84bbbcb"
+    },
+    {
+      "file": "20260912180522_052_access_integrity_indexes.sql",
+      "sha256": "d803c10e5046796bd5d71d98edea43cda4c9f28269bc79a5d142848c45242c31"
+    },
+    {
+      "file": "20260912213005_inventory_item_yield_percent.sql",
+      "sha256": "cacc063c8c8decece73c2bc1a60ae50f5f38d50d1761b6ac3ccc132ed3441c91"
+    },
+    {
+      "file": "20260912215706_menu_category_parent_relationship.sql",
+      "sha256": "4bc2547415c012055a75e67959bd0764adf2e73b894f6eddf5bffb5501432b6c"
+    },
+    {
+      "file": "20260912221845_menu_item_location_availability.sql",
+      "sha256": "cc04c8d2cf47364c268d524901648e0788cf55793566f238530381cc680bc658"
+    },
+    {
+      "file": "20260912223834_inventory_item_multiple_storage_areas.sql",
+      "sha256": "1e1884d3077453eff75bdd36ba4bedef6240ba1c20cca82595315ea83515d0e7"
+    },
+    {
+      "file": "20260912224410_storage_area_inventory_totals.sql",
+      "sha256": "3894fc7471cf2d326a02fa0a40cababf5d88efcf3d49de60f682dd88fe5cdadf"
+    },
+    {
+      "file": "20260913135321_recipe_central_production_location.sql",
+      "sha256": "b80db914c2cf4d377ebb0c4c316cf9a763f1ea9ffb8cd4ac7521ac7e4b40ed22"
+    },
+    {
+      "file": "20260914000715_recipe_operational_classification.sql",
+      "sha256": "f023701a9b420690da3a524dbfa2f664aeea3250c7361a1235575d3e6becdaf5"
+    },
+    {
+      "file": "20260918003544_invoice_intake_and_approval_workflow.sql",
+      "sha256": "9f4d503c305d5285a4a564b4bf49381ee8c52bc417f05a0d8b5931394aa314af"
+    },
+    {
+      "file": "20260918003730_revoke_anon_invoice_approval_execution.sql",
+      "sha256": "5750919723d8678336dbfed1d076048cfe3897c733bd0c2cf3cf4d7b0031c2dd"
+    },
+    {
+      "file": "20260918003942_require_invoice_location_separation.sql",
+      "sha256": "f7cce8331610971bd55ac5581330fdd4c4757d93596d91f3ad8132a4dd49efd2"
+    },
+    {
+      "file": "20260918004413_allow_invoice_approval_without_item_mapping.sql",
+      "sha256": "b14225db11f24051a951e320651e35d20cb5033b0d2b037dc7eec99dff15e31a"
+    },
+    {
+      "file": "20260918004607_require_invoice_due_date.sql",
+      "sha256": "dd1b4c81c3d7dd2255110f70c82c070d70ae74f501f86dbbc33733930bac491f"
+    },
+    {
+      "file": "20260918004856_add_optional_supplier_item_photos.sql",
+      "sha256": "5307ca8227fd3ad29e4c31424345d8307f9dd1560d124c93b076413316eab74b"
+    },
+    {
+      "file": "20260918012223_default_invoice_due_date_to_invoice_date.sql",
+      "sha256": "4bef59996970cc81ed02d17cd39bc6a995310a1c72ee4e4e8a2d67d8157eea79"
+    },
+    {
+      "file": "20260918112101_invoice_document_canonical_path_functions.sql",
+      "sha256": "d808d709db42df5f600f5a6769456b144d1c25697e282b6ba39f8395c4dd168a"
+    },
+    {
+      "file": "20260918112121_enforce_invoice_document_storage_paths.sql",
+      "sha256": "7b6382b1870ee09ed5f56f256a65850edb5af4c0f54d7f1362ada3a51b4631a3"
+    },
+    {
+      "file": "20260918112150_allow_approved_invoice_document_linking.sql",
+      "sha256": "bf81c3d2e876c7f6f95d458b6ffeb70b637f231debc8178f4e310a574e09abca"
+    },
+    {
+      "file": "20260918112235_fix_invoice_document_extension_validation.sql",
+      "sha256": "a3a54fa47310cd8820a079ce9df67714457623e1c80a6477242f6b0c8063d1c7"
+    },
+    {
+      "file": "20260918112540_require_stored_document_for_invoice_approval.sql",
+      "sha256": "c0af58250189a537e760e2f5dd15478ac60065df7bd3812a430ebd278dbacb6e"
+    },
+    {
+      "file": "20260918112722_retain_invoice_documents_across_statuses.sql",
+      "sha256": "c25fff8196b3405e86bfbc390e6a0d41f1a291965fbaea196828cf2b4f2fc39c"
+    },
+    {
+      "file": "20260918113639_create_order_for_unlinked_invoices.sql",
+      "sha256": "352e2b2b864bd9b87a0de7fabab37379e60bb642133d346504cf7adf18eaa107"
+    },
+    {
+      "file": "20260918204305_prepare_square_csv_item_sales_importer.sql",
+      "sha256": "7d6f687987eddf16407ea8e638bd44a29ac9125be3993175179844e86e8e2c72"
+    },
+    {
+      "file": "20260918204600_secure_square_csv_mapping_and_storage.sql",
+      "sha256": "0753ad3a07c5bf0593c25fbb71f5d337517ce4dc839cf9e499907de558330bf2"
+    },
+    {
+      "file": "20260918205711_add_modifier_recipe_classification.sql",
+      "sha256": "5d5dbf8f25ddafa1710bd18c749a737345e3ba6354cb4ba24d807563d94e36b1"
+    },
+    {
+      "file": "20260918205736_modifier_recipe_menu_actions_prices.sql",
+      "sha256": "90decf8cf190201b7ecad0689a256fc1be3d733aead710cb6d02f669d86f6611"
+    },
+    {
+      "file": "20260918232608_square_csv_modifier_recipe_links.sql",
+      "sha256": "53b814f894583bddbb14daf976d8aeba035ff17b89a6eda2e435427d27df1353"
+    },
+    {
+      "file": "20260919231911_recipe_component_location_scope.sql",
+      "sha256": "3a38c1c8b6dac9c554bd25200bf2fee6ac34fa7f21403039a3e0d8d628859766"
+    },
+    {
+      "file": "20260920133824_recipe_packaging_and_pass_through_pricing.sql",
+      "sha256": "9c59c5e3c656f2e1d09bfa50ab5062952fa60b326d19008764dd9f87dcb9320c"
+    },
+    {
+      "file": "20260923114814_deterministic_sales_and_preparation_planning_v1.sql",
+      "sha256": "f568f9188930a3f4b48f4d012acb5f2d8c7f97b273af984541be97c5176bb927"
+    },
+    {
+      "file": "20260923115034_restaurant_operations_authorized_backend_and_query_execution.sql",
+      "sha256": "d7fb9a64f596964213c18a350584bfd715194f68ea2a1a36b65b84ab8c046e91"
+    },
+    {
+      "file": "20260923115153_restaurant_planning_limit_history_scan.sql",
+      "sha256": "b451952a67fbeb9e2c8dda405029e6c9be284d9ffbfd9b2b49ab8b106fb832ed"
+    },
+    {
+      "file": "20260923115351_restaurant_import_auth_role_guard.sql",
+      "sha256": "8cde8261aa0a3f62992705c6b6677ffe6244e5b6c40a6baf9ae3eb0c61f2965b"
+    },
+    {
+      "file": "20260923115730_restaurant_calculation_cache_with_catalog_invalidation.sql",
+      "sha256": "8aa3978008c8492f4d36455014732476502f546b21b37d56ec684cd4764f4561"
+    },
+    {
+      "file": "20260923120925_restaurant_timestamp_avoid_repeated_timezone_catalog_scan.sql",
+      "sha256": "bc58c2798778b54a57895515f4cc7b193717a8e8da4c9724553e8ca34eaf5afd"
+    },
+    {
+      "file": "20260923124125_internal_requests_interstore_dispatch_receiving.sql",
+      "sha256": "f84e62598b53f341e35e4143479be2558dc3d3e3c59a0c8a560b902847b31a9b"
+    },
+    {
+      "file": "20260923124237_internal_request_unit_identifier_fix.sql",
+      "sha256": "5782b9f3f97d7f6dcbe73293857de6374e4221820a64fdf04b4c09ac27f26e8d"
+    },
+    {
+      "file": "20260923124316_internal_requests_preparation_link_and_unit_precision.sql",
+      "sha256": "25f91f607df42afa3936f402b63fd03a90def96537cfbf17a31868ef0eda7845"
+    },
+    {
+      "file": "20260924145611_correct_sku_7779093_leaf_conversions_v2.sql",
+      "sha256": "880c71205703991773e4cb2935294eb586150d5d6c1c67eb9a164918bddf6165"
+    },
+    {
+      "file": "20260924200627_invoice_s3_completion_gate.sql",
+      "sha256": "4c8c734d6fb4696a1dac9d7b60bc31a990e244776579086e2e2b7932ebbf709f"
+    },
+    {
+      "file": "20260924201553_invoice_s3_administrative_connector.sql",
+      "sha256": "cc2d2d91e18be10d1775cc3032d9d9f8e78d9ce459039095fb5a6418c25e0e5a"
+    },
+    {
+      "file": "20260925123059_confirm_purchase_receipt_posts_inventory.sql",
+      "sha256": "416468049c3ec4d71afd56397d248afb15c23bcc2aac955bb4c864774dd3a367"
+    },
+    {
+      "file": "20260925123134_allow_invoice_approval_after_receipt_confirmation.sql",
+      "sha256": "0eef787dc924a0cbc8c68df0c092eded69b1ab67a697458a9ffa65ad8ac6451f"
+    },
+    {
+      "file": "20260927183544_support_informational_modifier_rules.sql",
+      "sha256": "65ab4751c7bac96f66c9dba31cbd70b2600b8b014a0c8b3115b914a2c5abf89e"
+    },
+    {
+      "file": "20260927184809_normalize_no_tomatos_modifier_spelling.sql",
+      "sha256": "5406aa90f594252c79ba583fb4f264756a91635a3d526f65ffd9d88e0f605aa8"
+    },
+    {
+      "file": "20260927191016_support_modifier_recipe_by_store_and_order_context.sql",
+      "sha256": "af5717c751d29b506993465773e44367d17295d436700007629e1399b157339c"
+    },
+    {
+      "file": "20260928140113_allow_informational_remove_modifiers.sql",
+      "sha256": "21034a59c9a72f49d7e8324b34439678216d78104fc69087b421288bd474fc48"
+    },
+    {
+      "file": "20261004115029_combo_side_drink_selection_validation.sql",
+      "sha256": "8b67c6ddda06cb05aa60c6132fd57fbc95929ede6abc664d774f50a3935a74b9"
+    },
+    {
+      "file": "20261004120243_fountain_soda_modifier_selection_validation.sql",
+      "sha256": "58f76c97a7dcf3d2e94e91aae9491853621086eaec549b14b5b011a7cb94a635"
+    },
+    {
+      "file": "20261004123803_fountain_self_service_inventory_reconciliation.sql",
+      "sha256": "352f6e81c2248af140f4b3f2912757365c182be99dfcf788aa62b46fb7d057a5"
+    },
+    {
+      "file": "20261005113923_authenticated_web_operations_and_store_counts.sql",
+      "sha256": "84113ca1839594da739dd4c9e947bade4d5fcefa380f1a6281881d2e77b97ccb"
+    },
+    {
+      "file": "20261005122747_cache_sales_read_authorization_per_query.sql",
+      "sha256": "58673efb713026f1fca120a5d38c1a2ff31c5f707dd21a6423cc268edcae52a5"
+    },
+    {
+      "file": "20261005151230_purchasing_usage_extend_preparation_summary.sql",
+      "sha256": "220504ef432471c831e486d536cc1de83de7679390554a3fca86158501ac369e"
+    },
+    {
+      "file": "20261005174401_security_revoke_unnecessary_anonymous_access.sql",
+      "sha256": "6046920ca7ea8b411f61ac5c1505a5c460c1a4c39ebafc5e94ce3ba9fd1c7640"
+    },
+    {
+      "file": "20261005182606_enforce_administrative_mfa.sql",
+      "sha256": "8d33647eec7d40128e83494606c00a510d51565ecf4f671f12cc55739bf162b9"
+    },
+    {
+      "file": "20261005183909_optimize_mfa_read_authorization.sql",
+      "sha256": "9e30bb288610de654d7ee0cd23c33f60f3d7f9ffd0f3a14cc07e77e19c1b3ac0"
+    },
+    {
+      "file": "20261005234057_invoice_status_edit.sql",
+      "sha256": "6278ac1b74b786bf67af72c9e43f8b98e77cc98c8bde67b7c152c22395ec0461"
+    },
+    {
+      "file": "20261006004911_invoice_receipt_receivers.sql",
+      "sha256": "c517ca6e36c124dbb435a29c9581c04e45022df13ff613144d856a211b113ca1"
+    },
+    {
+      "file": "20261006104952_invoice_financial_status_and_receipt_names.sql",
+      "sha256": "4671338f0d7473d0dc6c874a184a78aee1b8c5646b84465e7ff7e706562d68e3"
+    },
+    {
+      "file": "20261006115033_confirmed_invoice_deletion.sql",
+      "sha256": "8574b840638882e16c3d48b1ad181144b319774341a76cd13d69230e0d4e5539"
+    },
+    {
+      "file": "20261006121343_independent_preparation_usage_period.sql",
+      "sha256": "81d2a1ed538093498a13d3305131fa4b0d4512aef7525cbf00a8e66285aa1dc6"
+    },
+    {
+      "file": "20261006121754_preparation_usage_allow_full_comparison_window.sql",
+      "sha256": "9de25cdbb39d8c61cdfbee918b795f0098dd164deaa76315ee5329524a6c49eb"
+    },
+    {
+      "file": "20261006160147_preserve_preparation_order_notes.sql",
+      "sha256": "658737cee120fc4ed3b3f5afb6f8c3a8a78e3709611606cebfb43a72534758c6"
+    },
+    {
+      "file": "20261006183319_unify_item_names_and_enable_supplier_catalog_creation.sql",
+      "sha256": "437b4aa685b821fc8d473e8d09c88ecc9c1afc1bf59a12b45ec607d76f76cf6c"
+    },
+    {
+      "file": "20261007010134_recipe_create_atomic_registration.sql",
+      "sha256": "fe969d73ffed4ef597f74c6efcde31c33216a08aecbeb7fefd3d2ac56b5ae72b"
+    },
+    {
+      "file": "20261007011224_recipe_multiple_production_locations.sql",
+      "sha256": "4654d1f536e8869005f094df315ab4555c469cdf691cabe5bd6510ef51a1174c"
+    },
+    {
+      "file": "20261007012945_revert_unpublished_recipe_registration.sql",
+      "sha256": "2c0d3f971491141754d3ad091d5810a4ccd6f3a5370b915ae55aba74ce04ca46"
+    },
+    {
+      "file": "20261008125044_inventory_count_device_completion.sql",
+      "sha256": "1855b9e128f98a21c77abb9e374102469b3013c41805d44cdba76cb116768a90"
+    },
+    {
+      "file": "20261008125059_inventory_count_notes_issues.sql",
+      "sha256": "66c9d35bfa26f68ce5b395e0f0b9b22237cb89caa83a30eb914f6ca984cfc25d"
+    },
+    {
+      "file": "20261008135853_staff_access_role.sql",
+      "sha256": "56db98ba27890c501300a380d8a19da5ff91d339aef1ab1b7a59c19cdafba00d"
+    },
+    {
+      "file": "20261008135903_staff_readonly_permissions.sql",
+      "sha256": "9b75a0b965aafb06040e8e42fea7dfefb4c5bd1ea303d6d3f9c7ffe6a536e9ea"
+    },
+    {
+      "file": "20261008234321_recover_today_count_storage_areas.sql",
+      "sha256": "ad22bf536ba02e6f964ef1cf9658dae923b65cb24193c8c771b893d31d806aca"
+    },
+    {
+      "file": "20261009000302_inventory_count_detail_notes.sql",
+      "sha256": "105337ec1120dfb4d770a0bad5c30934eeb5fe9ae493415fa633a36853cf080a"
+    },
+    {
+      "file": "20261009014307_edit_inventory_count_quantity_unit.sql",
+      "sha256": "bdecc69c3e87feae23c6e14dbfc4a89f4d2c13138c73b76fb5d6906d1082bf9e"
+    },
+    {
+      "file": "20261011142253_invoice_document_classification_gate.sql",
+      "sha256": "542fcb5e0a57c940ae16cb967cd3e8e05405059950265af3a48cbdf9db6e060f"
+    },
+    {
+      "file": "20261011162953_invoice_payment_date.sql",
+      "sha256": "07d4595237a59566565a2cc9eab4b47322d84826308d9e54a2fb1f1ac415cc8e"
+    },
+    {
+      "file": "20261011163752_invoice_payment_method.sql",
+      "sha256": "d8879d8e740821e52501857a8d2ae12f8a06867abcdc95f60f95c8d44098866d"
+    },
+    {
+      "file": "20261011172215_llm_invoice_drafts_human_approval.sql",
+      "sha256": "59589e00053210eef3c75955f09ef53adeb168dad2239647f13f0d3fc8f73483"
+    },
+    {
+      "file": "20261011172226_editable_invoice_drafts.sql",
+      "sha256": "52622335fb0330c220c8500023b082299f23b3adc73ca3ee2d60ce5694400e9b"
+    },
+    {
+      "file": "20261011192921_invoice_review_receiving.sql",
+      "sha256": "8a18188a72a2de54039d1330f1d016120e39a35535fd76a65c085d39a782e892"
+    },
+    {
+      "file": "20261011195918_invoice_line_item_type.sql",
+      "sha256": "83ff7c6bb4d5c108ce02ad250e387c650e953a40d42eec9bdb90ccd0847529f4"
+    },
+    {
+      "file": "20261011195920_invoice_line_category.sql",
+      "sha256": "435d14cd24aabba9ce34a7a3a2c48072172f49cea4bd1ff9bc30bccceab378fe"
+    },
+    {
+      "file": "20261011210808_catalog_item_delete.sql",
+      "sha256": "8876a3205893d5530ae2742734b605b1755e29b1262d3b44a44a5c808392f614"
+    },
+    {
+      "file": "20261011212134_record_waste.sql",
+      "sha256": "349fa8a17f8d0f577cf675b7337b332b88b48aac9b8bcb5ded6b7b7563f1ec09"
+    },
+    {
+      "file": "20261012005936_hr_team_workday_payroll.sql",
+      "sha256": "1d41c3e694254d9f376a522767915492f6b46b34317e3bd4b0a47407e99c7b66"
+    },
+    {
+      "file": "20261012010924_hr_link_supabase_users.sql",
+      "sha256": "a9291aad15f6c0ced02f2f6bf5c49d5abd454f5a0b663598b14deb9e5a58bb34"
+    },
+    {
+      "file": "20261012013607_hr_permission_profiles.sql",
+      "sha256": "04c1880ff7e890bab3de97a6f1bc65e1c93cca69b3add35007c145a816285e54"
+    },
+    {
+      "file": "20261012103729_my_day_tasks_procedures.sql",
+      "sha256": "dafc8c07a48653571cd7673f780cda3871b1c17b31403bd0b8215a1a4e044794"
+    },
+    {
+      "file": "20261012104433_my_day_recurrence.sql",
+      "sha256": "20ca25894ea8cbb013651e0f7c9ebf72e34353017c2c77cb7eaf7f4985e84ec1"
+    },
+    {
+      "file": "20261012111302_hr_optional_job_phone_deactivation.sql",
+      "sha256": "9c3e5e17ef8bf2f122903b80768dccff60205a3f793732798f1cd2a7959f9e29"
+    },
+    {
+      "file": "20261012111312_workday_import_and_invoice_team_receiver.sql",
+      "sha256": "c1f4d1d2e590e9bdef6ff7cd77f666263d9853fb763d3fd13ecd9532fcbb4209"
+    },
+    {
+      "file": "20261012112046_order_receipt_team_receiver.sql",
+      "sha256": "b4642a69ea89d8e1e6b2618717cc565834ea0ebe26e125c8eb0c3a260769ed99"
+    },
+    {
+      "file": "20261012113615_confirmed_order_deletion.sql",
+      "sha256": "ce51dee0f646ee23fc3ec82b40e0187f9330b87347d5b52cbd84b7a6921f5906"
+    },
+    {
+      "file": "20261012120631_my_day_calendar_connections.sql",
+      "sha256": "0b5120b8337f0a5d0bdddc07e75b0e8c246a65da3580d516f98d7cc4d5c1837c"
+    },
+    {
+      "file": "20261012121130_private_calendar_feed_wrapper.sql",
+      "sha256": "4f6949acb2d732d1512790015512dfcccfdf2e61d51d5ab49081814d29fb840f"
+    },
+    {
+      "file": "20261012121335_parsed_calendar_feed_wrapper.sql",
+      "sha256": "e3e53b3b68dcf310ffb293e32087c5408068bbb6127558f8d0cd9c2bfb146e9f"
+    },
+    {
+      "file": "20261012123651_my_day_event_times.sql",
+      "sha256": "17c680d4ba96bd8270d9220c641bebfa29b53f9e21a54b9655e47c6115aeb815"
+    },
+    {
+      "file": "20261012124812_my_day_whatsapp_assignments.sql",
+      "sha256": "edd46d2c69ed6554f8b20501eceb310a9496e2b75e5ea71220ed0149a17a7c28"
+    },
+    {
+      "file": "20261012130523_hr_team_location_assignment.sql",
+      "sha256": "d6a85303f7f3011b47d29e4222dcb6ff5999aeb73b0334468e5369e4b8e7a2cf"
+    },
+    {
+      "file": "20261012161149_editable_order_details.sql",
+      "sha256": "5a309b0aec898f9261ae6e716347c6d2db8747b98f2f9387f7bd1d7a36bd78a6"
+    },
+    {
+      "file": "20261012161502_order_edit_add_remove_products.sql",
+      "sha256": "15ee84067ac21eedba4cbc47d004bf5c998afdedc066b8379b61a1a5f0d4f48b"
+    },
+    {
+      "file": "20261012190801_recipe_edits_activate_new_version.sql",
+      "sha256": "44215633bac572ffc6fc324ecd8b978b579ad2ab741f4e1f0827df00135fba72"
+    },
+    {
+      "file": "20261012225111_editable_draft_order_notes.sql",
+      "sha256": "aae74d7166167843c1e4a3e0093c316f9aadf281b26158e2153f449c398f2bd1"
+    },
+    {
+      "file": "20261014014609_edit_submitted_internal_requests.sql",
+      "sha256": "6f83d25dcee345361854e797f0f2f634c05653d9d1bddbcd95bd33f2506b20e7"
+    },
+    {
+      "file": "20261014021028_internal_request_line_not_sent_issues.sql",
+      "sha256": "1f21c5e3d31be8209acae2a2a95f952cb4f785486cadc8309ec64b6336a23ef7"
+    },
+    {
+      "file": "20261014021434_partial_not_sent_quantity.sql",
+      "sha256": "9abe116d449c4fc881f7fac5300db8bc82c1b5c4e664bd93a1b48879abef1c55"
+    },
+    {
+      "file": "20261014024637_internal_request_requester_name.sql",
+      "sha256": "4fa454ed2606bc1c574dc3012f4297aefe59496d2137ab0500d5f440a9fa9bf5"
+    },
+    {
+      "file": "20261014113106_prep_batch_preparer_from_session.sql",
+      "sha256": "b33fbc1be6254d59322e0b622d144a6a339345c9e7715221e0af3ca112b89522"
+    },
+    {
+      "file": "20261014122848_recipe_management_fields.sql",
+      "sha256": "3d371ffe5cbaec5e1c295442dba695bc7cc6fc19b28eb28b815e15296f311946"
+    },
+    {
+      "file": "20261014123927_recipe_rename_prep_item_internal_name.sql",
+      "sha256": "290712848b95b5be554400268a10e5445ab080df2d26ce591ce0c40da835664f"
+    },
+    {
+      "file": "20261014141659_waste_reporter_standard_name.sql",
+      "sha256": "d5ce1fcc998353fdc23473930cfa1ed8353da90fffcd0ee82fba0eb5c64e7893"
+    },
+    {
+      "file": "20261014141703_waste_strip_automatic_notes.sql",
+      "sha256": "6c5049f0ee64c24df2a960b294890743885a267f4ff8782d7f4adcdfa3d93b50"
+    },
+    {
+      "file": "20261014141742_waste_notes_trigger_security_definer.sql",
+      "sha256": "107b8ea3fd1a1e8f1ef48ace43c543df92f74913f9ccaf96a03e4eaf9238f401"
+    },
+    {
+      "file": "20261014142206_waste_reported_team_member.sql",
+      "sha256": "e57990419fcf679f5fce1c43cd47b07fc2eef2a7c43ca9c3c1766f039eb587d6"
+    },
+    {
+      "file": "20261015230746_sales_import_posts_stock_depletion.sql",
+      "sha256": "a6c031cc5e89fd5dc5700cf772c56aeaa935a663c669a60610ea9225c36cc0b6"
+    },
+    {
+      "file": "20261016125418_invoice_document_storage_verified.sql",
+      "sha256": "9d3d483615f79a34f5f07f30898f4708a7657d261986ac60ebfccd782cfb9728"
+    },
+    {
+      "file": "20261016132000_careers_applications.sql",
+      "sha256": "97326fa99c6b02e08f51d73771370764f093a1e9aebdd72daf6d79097ae4a61a"
+    },
+    {
+      "file": "20261016141500_careers_work_experience_options.sql",
+      "sha256": "60e89b03c42ebf134b5c26595df473995e0de37a9193f2ed6ae65c16825358dc"
+    },
+    {
+      "file": "20261016142000_careers_english_options.sql",
+      "sha256": "5920b86317105ebeefc7194777c29dbbd27de1a3e12b8ffd0ecfd7457cce4612"
+    },
+    {
+      "file": "20261016143000_careers_uploads_require_mfa.sql",
+      "sha256": "54225e8c4093752b2cfd4de000c6e149496e7e1fea96ee2ff77511c00dc48a3f"
+    },
+    {
+      "file": "20261016144500_careers_position_options.sql",
+      "sha256": "6cdb832d29ca6815f5445753f43caabb4fe423df8393bb64dc4b3ac86cb734e6"
+    }
+  ],
+  "cutoff": "20261016144500"
+}
