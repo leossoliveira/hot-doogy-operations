@@ -100,7 +100,7 @@ Install `deploy/hot-doogy-openclaw.service` as `/etc/systemd/system/hot-doogy-op
 
 ## Versionamento conjunto do aplicativo e Supabase
 
-Implementação preparada em 16 de outubro de 2026 (horário de Nova York). A migração `20261017030012_application_release_versioning` foi aplicada e verificada no Supabase. A instalação do novo atualizador na VPS ainda está pendente: a conexão SSH de manutenção foi recusada. O atualizador instalado anteriormente continua operando conforme sua versão. Nenhuma versão ativa foi presumida ou inserida no banco.
+Implementação preparada em 16 de outubro de 2026 (horário de Nova York). A migração `20261017030012_application_release_versioning` foi aplicada e verificada no Supabase. Ativado na VPS em 16 de outubro de 2026, às 23:12 (Nova York), pela release `v0.1.83`, commit `14a94e1bf34987c462ad55b9c40e8351dcd0bfdd`. O publicador terminou com sucesso, o site respondeu HTTP 200 e `deployment.current_release` confirmou a mesma versão/commit. O timer voltou a ficar ativo. A conexão de manutenção funcionou com a chave existente usando `UseKeychain=yes`; nenhum acesso novo foi criado. A configuração administrativa foi validada com TLS verify-full e está em arquivos root/0600 separados do serviço web.
 
 O esquema administrativo `deployment`, fora da Data API, contém `current_release`, `release_events` e `migration_checksums`. Registra versão, commit exato, versão do esquema e horários. As tabelas têm RLS sem políticas e sem privilégios para anon, authenticated e service_role: o acesso é exclusivamente administrativo. O aviso informativo do Advisor sobre ausência de políticas é intencional ([explicação](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)).
 

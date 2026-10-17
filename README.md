@@ -59,4 +59,4 @@ History supports All, Awaiting receipt (ordered and partially received), Drafts,
 
 Database prerequisite: the backward-compatible `itemRows` response in `private.web_preparation_sales` from `database/operations-command.sql`. It was applied as `purchasing_usage_extend_preparation_summary`. Existing Prep response rows and access controls are preserved. The server computes both summaries in the same background job, keeping the initial login request nonblocking.
 
-O versionamento conjunto com o Supabase está preparado e suas tabelas administrativas já foram criadas. A ativação do novo atualizador na VPS está pendente. Consulte [o procedimento e o estado da instalação](deploy/README.md#versionamento-conjunto-do-aplicativo-e-supabase).
+O versionamento conjunto com o Supabase está ativo desde a release v0.1.83. O publicador aplica novas migrações antes de ativar o aplicativo e registra versão e commit após a verificação de disponibilidade. Consulte [o procedimento e o estado da instalação](deploy/README.md#versionamento-conjunto-do-aplicativo-e-supabase).
