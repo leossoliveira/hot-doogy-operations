@@ -1,35 +1,33 @@
 # Inventory count workflow
 
-New activity → Inventory count opens an initially unselected location and required employee-name fields, the shared searchable supplier multiselect, and location-specific storage-area multiselect. Supplier selection supports All, None and multiple choices. Storage-area selection supports All, None and multiple choices. Filters select items; quantities remain whole-item totals for the chosen location.
+New activity → Inventory count opens the location, supplier and storage-area filters, plus **Include Prep Recipes**. **Counted by** displays the authenticated account's registered name in the same non-editable style as Prepared by. The server resolves the name; draft submissions cannot choose another employee. Filters select whole-item totals for the chosen location, as before.
 
-Complete count captures the device instant, local calendar date and UTC offset. Employee Name is required and limited to 80 characters; it is a label, not the authenticated actor. Authorization and created_by remain tied to the signed-in account.
+## Persistent drafts and section stock — October 19, 2026
 
-## Deployment order
+**Start count** creates an `inventory_count_sessions` draft before opening the entry screen, including the fixed list of items and their sections. Quantities, units, item issues and count notes autosave to the database. The entry screen shows saving, saved and failed states, with a retry button. **Save & close** waits for a save and opens Inventory → History. Closing the browser after a successful autosave preserves the draft there. The creator can select **Resume** after reopening the application, including on another device. Other authorized users can see that the count is in progress; only its creator can resume it.
 
-Apply `20261008111849_inventory_count_device_completion.sql` through the authorized migration workflow before deploying this frontend and server. It adds nullable fields for the precise completion instant, device offset and employee name, preserves legacy day/period records, and patches only the count insert in the existing private command. No migration was applied to the remote project during local development.
+A per-account/per-count browser recovery copy also preserves edits awaiting acknowledgment. It is restored only when its version matches the saved draft. Optimistic versions reject changes from stale windows; requests are serialized and retries use the same request UUID. A failed save leaves the editor open and warns before browser closure. Reconnection retries pending edits.
 
-## Validation
+**Mark section complete** publishes all items in that section immediately, including items temporarily hidden by search, then refreshes Inventory. Blank quantities are recorded as **zero**. Items outside the original filters and items in other unfinished sections are untouched. Editing a submitted section clears its completion state; completing it again replaces that count's observations for those items. Other counts are preserved. Notes and issues remain with the draft.
 
-The focused test uses PostgreSQL in memory through PGlite 0.3.14. It executes the original private command and the new migration with synthetic tables and authorization dependencies. It covers the timestamp across UTC midnight, zero quantity, employee label, legacy counts, mismatched dates and rejected locations. It is not a full Supabase migration replay or a production validation.
+**Complete count** publishes every remaining or changed section, treats all remaining blanks in the count as zero and changes the draft to completed in the same database transaction. Unchanged sections are not republished, preserving their original stock timestamps and subsequent production calculations. A completed count has one History row with all its observations, notes and issues. Completed quantity/UOM corrections still use the existing observation editor.
 
-Run with an existing local PGlite module:
+Storage areas remain organizational sections; this change does not turn the existing whole-item count into an area-by-area stock ledger. Quantities use the selected configured count unit and the existing conversion/observation rules. New observation timestamps come from the server; the device offset determines the recorded local date.
+
+## Deployment and verification
+
+The frontend/server depend on `20261019110004_inventory_count_drafts_and_section_updates.sql`. Apply it through the authorized release workflow **before activating the new application**. It adds the session table with RLS and SELECT-only authenticated access, plus `save_inventory_count(jsonb)` for validated writes. The RPC enforces MFA, organizational roles, location access, creator identity, immutable item scope, valid units/quantities and optimistic versions. Anonymous execution and direct table writes are denied. No remote migration or operational stock write was performed during this implementation.
+
+The isolated PostgreSQL test executes the original count command, the precise-timestamp and notes/issues migrations, and the new draft migration against synthetic dependencies. It covers persistent state, sections, zero stock, replacement, retries, atomic rollback, stale windows, creator/location checks, RLS/MFA and grants. It is not a full Supabase replay.
 
 ```sh
-node supabase/tests/count-completion.mjs /absolute/path/to/pglite/dist/index.js
+node supabase/tests/count-drafts.mjs /absolute/path/to/pglite/dist/index.js
 ```
 
-The regular checks and application tests also run before committing. Browser verification opens the filters and item list without submitting real inventory quantities.
+The regular application tests cover serialization, lost completion responses, history deduplication and section completion signatures. A local browser check with synthetic API responses covers starting, autosave/close, reload, History resume, preserved quantities/notes, a searched section containing a hidden blank item, and final completion. Production data was not submitted.
 
-Items are grouped by their displayed storage area and alphabetized within each collapsible section. Mark section complete collapses that section; editing a quantity or unit clears its completion mark. Section completion is session-only review state and does not submit a count.
+Rollback: activate the previous application version, retaining the session table and all observations for recovery and audit. Do not delete partially published stock when reverting the UI.
 
-Starting a count opens the full-screen entry view and locks location and employee. Employee name remains required without a static helper label. The entry view removes the locked location dropdown arrow, shows ordering-to-stocktake conversions and SKU followed by the supplier catalog product description (without a description label), uses QTY. for quantities, and provides yellow section completion, green count completion, and red cancellation actions.
+## Earlier count records
 
-Count quantity fields show Est. Stock in the selected count unit, using the same latest completed count plus subsequent production reference as the inventory view. Missing or partial totals display a dash rather than zero. Changing the count unit recalculates the displayed estimate.
-
-Count filters use consistent control heights and the native single-location dropdown. UOM fields have a uniform width. Quantity and UOM columns align across sections on desktop. Each item has an icon-only Report issue button and dialog; saving it updates the current count draft, and clearing its text removes the report. Notes at the bottom apply to the whole count. On completion, notes and issues are persisted atomically in the existing count audit record (`audit_logs.new_data`), including issues for items without an entered quantity. The new migration validates text limits and item/location scope. No separate issue notification is sent. The count completion and notes/issues migrations were applied to production on October 8, 2026. Local filenames match the versions assigned by Supabase (20261008125044 and 20261008125059); SQL contents were preserved.
-
-## Include Prep Recipes — October 12, 2026
-
-The initial filter form includes an unchecked **Include Prep Recipes** checkbox. Checking it adds active prepared inventory items for the selected location and storage areas alongside purchased items. Supplier selection applies only to purchased items because prep is produced internally. Unchecking it keeps the count limited to purchased items. Starting from **Count this item** on a prepared item preselects the checkbox.
-
-Prep rows use the existing registered inventory item, count units, conversions and count-saving workflow; recipe ingredients and menu recipes are not duplicated as count rows. Blank quantities remain unrecorded. No schema or production data changes are required.
+Legacy day/period counts and precise device timestamps remain readable. The October 8 count-completion and notes/issues migrations are unchanged. Historical records without an employee keep the Not recorded label. Earlier device-only drafts (`hot-doogy.count-draft`) are not automatically submitted or converted to zero by this change; their stored browser data is left intact.

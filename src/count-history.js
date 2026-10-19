@@ -1,5 +1,5 @@
-// One row per completed count, never one row per counted item.
-export function countSessions(observations=[],sessions=[],legacyLines=[]){
+// One row per count (draft or completed), never one row per counted item.
+export function countSessions(observations=[],sessions=[],legacyLines=[],drafts=[]){
  const rows=new Map();
  for(const s of sessions.filter(s=>s.status==='completed'))rows.set(`${s.locationId}|${s.id}`,{id:s.id,locationId:s.locationId,status:s.status,employeeName:s.employeeName||'',countedAt:s.completedAt||null,date:s.countedOn||null,notes:s.notes||'',lines:legacyLines.filter(l=>l.sessionId===s.id),source:'legacy'});
  for(const o of observations){
@@ -9,6 +9,7 @@ export function countSessions(observations=[],sessions=[],legacyLines=[]){
   if(!record.employeeName&&o.employeeName)record.employeeName=o.employeeName;
   record.lines.push({...o,itemId:o.inventoryItemId,qty:o.quantity});
  }
+ for(const d of drafts){const key=`${d.locationId}|${d.id}`,existing=rows.get(key);rows.set(key,{...existing,...d,source:'session',countedAt:d.completedAt||d.createdAt,notes:d.state?.notes||'',issues:(d.state?.lines||[]).filter(x=>x.issue?.trim()).map(x=>({itemId:x.itemId,text:x.issue})),lines:existing?.lines||[]});}
  return [...rows.values()];
 }
 export function historyRows(saved=[],local=[],locationId='all'){
