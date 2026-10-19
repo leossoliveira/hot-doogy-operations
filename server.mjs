@@ -1,3 +1,4 @@
+import {saveInventoryDraft} from './server/inventory-count.mjs';
 import {editOrder} from './server/order-edit.mjs';
 import {editTransfer,reportTransferIssue} from './server/transfer-edit.mjs';
 import {myDayAPI} from './server/my-day.mjs';
@@ -55,7 +56,7 @@ http.createServer(async(req,res)=>{
    if(['/api/preparation/preparer','/api/inventory/counter'].includes(url.pathname)&&req.method==='GET')return reply(res,200,await auth.request('/rest/v1/rpc/operations_current_preparer',{token:session.token,method:'POST',body:{}}));
    if(url.pathname==='/api/preparation/team-member'&&req.method==='POST'){const b=await jsonBody(req,4096);return reply(res,200,await auth.request('/rest/v1/rpc/set_prep_team_member',{token:session.token,method:'POST',body:{p_batch:b.id,p_expected_version:b.expectedVersion,p_team:b.teamMemberId}}));}
    if(url.pathname==='/api/preparation/usage')return preparationUsage(req,res,url,auth,session);
-   if(url.pathname==='/api/inventory/count-draft'&&req.method==='POST'){const body=await jsonBody(req,600000);return reply(res,200,await auth.request('/rest/v1/rpc/save_inventory_count',{token:session.token,method:'POST',body:{p:body}}));}
+   if(url.pathname==='/api/inventory/count-draft'&&req.method==='POST'){const body=await jsonBody(req,600000);return reply(res,200,await saveInventoryDraft(auth,session,body));}
    if(url.pathname==='/api/inventory/count-edit'&&req.method==='POST'){
     const body=await jsonBody(req);
     return reply(res,200,await auth.request('/rest/v1/rpc/edit_inventory_count',{token:session.token,method:'POST',body:{p_source:body.source,p_id:body.id,p_quantity:body.quantity,p_unit:body.unit,p_old_quantity:body.oldQuantity,p_old_unit:body.oldUnit}}));

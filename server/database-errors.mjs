@@ -1,3 +1,4 @@
+import {countDatabaseMessage} from './inventory-count-messages.mjs';
 // Translate known database validation messages without changing stored enum values or records.
 const messages=new Map([
  ...['Invalid waste record.','This waste request has changed. Reopen the form.','Invalid waste location.','Invalid waste storage area.','Item is unavailable at this location.','Invalid waste quantity or unit.','Invalid waste date.','Choose a waste reason and valid notes.','Confirm permanent deletion.','Item unavailable.','This item is shared with another supplier. Deactivate it instead.','This item has linked recipes or history. Deactivate it instead.'].map(message=>[message,message]),
@@ -55,6 +56,7 @@ const messages=new Map([
 ]);
 export function databaseErrorMessage(data){
  if(data?.message?.startsWith('INVOICE_S3_REQUIRED:'))return 'Upload and verify the original invoice document before marking it Approved or Paid.';
+ if(countDatabaseMessage(data?.message))return data.message;
  if(data?.code==='40001')return 'This invoice changed. Reload its status before saving.';
 
  if(data?.code==='P0001'&&data?.message?.startsWith('HR '))return data.message;

@@ -23,3 +23,43 @@ test('retrying completion after a lost response returns its receipt without subm
  let calls=0;const sync=createCountSync({id:'s',locationId:'l',version:2,request:async body=>{calls++;if(calls===1)throw Error('Response lost');return {version:3,status:'completed'};}});
  await assert.rejects(sync.save({notes:'done'},'complete'));const result=await sync.save({notes:'done'},'complete');assert.equal(result.status,'completed');assert.equal(calls,2);
 });
+
+test('a rejected unit does not trap later corrected quantities behind the failed request',async()=>{
+ const calls=[];
+ const sync=createCountSync({id:'s',locationId:'l',version:7,request:async body=>{calls.push(body);if(body.state.unit==='invalid')throw Object.assign(Error('Invalid unit'),{status:422});return {version:8};}});
+ await assert.rejects(sync.save({unit:'invalid',qty:9}));
+ await sync.save({unit:'valid',qty:9});
+ assert.equal(calls.length,2);assert.equal(calls[1].expectedVersion,7);assert.notEqual(calls[0].requestId,calls[1].requestId);assert.equal(calls[1].state.qty,9);
+});
+test('queued corrected edits can proceed after a definitive rejection',async()=>{
+ const calls=[];const sync=createCountSync({id:'s',locationId:'l',version:1,request:async b=>{calls.push(b);if(b.state.invalid)throw Object.assign(Error('bad'),{status:422});return {version:2};}});
+ const bad=sync.save({invalid:true});const corrected=sync.save({qty:4});await assert.rejects(bad);assert.equal((await corrected).version,2);assert.equal(calls.length,2);
+});
+test('lost completion receipt followed by save or close never submits to a completed draft again',async()=>{
+ const calls=[];const sync=createCountSync({id:'s',locationId:'l',version:2,request:async b=>{calls.push(b);if(calls.length===1)throw Error('Response lost');return {version:3,status:'completed'};}});
+ await assert.rejects(sync.save({qty:3},'complete'));
+ assert.equal((await sync.save({qty:3})).status,'completed');assert.deepEqual(calls[0],calls[1]);
+ assert.equal((await sync.save({qty:4},'complete')).status,'completed');assert.equal(calls.length,2);
+});
+test('timeouts and throttling preserve the request identity until its outcome is known',async()=>{
+ for(const status of [408,429,502]){const calls=[];const sync=createCountSync({id:'s',locationId:'l',request:async b=>{calls.push(b);if(calls.length===1)throw Object.assign(Error('retry'),{status});return {version:1};}});await assert.rejects(sync.save({qty:2}));await sync.save({qty:2});assert.deepEqual(calls[0],calls[1]);}
+});
+
+test('completion review includes hidden items in the selected section and distinguishes explicit zero',async()=>{
+ const {countCompletionReview}=await import('../src/count-draft.js');
+ const lines=[{section:'Freezer',qty:''},{section:'Freezer',qty:'0'},{section:'Dry',qty:'2'},{section:'Dry',qty:''}];
+ assert.deepEqual(countCompletionReview(lines,'Freezer'),{total:2,filled:1,blank:1});
+ assert.deepEqual(countCompletionReview(lines),{total:4,filled:2,blank:2});assert.equal(lines[0].qty,'');
+ assert.equal(countCompletionReview([{qty:''}]).filled,0);
+});
+test('recovery ignores JSON key order, restores matching versions and retains conflicts for review',async()=>{
+ const {countRecovery}=await import('../src/count-draft.js');
+ const state={notes:'saved',lines:[{rowId:'r',itemId:'i',section:'S',qty:'3'}]},saved={id:'s',version:4,state};
+ assert.equal(countRecovery(saved,{id:'s',version:4,state:{lines:state.lines,notes:'saved'}}).kind,'none');
+ const cached={id:'s',version:4,state:{...state,notes:'unsynced'}};
+ assert.equal(countRecovery(saved,cached).kind,'restore');
+ assert.equal(countRecovery({...saved,version:5},cached).kind,'conflict');
+ assert.equal(countRecovery(saved,{...cached,state:{...cached.state,lines:[]}}).kind,'conflict');
+ assert.equal(countRecovery(saved,{...cached,id:'other'}).kind,'none');
+ assert.equal(cached.state.notes,'unsynced');
+});

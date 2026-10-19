@@ -23,6 +23,18 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/db-version-tests" --save-exact @electric-sql/pglite@0.3.14
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/release-versioning.mjs
           node supabase/tests/count-drafts.mjs "$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js"
+      - name: Testar falhas e recuperação de contagens no navegador
+        run: |
+          npm install --prefix "$RUNNER_TEMP/count-browser-tests" --save-exact playwright@1.56.1
+          "$RUNNER_TEMP/count-browser-tests/node_modules/.bin/playwright" install --with-deps chromium
+          PORT=4196 node server.mjs > "$RUNNER_TEMP/count-browser-server.log" 2>&1 &
+          COUNT_SERVER_PID=$!
+          trap 'kill "$COUNT_SERVER_PID"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:4196/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node tests/browser/count-reliability.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
   version:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
