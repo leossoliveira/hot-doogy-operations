@@ -10,9 +10,16 @@ import { escape as e, money, preciseNumber, date} from './model.js';
 import {supplierItemWithEdits, filterSupplierItems, createSupplierDraft, saveSupplierDraft, restoreSupplierDraft, resolveSupplierPrice} from './supplier-model.js';
 
 export async function persistSupplierChanges(current,next,ctx,{saveDetails=saveLocal,savePhoto=saveCloudPhoto}={}){
-  await saveDetails(next);ctx.setLocal(next);
+  await saveDetails(next,{refresh:!current.photoDirty});ctx.setLocal(next);
   if(current.photoDirty){
-    const photo=current.photo===null&&ctx.local().itemPhotos?.[current.original.itemId]?.storage!=='s3'?null:await savePhoto('items',current.original.itemId,current.photo);
+    let photo;
+    try{
+      photo=current.photo===null&&ctx.local().itemPhotos?.[current.original.itemId]?.storage!=='s3'?null:await savePhoto('items',current.original.itemId,current.photo);
+    }catch(error){
+      // Details are already committed; refresh their versions even if the upload fails.
+      try{await saveDetails(next);}catch{}
+      throw error;
+    }
     next.itemPhotos={...ctx.local().itemPhotos,[current.original.itemId]:photo};
     await saveDetails(next);ctx.setLocal(next);
   }

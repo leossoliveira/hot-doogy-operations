@@ -714,7 +714,7 @@ async function refreshData(background=false){
  if(owner!==session||generation!==refreshGeneration||(background&&(syncing||dialog||supplierUI.dirty||preparationUI.dirty||purchasingUI.dirty)))return false;
  data=fresh;if(fresh.access?.role)session.role=fresh.access.role;confirmedLocal=structuredClone(local);refreshPhotos();return true;
 }
-configureCommit(async next=>{
+configureCommit(async (next,{refresh=true}={})=>{
  if(!session||syncing)throw Error("Wait for synchronization to finish before saving.");
  syncing=true;
  try{
@@ -726,7 +726,7 @@ configureCommit(async next=>{
   if(changes.length)await command('batch',{changes},next.pendingCommandId||(next.pendingCommandId=crypto.randomUUID()));
   const photos={itemPhotos:next.itemPhotos,recipePhotos:next.recipePhotos};
   Object.assign(next,loadLocal({getItem:()=>null}),photos);delete next.pendingCommandId;
-  local=next;confirmedLocal=structuredClone(local);try{await refreshData();}catch(error){toast("Saved. Screen refresh pending: "+error.message,'circle-alert');}
+  local=next;confirmedLocal=structuredClone(local);if(refresh)try{await refreshData();}catch(error){toast("Saved. Screen refresh pending: "+error.message,'circle-alert');}
  }finally{syncing=false;}
 });
 createRefreshLoop({canRefresh:()=>!!session&&!!data&&!loginRoutes.includes(state.route)&&!syncing&&!dialog&&!document.querySelector('.chart-expanded-dialog[open]')&&!isDatePickerOpen()&&!locationPicker.isOpen&&!inventorySupplierPicker.isOpen&&!inventoryAreaPicker.isOpen&&!invoiceSupplierPicker.isOpen&&!invoiceStatusPicker.isOpen&&!foodCategoryPicker.isOpen&&!foodStatusPicker.isOpen&&!preparationUI.filterOpen&&!purchasingUI.filterOpen&&!reportsUI.filterOpen&&!isNavigationOpen()&&!document.hidden&&!document.activeElement?.closest('[data-report-filter]')&&!supplierUI.dirty&&!preparationUI.dirty&&!purchasingUI.dirty,refresh:async()=>{if(await refreshData(true))render();},onError:error=>{if(error.status===401||error.status===403){session=null;data=null;render();}else toast("Not refreshed: "+error.message,'circle-alert');}});
