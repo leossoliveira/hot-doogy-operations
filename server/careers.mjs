@@ -1,3 +1,4 @@
+import {replyData} from './compressed-json.mjs';
 import {ApiError,jsonBody,reply} from './auth.mjs';
 import {SUPABASE_URL,SUPABASE_KEY,ORGANIZATION_ID} from './supabase-config.mjs';
 import {readPages} from './paginated-read.mjs';
@@ -20,7 +21,7 @@ export async function careersAPI(req,res,url,auth,session,fetchFile=fetch){
    auth.request('/rest/v1/rpc/hr_user_directory',{token:session.token,method:'POST',body:{}})]);
   const names=new Map((accounts||[]).map(a=>[a.user_id,a.name||a.email]));
   const who=id=>id?names.get(id)||'Team member':null;
-  return reply(res,200,{applications,files,notes:notes.map(n=>({...n,author:who(n.author_id)})),events:events.map(x=>({...x,actor:who(x.actor_id)}))});
+  return replyData(req,res,{applications,files,notes:notes.map(n=>({...n,author:who(n.author_id)})),events:events.map(x=>({...x,actor:who(x.actor_id)}))});
  }
  if(url.pathname==='/api/hr/careers/review'&&req.method==='POST'){
   const b=await jsonBody(req,16384);

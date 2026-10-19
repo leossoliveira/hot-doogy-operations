@@ -1,3 +1,4 @@
+import {replyData} from './compressed-json.mjs';
 import {workdayIntake} from './workday-intake.mjs';
 import {ApiError,jsonBody,reply} from './auth.mjs';
 import {ORGANIZATION_ID} from './supabase-config.mjs';
@@ -12,7 +13,7 @@ export async function hrAPI(req,res,url,auth,session){
    readPages(read,`/rest/v1/hr_team_members?select=*&${org}&order=last_name,id`),
    readPages(read,`/rest/v1/hr_workdays?select=*&${org}&order=work_date.desc,id`),
    auth.request('/rest/v1/rpc/hr_user_directory',{token:session.token,method:'POST',body:{}}),read(`/rest/v1/hr_permission_profiles?select=*&${org}`)]);
-  return reply(res,200,{team,workdays,accounts,profiles});
+  return replyData(req,res,{team,workdays,accounts,profiles});
  }
  if(url.pathname==='/api/hr/import-users'&&req.method==='POST')return reply(res,200,await auth.request('/rest/v1/rpc/hr_import_users',{token:session.token,method:'POST',body:{}}));
  if(url.pathname==='/api/hr/profiles'&&req.method==='POST'){const b=await jsonBody(req,16384);return reply(res,200,await auth.request('/rest/v1/rpc/hr_save_profile',{token:session.token,method:'POST',body:{p_role:b.role,p_version:b.version,p_permissions:b.permissions}}));}

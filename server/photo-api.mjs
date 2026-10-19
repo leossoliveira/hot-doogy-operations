@@ -1,8 +1,9 @@
 import {createPhotoStorage,loadS3Config,ORG} from './photo-storage.mjs';
 import {ApiError,reply} from './auth.mjs';
 export async function photos(req,res,url,auth,session){
- const items=await auth.request(`/rest/v1/supplier_items?select=id,inventory_item_id&organization_id=eq.${ORG}&order=id.desc`,{token:session.token});
- const recipes=await auth.request(`/rest/v1/recipes?select=id&organization_id=eq.${ORG}`,{token:session.token});
+ const [items,recipes]=await Promise.all([
+  auth.request(`/rest/v1/supplier_items?select=id,inventory_item_id&organization_id=eq.${ORG}&order=id.desc`,{token:session.token}),
+  auth.request(`/rest/v1/recipes?select=id&organization_id=eq.${ORG}`,{token:session.token})]);
  const aliases=Object.fromEntries(items.map(x=>[x.inventory_item_id,x.id]));
  const storage=createPhotoStorage(await loadS3Config(),fetch,aliases);
  if(url.pathname==='/api/photos'&&req.method==='GET'){const all=await storage.list();all.items=Object.fromEntries(Object.entries(all.items).filter(([id])=>aliases[id]));const ids=new Set(recipes.map(r=>r.id));all.recipes=Object.fromEntries(Object.entries(all.recipes).filter(([id])=>ids.has(id)));return reply(res,200,{...all,token:'session'});}
