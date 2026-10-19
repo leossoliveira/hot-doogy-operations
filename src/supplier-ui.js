@@ -9,6 +9,15 @@ import {itemPhotoView,prepareItemPhoto,itemPhotoSource} from './item-photo-ui.js
 import { escape as e, money, preciseNumber, date} from './model.js';
 import {supplierItemWithEdits, filterSupplierItems, createSupplierDraft, saveSupplierDraft, restoreSupplierDraft, resolveSupplierPrice} from './supplier-model.js';
 
+export async function persistSupplierChanges(current,next,ctx,{saveDetails=saveLocal,savePhoto=saveCloudPhoto}={}){
+  await saveDetails(next);ctx.setLocal(next);
+  if(current.photoDirty){
+    const photo=current.photo===null&&ctx.local().itemPhotos?.[current.original.itemId]?.storage!=='s3'?null:await savePhoto('items',current.original.itemId,current.photo);
+    next.itemPhotos={...ctx.local().itemPhotos,[current.original.itemId]:photo};
+    await saveDetails(next);ctx.setLocal(next);
+  }
+}
+
 // Supplier catalog and editor share the application's local-only persistence boundary.
 export function createSupplierUI(ctx) {
   const {icon,btn,field,input,select,options,pair,notice,empty,heading}=ctx;
@@ -141,13 +150,10 @@ export function createSupplierUI(ctx) {
     if(editor.photoBusy||!$('#supplier-item-form').reportValidity())return;
     const current=editor,button=$('[data-action="supplier-save"]');button.disabled=true;current.photoBusy=true;
     try {
-      // Validate the full draft before uploading; persistence follows a verified Storage response.
+      // Save details before the photo API updates the supplier record's timestamp.
       const result=saveSupplierDraft(ctx.local(),current.original,current.draft,{...catalog(),items:items()},{storage:{setItem(){}}});
-      if(current.photoDirty){
-        const photo=current.photo===null&&ctx.local().itemPhotos?.[current.original.itemId]?.storage!=='s3'?null:await saveCloudPhoto('items',current.original.itemId,current.photo);
-        result.local.itemPhotos={...ctx.local().itemPhotos,[current.original.itemId]:photo};
-      }
-      await saveLocal(result.local);ctx.setLocal(result.local);current.dirty=false;ctx.close(true);editor=null;ctx.render();ctx.toast(current.photoDirty?"Photo and item details saved.":"Item details updated in the database.");
+      await persistSupplierChanges(current,result.local,ctx);
+      current.dirty=false;ctx.close(true);editor=null;ctx.render();ctx.toast(current.photoDirty?"Photo and item details saved.":"Item details updated in the database.");
     }catch(error){const target=$('#supplier-item-error');if(target){target.textContent=error.name==='QuotaExceededError'?"Unable to save locally: storage is full. A photo already verified in storage will still be available when you reload.":error.message;target.focus();}}
     finally{current.photoBusy=false;button.disabled=false;}
   }
