@@ -31,3 +31,9 @@ Rollback: activate the previous application version, retaining the session table
 ## Earlier count records
 
 Legacy day/period counts and precise device timestamps remain readable. The October 8 count-completion and notes/issues migrations are unchanged. Historical records without an employee keep the Not recorded label. Earlier device-only drafts (`hot-doogy.count-draft`) are not automatically submitted or converted to zero by this change; their stored browser data is left intact.
+
+## Configured-unit validation fix — October 19, 2026
+
+The editor offers all configured units with a positive conversion, while the draft and observation writers previously required `is_count_unit`. Selecting another configured unit therefore failed autosave and completion with `Invalid count item or unit`. Migration `20261019173433_inventory_count_configured_units.sql` aligns both writers with the editor while retaining item/location ownership, positive conversions, version guards and existing permissions.
+
+Applied directly to production for the reported incident; the connector assigned the recorded version above (the empty local file was originally created by the CLI). All five existing draft state hashes and versions matched before and after application. No draft was completed, rewritten or deleted. The isolated test covers a non-default unit with factor 12, stock publication, rejection of another item's unit and zero conversion, preservation on failure, and completion. The 389 application tests and syntax/migration checks passed. No frontend deployment is needed. On the device holding unsynced changes, retry saving before closing; creators can resume existing drafts from History.

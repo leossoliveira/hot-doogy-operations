@@ -32,6 +32,7 @@ create function public.operations_current_preparer() returns jsonb language sql 
 insert into inventory_item_units values('33333333-3333-4333-8333-333333333334','44444444-4444-4444-8444-444444444445','6013ed02-626a-497c-b951-619069035532',true,10);
 insert into location_inventory_items values('44444444-4444-4444-8444-444444444445','22222222-2222-4222-8222-222222222222',true,'77777777-7777-4777-8777-777777777778');`);
 await db.exec(await readFile(root+'supabase/migrations/20261019110004_inventory_count_drafts_and_section_updates.sql','utf8'));
+await db.exec(await readFile(root+'supabase/migrations/20261019173433_inventory_count_configured_units.sql','utf8'));
 const id='55555555-5555-4555-8555-555555555555',locationId='22222222-2222-4222-8222-222222222222';
 let version=0;
 const state={notes:'Draft notes',lines:[{rowId:'77777777-7777-4777-8777-777777777777',itemId:'44444444-4444-4444-8444-444444444444',itemUnitId:'33333333-3333-4333-8333-333333333333',section:'Freezer',qty:'3',issue:'Check packaging'},{rowId:'77777777-7777-4777-8777-777777777778',itemId:'44444444-4444-4444-8444-444444444445',itemUnitId:'33333333-3333-4333-8333-333333333334',section:'Dry',qty:''}]};
@@ -53,6 +54,19 @@ await assert.rejects(call(request('save',{expectedVersion:version-1})));await as
 await db.exec(`create or replace function auth.uid() returns uuid language sql as $$select '99999999-9999-4999-8999-999999999999'::uuid$$`);
 await assert.rejects(call(request()));
 await db.exec(`create or replace function auth.uid() returns uuid language sql as $$select '11111111-1111-4111-8111-111111111111'::uuid$$`);
+// The editor offers configured units beyond the default count unit.
+await db.exec(`insert into inventory_item_units values('33333333-3333-4333-8333-333333333335','44444444-4444-4444-8444-444444444444','6013ed02-626a-497c-b951-619069035532',false,12)`);
+state.lines[0].itemUnitId='33333333-3333-4333-8333-333333333335';
+await save();await save('section',{section:'Freezer'});
+assert.equal(Number((await quantity())[0].quantity_base),48);
+// A different item's unit and zero conversion remain invalid; draft survives.
+const validState=structuredClone(state);
+state.lines[0].itemUnitId=state.lines[1].itemUnitId;await assert.rejects(save());
+state.lines=structuredClone(validState.lines);
+await db.exec(`update inventory_item_units set quantity_in_base_unit=0 where id='33333333-3333-4333-8333-333333333335'`);
+await assert.rejects(save());
+await db.exec(`update inventory_item_units set quantity_in_base_unit=12 where id='33333333-3333-4333-8333-333333333335'`);
+assert.deepEqual((await db.query('select state from inventory_count_sessions')).rows[0].state,validState);
 // A pending edit does not alter stock; completing again replaces only this count's item.
 state.lines[0].qty='6';await save();assert.equal(Number((await quantity())[0].quantity),4);
 await save('section',{section:'Freezer'});assert.equal((await quantity()).length,1);assert.equal(Number((await quantity())[0].quantity),6);
