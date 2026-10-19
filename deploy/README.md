@@ -23,6 +23,20 @@ Para reconstruir o HTTPS em outra VPS:
 4. Substitua a configuração inicial por `nginx-management.conf`, valide com `nginx -t` e recarregue o Nginx.
 5. Instale o hook de renovação com permissão 755, habilite `certbot.timer` e valide com `certbot renew --cert-name management.hotdoogy.com --dry-run`.
 
+## Cloudflare - migração em 19 de outubro de 2026
+
+A zona `hotdoogy.com` foi criada no plano Free, copiando os nove registros conferidos na Hostinger. O domínio raiz e `www` do Wix, `order`, `www.order`, `careers`, MX e TXT permanecem em Somente DNS. A troca para `roman.ns.cloudflare.com` e `stella.ns.cloudflare.com` foi concluída com verificação por e-mail e confirmada em 1.1.1.1 e 8.8.8.8. A Cloudflare confirmou a zona ativa.
+
+**Ativação final do proxy pendente:** o Universal SSL para `*.hotdoogy.com` e `hotdoogy.com` apareceu em Validação pendente (TXT). Um teste direto na borda falhou no handshake TLS antes da emissão. `management` foi devolvido temporariamente a Somente DNS, confirmado no nameserver autoritativo, com HTTPS direto 200. A emissão é automática mesmo com registros Somente DNS. Aguardar o certificado Ativo, ativar somente `A management` e validar antes de concluir a migração. Não deixar o proxy ligado sem certificado ativo. Ver [prazo e procedimento oficiais](https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/enable-universal-ssl/).
+
+O modo SSL/TLS foi salvo como **Completo (estrito)**, preservando o certificado Let's Encrypt da VPS. A regra `Management - bypass cache`, com expressão `(http.host eq "management.hotdoogy.com")` e ação Ignorar cache, foi implantada e aparece Ativa. A versão TLS mínima da borda foi configurada como TLS 1.2, preservando o mínimo exigido pela origem.
+
+O Nginx instalado foi ajustado nos dois blocos do hostname management para restaurar o visitante por `CF-Connecting-IP`, confiando exclusivamente nas faixas oficiais IPv4/IPv6 obtidas de `https://www.cloudflare.com/ips-v4` e `https://www.cloudflare.com/ips-v6` em 19/10/2026. A configuração versionada contém as mesmas diretivas. Atualizar as faixas com base nessas fontes quando necessário; nunca confiar nesse cabeçalho de qualquer origem. Assim, `$remote_addr`, os limites por IP e `X-Real-IP` continuam representando o visitante. O acesso direto à VPS ignora cabeçalhos de IP forjados.
+
+Aplicado com backup `/root/hot-doogy-management-before-cloudflare-20261019T221106Z`, `nginx -t` e recarga do Nginx. Preservado o timeout de leitura de 150s existente na VPS (o modelo versionado tem 90s); nenhuma configuração de firewall ou de outros hosts foi alterada. HTTP público 200 e rejeição de IP forjado em conexão local foram conferidos antes da troca de DNS. O teste `certbot renew --cert-name management.hotdoogy.com --dry-run --non-interactive --no-random-sleep-on-renew` concluiu com sucesso após a troca dos nameservers, antes da ativação final do proxy.
+
+Após ativar: conferir o certificado de borda, HTTPS público e login/MFA, restauração do IP real no log, cache não servido como HIT e `certbot renew --cert-name management.hotdoogy.com --dry-run`. Manter `/.well-known/acme-challenge/` acessível para renovação. O IP da VPS continua público por `careers`; o proxy do management não significa isolamento completo da origem. Para reverter a preparação do Nginx, restaurar o backup, validar com `nginx -t` e recarregar. Para desativar apenas o proxy, alterar `management` para Somente DNS na Cloudflare, preservando DNS e HTTPS de origem.
+
 ## Atualizações
 
 A cada aproximadamente dois minutos, `hot-doogy-update.timer` busca tags `v0.1.N` do repositório privado. Essas tags são criadas pelo GitHub após os testes de `main`. A VPS usa uma chave de implantação com leitura apenas deste repositório; não pode enviar alterações ao GitHub.
