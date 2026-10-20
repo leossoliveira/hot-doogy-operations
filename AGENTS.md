@@ -26,6 +26,8 @@
 
 ## Comprovantes de recebimento e invoices
 
+- Recibos de compra discriminados (cupom de caixa, purchase receipt ou sales receipt) são aceitos como invoice para revisão humana, inclusive quando o fornecedor não emite invoice formal. Devem identificar vendedor, data, produtos/serviços e total da compra. Usar o número do recibo quando disponível, sem inventar campos ausentes; dinheiro entregue e troco não são despesas. Isso não inclui comprovantes de entrega/recebimento nem autoriza aprovação ou pagamento automático.
+
 - Comprovante de recebimento, canhoto, delivery receipt, pedido e confirmação de entrega não são automaticamente invoices. O recebimento deve ser registrado independentemente do documento financeiro.
 - Não criar invoice nem armazenar comprovante em `invoice-documents` apenas porque foi enviado no fluxo de recebimento. Confirmar a natureza fiscal/financeira do documento; em caso de dúvida, solicitar identificação antes de cadastrar como invoice.
 - Comprovantes de recebimento não devem ser enviados ao Storage. Uma autorização de recebimento, conferência ou entrada de estoque não autoriza a classificação como invoice.
