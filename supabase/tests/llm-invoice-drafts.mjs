@@ -107,4 +107,26 @@ if(process.argv[5]){
  assert.equal((await db.query(`select source_category_id from invoice_lines where invoice_id='${u(60)}'`)).rows[0].source_category_id,null);
  console.log('PASS: invoice category create/edit, clearing, cross-tenant rejection');
 }
+// Regression: the model classification must not veto an authenticated human review.
+if(process.argv[6]){
+ const proof={...payload,number:'HUMAN-REVIEW',extraction:{document_type:'other',confidence:'low',warnings:['Order confirmation; review financial details.']}};
+ await assert.rejects(save(u(80),proof),/A reviewed financial invoice is required/);
+ const aclBefore=(await db.query("select proacl::text as acl, prosecdef, proconfig from pg_proc where oid='public.save_llm_invoice_draft(uuid,jsonb)'::regprocedure")).rows;
+ await db.exec(fs.readFileSync(process.argv[6],'utf8'));
+ assert.deepEqual((await db.query("select proacl::text as acl, prosecdef, proconfig from pg_proc where oid='public.save_llm_invoice_draft(uuid,jsonb)'::regprocedure")).rows,aclBefore);
+ for(const [index,document_type] of ['other','receiving_proof','uncertain','invoice'].entries()){
+  const id=u(80+index),review={...proof,number:'HUMAN-'+index,extraction:{...proof.extraction,document_type}};
+  for(const documentReviewed of [false,null,undefined])await assert.rejects(save(id,{...review,documentReviewed}),/reviewed financial invoice/);
+  await assert.rejects(save(id,{...review,documentKind:'receiving_proof'}),/reviewed financial invoice/);
+  await db.exec("set test.role='staff'");await assert.rejects(save(id,review),/access denied/);await db.exec("set test.role='manager';set test.mfa='no'");await assert.rejects(save(id,review),/access denied/);await db.exec("set test.mfa='yes'");
+  await assert.rejects(save(id,{...review,locationId:u(90)}),/access denied/);
+  const saved=(await save(id,review)).rows[0].result;assert.equal(saved.status,'review');
+  const row=(await db.query('select extraction, human_approved_at, source_sha256 from invoices where id=$1',[id])).rows[0];
+  assert.deepEqual(row.extraction.result,review.extraction);assert.equal(row.extraction.reviewedFields.documentReviewed,true);assert.equal(row.human_approved_at,null);assert.equal(row.source_sha256,hash);
+  await save(id,review);await assert.rejects(save(u(90+index),review),/already exists/);
+ }
+ assert.equal((await db.query('select count(*)::int n from inventory_transactions')).rows[0].n,0);
+ assert.equal((await db.query('select count(*)::int n from purchase_receipts')).rows[0].n,0);
+ console.log('PASS: reviewed receipts/proofs keep original classification, require human confirmation and retain scope, MFA, duplicate and approval protections');
+}
 await db.close();console.log('PASS: draft creation, receipt rejection, scope/MFA/roles, duplicate/idempotency, exact SKU/unit mapping, From Invoice draft order, original hash binding, approval/payment gates, stale protection, zero receipt/stock writes.');

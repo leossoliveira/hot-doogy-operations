@@ -57,3 +57,11 @@ test('a pending receipt retains its command identity after seven days',()=>{
  const reopened=createCatalogDraft({storage,key:'pending',now:()=>8*86400000});
  assert.deepEqual(reopened.value.pending,request);
 });
+
+
+test('invoice review rejection is an actionable 422, not a proxy-level connection error',async()=>{
+ const auth=createAuth({fetcher:async()=>response({code:'P0001',message:'A reviewed financial invoice is required'},400)});
+ await assert.rejects(auth.request('/rest/v1/rpc/save_llm_invoice_draft',{method:'POST',body:{}}),e=>e.status===422&&e.databaseCode==='P0001'&&/Review the original document/.test(e.message));
+ const original=globalThis.fetch;
+ try{globalThis.fetch=async()=>response({error:'Review the original document and confirm that it supports this purchase before saving the invoice.'},422);await assert.rejects(api('/api/invoices/draft',{}),e=>e.status===422&&/Review the original document/.test(e.message));}finally{globalThis.fetch=original;}
+});

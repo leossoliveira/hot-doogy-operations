@@ -15,6 +15,7 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
   if(!r.ok){
    if(r.status>=500&&(route.startsWith('/auth/')||!data?.code))throw new ApiError(503,"The database is temporarily unavailable. Please try again.");
    if(route==='/auth/v1/token?grant_type=refresh_token'&&r.status===400&&['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired'].includes(data?.error_code||data?.code))throw new ApiError(401,"Your session has expired. Sign in again.");
+   if(route==='/rest/v1/rpc/save_llm_invoice_draft'&&data?.code==='P0001'){const failure=new ApiError(422,databaseErrorMessage(data));failure.databaseCode=data.code;throw failure;}
    if(route==='/rest/v1/rpc/catalog_create'&&/^(P0001|22|23)/.test(data?.code||''))throw new ApiError(400,databaseErrorMessage(data));
    if(route.startsWith('/auth/v1/factors')){
     if(r.status===429)throw new ApiError(429,"Too many attempts. Wait a few minutes before trying again.");
