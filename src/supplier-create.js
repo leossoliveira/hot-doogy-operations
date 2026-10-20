@@ -42,7 +42,7 @@ export function createSupplierForms(ctx){
   await api('/api/catalog/create',envelope);current.complete();
   if(document.querySelector('#supplier-create-form')===form)ctx.close(true);
   ctx.toast(operationKind==='supplier'?'Supplier created.':'Item created.');
-  try{await ctx.refresh();ctx.render();}catch{ctx.toast('Saved. The list updates on the next automatic refresh.','info');}
+  ctx.refreshAfterSave();
  }catch(error){
   if(error.rejected||[400,409,422].includes(error.status)){current.rejected();lock(form,false);}
   message(form,error.status>=500&&!error.rejected?'The save could not be confirmed. Your draft is kept. Select Save to retry the same item safely.':error.message);

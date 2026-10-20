@@ -1,3 +1,4 @@
+import {refreshInBackground} from './save-feedback.js';
 import {api} from './cloud.js';
 import {escape as e} from './model.js';
 import {hrDate} from './hr-model.js';
@@ -12,7 +13,10 @@ export function createCareers(ctx){
  const where=a=>a.any_location?'Either location':location(a.preferred_location_id);
  const badge=s=>`<span class="status ${statusTone(s)}">${e(statusLabel(s))}</span>`;
  const stars=n=>`<span class="careers-stars" aria-label="${n?`Rated ${n} of 5`:'Not rated'}">${[1,2,3,4,5].map(i=>`<i class="${n>=i?'on':''}">★</i>`).join('')}</span>`;
- async function load(){if(loading)return;loading=true;error='';if(visible())ctx.render();try{cache=await api('/api/hr/careers');}catch(err){error=err.message;}finally{loading=false;loaded=true;if(visible())ctx.render();}}
+ const pendingRecords=new Set();let loadGeneration=0;
+ function reloadSaved(id){loadGeneration++;if(id)pendingRecords.add(id);refreshInBackground(()=>load(true));}
+ function pending(id){if(!pendingRecords.has(id))return false;ctx.toast('Saved. The latest details are still updating.');refreshInBackground(()=>load(true));return true;}
+ async function load(force=false){if(loading&&!force)return;const run=++loadGeneration;loading=true;error='';if(visible())ctx.render();try{const fresh=await api('/api/hr/careers');if(run===loadGeneration){cache=fresh;pendingRecords.clear();}}catch(err){if(run===loadGeneration)error=err.message;}finally{if(run===loadGeneration){loading=false;loaded=true;if(visible())ctx.render();}}}
  const filtered=()=>filterApplications(cache?.applications,{query,status,position,location:ctx.state().store});
  const stat=(label,value,sub)=>`<article class="stat-card"><div class="stat-top">${label}</div><div class="stat-value mono">${value}</div><div class="stat-bottom">${sub}</div></article>`;
  function toolbar(){return `<div class="toolbar hr-toolbar"><div class="input-wrap">${ctx.icon('search')}<input aria-label="Search candidates" data-careers-filter="query" placeholder="Search name, email, phone or reference" value="${e(query)}"></div><select aria-label="Status" data-careers-filter="status"><option value="open" ${status==='open'?'selected':''}>Open pipeline</option><option value="all" ${status==='all'?'selected':''}>All statuses</option>${CAREERS_STATUSES.map(([id,label])=>`<option value="${id}" ${status===id?'selected':''}>${label}</option>`).join('')}</select><select aria-label="Position" data-careers-filter="position"><option value="all">All positions</option>${Object.entries(CAREERS_POSITIONS).map(([id,label])=>`<option value="${id}" ${position===id?'selected':''}>${label}</option>`).join('')}</select><span class="spacer"></span><span class="muted" style="font-size:12px">${filtered().length} of ${cache.applications.length}</span></div>`;}
@@ -28,7 +32,7 @@ export function createCareers(ctx){
  }
  function pair(label,value){return `<div class="detail-pair"><small>${label}</small><strong>${value}</strong></div>`;}
  function fileCard(a,kind){const f=(cache.files||[]).find(x=>x.application_id===a.id&&x.kind===kind);if(!f)return `<div class="careers-file empty-file">${kind==='selfie'?'No selfie attached':'No resume attached'}</div>`;const href=`/api/hr/careers/${a.id}/files/${f.id}`;const preview=f.mime_type.startsWith('image/')?`<img src="${href}?inline=1" alt="${kind==='selfie'?'Selfie':'Attachment preview'}" loading="lazy">`:`<span class="careers-file-icon">${ctx.icon('file-text')}</span>`;return `<div class="careers-file">${preview}<div><strong>${e(f.file_name)}</strong><small>${kind==='selfie'?'Selfie':'Resume / supporting file'} · ${kb(f.size)}</small></div><a class="btn" href="${href}" download="${e(f.file_name)}">${ctx.icon('download')}Download</a></div>`;}
- function openDetail(id){
+ function openDetail(id){if(pending(id))return;
   const a=cache?.applications.find(x=>x.id===id);if(!a)return;detail={id,version:a.version};pendingRating=a.rating??null;
   const notes=(cache.notes||[]).filter(n=>n.application_id===id),events=(cache.events||[]).filter(x=>x.application_id===id);
   const eventText=x=>x.type==='submitted'?'Application submitted':x.type==='file_attached'?`${x.payload?.kind==='selfie'?'Selfie':'Resume'} attached`:x.type==='status_changed'?`${x.actor||'Team member'} moved to ${statusLabel(x.to_status)}`:x.type==='rated'?`${x.actor||'Team member'} rated ${x.payload?.to??'—'}/5`:x.type==='note_added'?`${x.actor||'Team member'} added a note`:x.type;
@@ -51,10 +55,10 @@ export function createCareers(ctx){
   const current=cache.applications.find(x=>x.id===detail.id);
   let payload;try{payload=reviewPayload({id:detail.id,version:detail.version,status:form.elements.status.value,rating:pendingRating,clearRating:pendingRating==null&&current?.rating!=null,note:form.elements.note.value},current);}catch(err){errorEl.textContent=err.message;return;}
   saving=true;errorEl.textContent='';const button=form.querySelector('[data-action="careers-save"]');if(button)button.disabled=true;
-  try{await api('/api/hr/careers/review',payload);ctx.close(true);await load();ctx.toast('Review saved.','check');}
+  try{await api('/api/hr/careers/review',payload);ctx.close(true);ctx.toast('Review saved.','check');reloadSaved(detail.id);}
   catch(err){errorEl.textContent=err.status===409?'This application changed. Close and reopen it to see the latest version.':err.message;}
   finally{saving=false;if(button)button.disabled=false;}
  }
  function changed(el){const key=el.dataset.careersFilter;if(!key)return false;if(key==='query')query=el.value;if(key==='status')status=el.value;if(key==='position')position=el.value;ctx.render();return true;}
- return {reset(){cache=null;loaded=false;error='';status='open';position='all';query='';detail=null;},page,changed,actions:{'careers-refresh':load,'careers-view':el=>openDetail(el.dataset.id),'careers-rate':rate,'careers-save':save}};
+ return {reset(){loadGeneration++;pendingRecords.clear();loading=false;cache=null;loaded=false;error='';status='open';position='all';query='';detail=null;},page,changed,actions:{'careers-refresh':load,'careers-view':el=>openDetail(el.dataset.id),'careers-rate':rate,'careers-save':save}};
 }
