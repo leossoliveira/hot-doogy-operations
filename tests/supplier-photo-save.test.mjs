@@ -40,3 +40,15 @@ test('A details conflict prevents the photo upload',async()=>{
  await assert.rejects(()=>persistSupplierChanges({photoDirty:true}, {}, {setLocal(){}},{saveDetails:async()=>{throw Error('conflict');},savePhoto:async()=>{uploaded=true;}}),/conflict/);
  assert.equal(uploaded,false);
 });
+
+test('Deferred list refresh does not delay supplier confirmation, with or without a photo',async()=>{
+ for(const photoDirty of [false,true]){
+  const options=[];const next={itemPhotos:{}};
+  await persistSupplierChanges({photoDirty,photo:{src:'jpeg'},original:{itemId:'item'}},next,{setLocal(){},local:()=>next},{
+   refresh:false,
+   saveDetails:async(state,option)=>{options.push(option.refresh);if(option.refresh)await new Promise(()=>{});},
+   savePhoto:async()=>({storage:'s3'})
+  });
+  assert.deepEqual(options,photoDirty?[false,false]:[false]);
+ }
+});

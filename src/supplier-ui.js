@@ -10,8 +10,8 @@ import {itemPhotoView,prepareItemPhoto,itemPhotoSource} from './item-photo-ui.js
 import { escape as e, money, preciseNumber, date} from './model.js';
 import {supplierItemWithEdits, filterSupplierItems, createSupplierDraft, saveSupplierDraft, restoreSupplierDraft, resolveSupplierPrice} from './supplier-model.js';
 
-export async function persistSupplierChanges(current,next,ctx,{saveDetails=saveLocal,savePhoto=saveCloudPhoto}={}){
-  await saveDetails(next,{refresh:!current.photoDirty});ctx.setLocal(next);
+export async function persistSupplierChanges(current,next,ctx,{saveDetails=saveLocal,savePhoto=saveCloudPhoto,refresh=true}={}){
+  await saveDetails(next,{refresh:refresh&&!current.photoDirty});ctx.setLocal(next);
   if(current.photoDirty){
     let photo;
     try{
@@ -22,7 +22,7 @@ export async function persistSupplierChanges(current,next,ctx,{saveDetails=saveL
       throw error;
     }
     next.itemPhotos={...ctx.local().itemPhotos,[current.original.itemId]:photo};
-    await saveDetails(next);ctx.setLocal(next);
+    await saveDetails(next,{refresh});ctx.setLocal(next);
   }
 }
 
@@ -31,6 +31,7 @@ export function createSupplierUI(ctx) {
   const {icon,btn,field,input,select,options,pair,notice,empty,heading}=ctx;
   const $=s=>document.querySelector(s);
   let selected=null, sortKey='name', direction='asc', itemStatus='active', editor=null;
+  const pendingSavedItems=new Map();
   const catalog=()=>ctx.catalog();
   const forms=createSupplierForms(ctx);
   const items=()=>catalog()?.items.map(x=>({...supplierItemWithEdits(x,ctx.local()),supplierName:x.supplierName||ctx.suppliers?.().find(s=>s.id===x.supplierId)?.name}))||[];
@@ -91,6 +92,10 @@ export function createSupplierUI(ctx) {
   const textField=(label,key,value,full=false,extra='')=>field(label,'catalog-'+key,input('catalog-'+key,value??'','text',`data-item-field="${key}" ${extra}`),full);
   function edit(id) {
     const row=items().find(x=>x.supplierItemId===id);if(!row)return;
+    if(pendingSavedItems.has(row.itemId)){
+      if(pendingSavedItems.get(row.itemId)===row.itemUpdatedAt){ctx.toast('Item saved. The latest details are still updating; you can keep working elsewhere.');ctx.refreshAfterSave();return;}
+      pendingSavedItems.delete(row.itemId);
+    }
     const price=priceFor(row),scope=ctx.state().store;
     const original={...row,price:price.amount,priceUnitId:price.unitId??null,priceScope:scope};
     editor={attempt:createSaveAttempt(),original,draft:createSupplierDraft(original),dirty:false,price,photo:ctx.local().itemPhotos?.[row.itemId]||null,photoBusy:false,photoDirty:false};
@@ -159,8 +164,10 @@ export function createSupplierUI(ctx) {
     const current=editor,button=$('[data-action="supplier-save"]');button.disabled=true;current.photoBusy=true;
     try {
       // Save details before the photo API updates the supplier record's timestamp.
-      await current.attempt.run(()=>saveSupplierDraft(ctx.local(),current.original,current.draft,{...catalog(),items:items()},{storage:{setItem(){}}}).local,next=>persistSupplierChanges(current,next,ctx));
+      await current.attempt.run(()=>saveSupplierDraft(ctx.local(),current.original,current.draft,{...catalog(),items:items()},{storage:{setItem(){}}}).local,next=>persistSupplierChanges(current,next,ctx,{refresh:false}));
+      pendingSavedItems.set(current.original.itemId,current.original.itemUpdatedAt);
       current.dirty=false;ctx.close(true);editor=null;ctx.render();ctx.toast(current.photoDirty?"Photo and item details saved.":"Item details updated in the database.");
+      ctx.refreshAfterSave();
     }catch(error){const target=$('#supplier-item-error');if(target){target.textContent=error.name==='QuotaExceededError'?"Unable to save locally: storage is full. A photo already verified in storage will still be available when you reload.":error.message;target.focus();}}
     finally{current.photoBusy=false;button.disabled=false;const form=$('#supplier-item-form');if(form){for(const el of form.elements)el.disabled=!!current.attempt.pending;const note=$('.catalog-save-note');if(note)note.textContent=current.attempt.pending?'Save not confirmed. Select Save changes to retry the same request.':'Review changes, then select Save changes';}}
   }

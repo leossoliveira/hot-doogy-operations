@@ -138,7 +138,7 @@ const hrUI=createHR({state:()=>state,data:()=>data,session:()=>session,render,he
 const careersUI=createCareers({state:()=>state,data:()=>data,session:()=>session,render,heading,btn,notice,empty,openModal,close:closeModal,toast,icon});
 const doogyUI=createDoogyAI({state:()=>state,render,heading,btn,searchToolbar,notice,empty,openModal,close:closeModal,toast,icons,icon});
 const wasteUI=createWasteUI({data:()=>data,state:()=>state,refresh:async()=>{await refreshData();inventorySessionAt=new Date().toISOString();},render,toast,openModal,close:force=>closeModal(force),btn,heading,searchToolbar,empty,field,input,select,options,user:()=>session?.user,icons,local:()=>local,stat:(...args)=>stat(...args)});
-const supplierUI=createSupplierUI({user:()=>session?.user?.id,data:()=>data,refresh:refreshData,catalog:()=>data?.supplierCatalog,local:()=>local,setLocal:value=>{local=value;},state:()=>state,suppliers:()=>data.suppliers,locations:()=>data.locations,render,toast,openModal,close:force=>closeModal(force),icons,icon,btn,field,input,select,options,pair,notice,empty,heading,searchToolbar});
+const supplierUI=createSupplierUI({user:()=>session?.user?.id,data:()=>data,refresh:refreshData,catalog:()=>data?.supplierCatalog,refreshAfterSave,local:()=>local,setLocal:value=>{local=value;},state:()=>state,suppliers:()=>data.suppliers,locations:()=>data.locations,render,toast,openModal,close:force=>closeModal(force),icons,icon,btn,field,input,select,options,pair,notice,empty,heading,searchToolbar});
 const preparationUI=createPreparationUI({readOnly:()=>isStaff(session?.role),user:()=>session?.user,data:()=>data,local:()=>local,setLocal:value=>{local=value;},items:inventoryItems,state:()=>state,render,toast,openModal,close:closeModal,showTransfer,icon});
 const reportsUI=createReportsUI({data:()=>data,local:()=>local,state:()=>state,render,heading,btn,icon,download});
 const purchasingUI=createPurchasingUI({data:()=>data,local:()=>local,state:()=>state,render,toast,heading,icon,orderTable,orders:()=>records('orders'),newOrder:plan=>{newRecord('order');purchasePlanSaved=plan.onSaved;$('#supplierId').value=plan.supplierId;$('#locationId').value=plan.locationId;$('#notes').value=plan.notes;draftLines=plan.lines;renderLines();}});
@@ -734,6 +734,12 @@ function refreshPhotos(){
  if(photoRefresh)return;
  const owner=session;
  photoRefresh=loadCloudPhotos().then(photos=>{if(session!==owner||!data)return;data.photoStorageConnected=true;local.itemPhotos=photos.items;local.recipePhotos=photos.recipes;confirmedLocal=structuredClone(local);if(!dialog&&!supplierUI.dirty&&!preparationUI.dirty&&!purchasingUI.dirty)render();}).catch(()=>{if(session===owner&&data)data.photoStorageConnected=false;}).finally(()=>{photoRefresh=null;});
+}
+function refreshAfterSave(){
+ const owner=session;
+ // A confirmed write is complete; refreshing the list must not hold its form open.
+ // Background application checks session, generation and active edits before rendering.
+ void refreshData(true).then(applied=>{if(applied)render();}).catch(error=>{if(owner===session)toast("Saved. Screen refresh pending: "+error.message,'circle-alert');});
 }
 async function refreshData(background=false){
  const generation=++refreshGeneration,owner=session,path='/api/data'+(['purchases','inventory','sales'].includes(state.route)?'?sales=1':'');

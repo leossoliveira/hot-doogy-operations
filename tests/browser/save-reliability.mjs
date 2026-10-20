@@ -40,7 +40,7 @@ try{
  await page.locator('#supplier-item-error').filter({hasText:'could not be confirmed'}).waitFor();assert.equal(await page.locator('#catalog-price').isDisabled(),true);
  await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.locator('#supplier-item-form').waitFor({state:'detached'});
  assert.equal(writes.length,3);assert.notEqual(writes[0].commandId,writes[1].commandId);assert.deepEqual(writes[1],writes[2]);
- assert.match(await page.locator('body').innerText(),/Saved\. Screen refresh pending/);
+ await page.getByText(/Saved\. Screen refresh pending/).waitFor();
  console.log('PASS supplier edit: DB timeout is actionable; fields retained; unknown response replays exactly; refresh failure does not reverse successful save.');
  refreshFails=false;await page.locator('[data-action="supplier-back"]').click();await page.locator('[data-action="supplier-create"]').click();
  await page.locator('#supplier-create-form [name="name"]').fill('Synthetic supplier');await page.getByRole('button',{name:'Save',exact:true}).click();
@@ -51,3 +51,41 @@ try{
  }
  assert.ok(reads.some(url=>url.includes('sales=1')));assert.deepEqual(errors,[]);console.log('PASS module navigation smoke: no unhandled browser exceptions; calculations requested only on consuming routes.');
 }catch(error){console.error(await page.locator('body').innerText(),errors);throw error;}finally{await browser.close();}
+
+// Keep the post-save read unresolved: confirmation must depend only on the write.
+await browserForRefresh();
+async function browserForRefresh(){
+ const isolated=await chromium.launch({headless:true,...(process.env.COUNT_BROWSER_CHANNEL?{channel:process.env.COUNT_BROWSER_CHANNEL}:{})});
+ const tab=await isolated.newPage({viewport:{width:1440,height:1000}});tab.setDefaultTimeout(10000);
+ let hold=false,release;const gate=new Promise(resolve=>release=resolve);let readsStarted=0,readsFinished=0;
+ const refreshed=structuredClone(data);refreshed.supplierCatalog.items[0].itemUpdatedAt='2026-10-20T23:00:00Z';
+ try{
+  await tab.route('**/api/**',async route=>{
+   const path=new URL(route.request().url()).pathname;
+   if(path==='/api/auth/session')return route.fulfill({json:{user:{id:'actor',email:'test@example.invalid'},role:'owner'}});
+   if(path==='/api/photos')return route.fulfill({json:{items:{},recipes:{}}});
+   if(path==='/api/data'){if(hold){readsStarted++;await gate;readsFinished++;}return route.fulfill({json:hold?refreshed:data});}
+   if(path==='/api/command'){hold=true;return route.fulfill({json:{ok:true}});}
+   return route.fulfill({json:{}});
+  });
+  await tab.goto('http://127.0.0.1:4196/#suppliers');await tab.locator('[data-action="supplier"]').first().click();
+  const ids=await tab.locator('[data-action="supplier-item"]').evaluateAll(rows=>[...new Set(rows.map(row=>row.dataset.id))]);
+  await tab.locator(`[data-action="supplier-item"][data-id="${ids[0]}"]`).first().click();
+  const started=Date.now();await tab.getByRole('button',{name:'Save changes',exact:true}).click();
+  await tab.locator('#supplier-item-form').waitFor({state:'detached',timeout:1500});
+  assert.ok(Date.now()-started<1500);await tab.getByText('Item details updated in the database.',{exact:true}).waitFor();
+  assert.equal(readsFinished,0);assert.ok(readsStarted>0);
+  await tab.locator(`[data-action="supplier-item"][data-id="${ids[0]}"]`).first().click();
+  assert.equal(await tab.locator('#supplier-item-form').count(),0);
+  await tab.getByText(/latest details are still updating/).waitFor();
+  await tab.locator(`[data-action="supplier-item"][data-id="${ids[1]}"]`).first().click();
+  await tab.locator('#catalog-internalName').fill('Keep this new edit');
+  release();await tab.waitForTimeout(150);
+  assert.equal(await tab.locator('#catalog-internalName').inputValue(),'Keep this new edit');
+  await tab.getByRole('button',{name:'Cancel',exact:true}).click();await tab.getByRole('button',{name:'Discard changes',exact:true}).click();
+  await tab.evaluate(()=>window.dispatchEvent(new Event('focus')));await tab.waitForTimeout(150);
+  await tab.locator(`[data-action="supplier-item"][data-id="${ids[0]}"]`).first().click();
+  await tab.locator('#supplier-item-form').waitFor();
+  console.log('PASS immediate confirmation before a held refresh; saved item waits for current versions; late response preserves a new edit; refreshed item reopens.');
+ }finally{release();await isolated.close();}
+}
