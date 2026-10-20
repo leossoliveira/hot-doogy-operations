@@ -26,6 +26,8 @@
 
 ## Comprovantes de recebimento e invoices
 
+- Atualização autorizada em 20/10/2026: o Invoice Extractor aceita qualquer comprovante, recibo ou invoice para análise e revisão, inclusive recibos sem discriminação, comprovantes de pagamento e de entrega. Preservar a classificação real e os campos ausentes; baixa confiança gera aviso. Esta aceitação na análise não equivale a cadastrar invoice, confirmar recebimento ou registrar pagamento. As restrições de Storage abaixo dizem respeito ao armazenamento financeiro definitivo, não ao arquivo temporário privado necessário à análise.
+
 - Recibos de compra discriminados (cupom de caixa, purchase receipt ou sales receipt) são aceitos como invoice para revisão humana, inclusive quando o fornecedor não emite invoice formal. Devem identificar vendedor, data, produtos/serviços e total da compra. Usar o número do recibo quando disponível, sem inventar campos ausentes; dinheiro entregue e troco não são despesas. Isso não inclui comprovantes de entrega/recebimento nem autoriza aprovação ou pagamento automático.
 
 - Comprovante de recebimento, canhoto, delivery receipt, pedido e confirmação de entrega não são automaticamente invoices. O recebimento deve ser registrado independentemente do documento financeiro.

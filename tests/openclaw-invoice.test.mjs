@@ -9,7 +9,7 @@ test('sends inline document to fixed agent without shared session or tools',asyn
  let call;await assert.rejects(extractOpenClawInvoice(Buffer.from('test'),'application/pdf',{config,fetcher:async(url,options)=>{call={url,...options};return {ok:true,json:async()=>({status:'incomplete'})};}}),/incomplete/);
  const body=JSON.parse(call.body);assert.equal(body.input[0].type,'message');assert.equal(body.model,'openclaw/invoice-analysis');assert.equal(body.tool_choice,'none');assert.equal(body.user,undefined);assert.equal(body.previous_response_id,undefined);assert.equal(call.redirect,'error');assert.equal(body.input[0].content[1].source.type,'base64');
 });
-test('fails closed on invalid JSON, tool calls, receiving proof and oversized documents',async()=>{
+test('fails closed on invalid JSON, tool calls, incomplete schema and oversized documents',async()=>{
  for(const result of [{status:'completed',output:[{type:'function_call'}]},{status:'completed',output:[]},{status:'completed',output:[{content:[{type:'output_text',text:'{"document_type":"receiving_proof"}'}]}]}])await assert.rejects(extractOpenClawInvoice(Buffer.from('test'),'application/pdf',{config,fetcher:async()=>({ok:true,json:async()=>result})}));
  await assert.rejects(extractOpenClawInvoice(Buffer.alloc(6*1024*1024),'application/pdf',{config,fetcher:()=>assert.fail('No network')}),/5 MB/);
 });

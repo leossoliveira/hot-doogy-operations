@@ -4,7 +4,7 @@ import {invoiceSuggestions} from '../src/invoice-intake-ui.js';
 import {financialStatus} from '../src/invoice-financial.js';
 import {invoicePriceHistory} from '../src/invoice-price-history.js';
 const sample=()=>Object.fromEntries(Object.keys(invoiceSchema.properties).map(k=>[k,k==='document_complete'?true:k==='document_type'?'invoice':k==='confidence'?'high':['items','warnings'].includes(k)?[]:null]));
-test('delivery proofs, uncertain documents and low confidence fail closed',()=>{for(const document_type of ['receiving_proof','other','uncertain'])assert.throws(()=>validateInvoiceExtraction({...sample(),document_type}),e=>e.status===422);assert.throws(()=>validateInvoiceExtraction({...sample(),confidence:'low'}));assert.throws(()=>validateInvoiceExtraction({document_type:'invoice'}));});
+test('all document classifications and low confidence remain available for human review',()=>{for(const document_type of ['invoice','receiving_proof','other','uncertain']){const result=validateInvoiceExtraction({...sample(),document_type,confidence:'low'});assert.equal(result.document_type,document_type);assert.equal(result.total,null);assert.deepEqual(result.items,[]);assert.ok(result.warnings.some(w=>/Low confidence/.test(w)));if(document_type!=='invoice')assert.ok(result.warnings.some(w=>/financial nature/.test(w)));}assert.throws(()=>validateInvoiceExtraction({document_type:'invoice'}));});
 test('invalid dates remain unresolved and no missing values are invented',()=>{const x=validateInvoiceExtraction({...sample(),invoice_date:'2026-13-02',due_date:'2026-02-30'});assert.equal(x.invoice_date,null);assert.equal(x.due_date,null);assert.equal(x.total,null);});
 test('Responses extraction keeps file in request, disables storage and requires structured output',async()=>{let request;const result=await extractInvoice(Buffer.from('%PDF-synthetic'),'application/pdf',{config:{key:'fake',model:'test'},fetcher:async(url,args)=>{request=JSON.parse(args.body);assert.equal(url,'https://api.openai.com/v1/responses');return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(sample())}]}]})};}});assert.equal(request.store,false);assert.equal(request.text.format.strict,true);assert.equal(request.input[0].content[0].type,'input_file');assert.equal(result.extraction.document_type,'invoice');});
 test('refusals, truncation and provider failures do not produce a draft',async()=>{for(const response of [{ok:false,status:401},{ok:true,json:async()=>({status:'incomplete'})},{ok:true,json:async()=>({status:'completed',output:[{content:[{type:'refusal'}]}]})}])await assert.rejects(extractInvoice(Buffer.from('test'),'image/png',{config:{key:'fake',model:'test'},fetcher:async()=>response}));});
@@ -24,7 +24,7 @@ test('both providers accept a purchase receipt draft with weight, rounding and h
  for(const provider of [extractInvoice,extractOpenClawInvoice]){
   let request;
   const result=await provider(Buffer.from('synthetic receipt'),'image/jpeg',{config:{key:'fake',model:'test',url:'http://localhost/v1/responses',token:'fake',agent:'invoice-analysis'},fetcher:async(url,args)=>{request=JSON.parse(args.body);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(receipt)}]}]})};}});
-  assert.match(request.instructions,/Accept an itemized purchase receipt/);
+  assert.match(request.instructions,/Accept any invoice, receipt or proof document/);
   assert.match(request.instructions,/US month\/day\/year/);
   assert.match(request.instructions,/visually re-read each printed digit/);
   assert.match(request.instructions,/Do not substitute the upload date, filename date/);
@@ -32,5 +32,25 @@ test('both providers accept a purchase receipt draft with weight, rounding and h
   assert.match(request.instructions,/never Cash, Total Tendered or Change/);
   assert.match(request.instructions,/Do not create item lines for tendered cash or change/);
   const x=result.extraction;assert.equal(x.document_type,'invoice');assert.equal(x.invoice_number,'028596-02');assert.equal(x.total,2.10);assert.equal(x.items[0].quantity,2.67);assert.equal(x.items[0].unit,'lb');assert.equal(x.items[1].line_total,-0.01);assert.equal(x.due_date,null);assert.equal(x.warnings.length,1);
+ }
+});
+
+test('both providers return payment proofs, simple receipts and delivery proofs without inventing items',async()=>{
+ const {extractOpenClawInvoice}=await import('../server/openclaw-invoice.mjs');
+ for(const provider of [extractInvoice,extractOpenClawInvoice])for(const document_type of ['invoice','other','receiving_proof','uncertain']){
+  const evidence={...sample(),document_type,confidence:'low',total:document_type==='receiving_proof'?null:75,warnings:['Original document requires review.']};
+  const result=await provider(Buffer.from('synthetic proof'),'image/png',{config:{key:'fake',model:'test',url:'http://localhost/v1/responses',token:'fake',agent:'invoice-analysis'},fetcher:async(url,args)=>{
+   const request=JSON.parse(args.body);
+   assert.match(request.instructions,/non-itemized purchase receipts/);
+   assert.match(request.instructions,/payment confirmations, bank transfers, card vouchers/);
+   assert.match(request.instructions,/must not create a duplicate expense/);
+   assert.match(request.instructions,/never invent item lines from a payment total/);
+   return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(evidence)}]}]})};
+  }});
+  assert.equal(result.extraction.document_type,document_type);
+  assert.equal(result.extraction.total,evidence.total);
+  assert.equal(result.extraction.invoice_date,null);
+  assert.deepEqual(result.extraction.items,[]);
+  assert.ok(result.extraction.warnings.some(w=>/Low confidence/.test(w)));
  }
 });
