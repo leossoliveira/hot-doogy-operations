@@ -1,3 +1,4 @@
+import {createSaveAttempt} from './save-attempt.js';
 import {itemSearchTitle,itemSearchCaption,supplierSearchTitle,supplierSearchCaption} from './item-search.js';
 import {usDate} from './locale.js';
 import {invoicePriceHistory,invoicePriceChange,filterInvoicePricePeriod} from './invoice-price-history.js';
@@ -92,7 +93,7 @@ export function createSupplierUI(ctx) {
     const row=items().find(x=>x.supplierItemId===id);if(!row)return;
     const price=priceFor(row),scope=ctx.state().store;
     const original={...row,price:price.amount,priceUnitId:price.unitId??null,priceScope:scope};
-    editor={original,draft:createSupplierDraft(original),dirty:false,price,photo:ctx.local().itemPhotos?.[row.itemId]||null,photoBusy:false,photoDirty:false};
+    editor={attempt:createSaveAttempt(),original,draft:createSupplierDraft(original),dirty:false,price,photo:ctx.local().itemPhotos?.[row.itemId]||null,photoBusy:false,photoDirty:false};
     renderEditor();
   }
   function links(row){
@@ -116,7 +117,7 @@ export function createSupplierUI(ctx) {
       <div class="catalog-editor-column"><section class="catalog-section"><h3>${icon('ruler')}Operating units</h3><p class="catalog-help">U.S. customary units appear first. Metric units remain available. Add an item-specific conversion before using a new unit.</p><div class="form-grid">${roles.map(([label,key])=>field(label,'catalog-'+key,select('catalog-'+key,unitOptions(row,row[key]),`data-item-field="${key}"`))).join('')}${field("Base unit",'catalog-base',input('catalog-base',row.baseUnitName||"Not specified",'text','readonly'))}</div></section>
       <section class="catalog-section"><h3>${icon('arrow-left-right')}Conversions</h3><p class="catalog-help">Quantity of ${e(row.baseUnitName||"base unit")} in each unit. The base unit stays unchanged.</p><div id="catalog-conversions"></div><div class="catalog-add-conversion"><select id="catalog-new-unit" aria-label="Unit for new conversion"></select>${btn("Add",'supplier-unit-add','plus','sm')}</div></section>
       <section class="catalog-section"><h3>${icon('settings-2')}Settings</h3><div class="form-grid">${booleanField("Active item",'active',row.active)}${booleanField("Active for this supplier",'supplierActive',row.supplierActive)}${row.trackInventory!=null?booleanField("Track inventory",'trackInventory',row.trackInventory):''}${row.yieldPercent!=null?field("Yield (%)",'catalog-yieldPercent',input('catalog-yieldPercent',row.yieldPercent,'number','min="0" max="100" step="any" data-item-field="yieldPercent"')):''}</div><p class="catalog-help">Internal name, category, and conversions are shared for this item. Product Description, brand, SKU, price, and ordering and receiving units belong to this supplier.</p></section>${links(row)}</div></div><p id="supplier-item-error" class="error-text" role="alert" tabindex="-1"></p></form>`;
-    ctx.openModal("Item details",body,`${row.editedLocally?btn("Restore original",'supplier-restore','rotate-ccw','ghost'):''}<span class="meta catalog-save-note">${icon('hard-drive')}Changes saved to the database</span>${btn("Cancel",'supplier-cancel')}${btn(row.active?"Deactivate":"Activate",'supplier-toggle','ban','catalog-toggle-button')}${btn("Delete",'supplier-delete','trash-2','catalog-delete-button')}${btn("Save changes",'supplier-save','check','primary')}`,{wide:true,className:'catalog-item-modal',kind:'supplier-edit'});
+    ctx.openModal("Item details",body,`${row.editedLocally?btn("Restore original",'supplier-restore','rotate-ccw','ghost'):''}<span class="meta catalog-save-note">${icon('hard-drive')}Review changes, then select Save changes</span>${btn("Cancel",'supplier-cancel')}${btn(row.active?"Deactivate":"Activate",'supplier-toggle','ban','catalog-toggle-button')}${btn("Delete",'supplier-delete','trash-2','catalog-delete-button')}${btn("Save changes",'supplier-save','check','primary')}`,{wide:true,className:'catalog-item-modal',kind:'supplier-edit'});
     renderConversions();
   }
   function priceHistory(row) {
@@ -158,20 +159,19 @@ export function createSupplierUI(ctx) {
     const current=editor,button=$('[data-action="supplier-save"]');button.disabled=true;current.photoBusy=true;
     try {
       // Save details before the photo API updates the supplier record's timestamp.
-      const result=saveSupplierDraft(ctx.local(),current.original,current.draft,{...catalog(),items:items()},{storage:{setItem(){}}});
-      await persistSupplierChanges(current,result.local,ctx);
+      await current.attempt.run(()=>saveSupplierDraft(ctx.local(),current.original,current.draft,{...catalog(),items:items()},{storage:{setItem(){}}}).local,next=>persistSupplierChanges(current,next,ctx));
       current.dirty=false;ctx.close(true);editor=null;ctx.render();ctx.toast(current.photoDirty?"Photo and item details saved.":"Item details updated in the database.");
     }catch(error){const target=$('#supplier-item-error');if(target){target.textContent=error.name==='QuotaExceededError'?"Unable to save locally: storage is full. A photo already verified in storage will still be available when you reload.":error.message;target.focus();}}
-    finally{current.photoBusy=false;button.disabled=false;}
+    finally{current.photoBusy=false;button.disabled=false;const form=$('#supplier-item-form');if(form){for(const el of form.elements)el.disabled=!!current.attempt.pending;const note=$('.catalog-save-note');if(note)note.textContent=current.attempt.pending?'Save not confirmed. Select Save changes to retry the same request.':'Review changes, then select Save changes';}}
   }
   function requestDelete(){
-    if(editor.photoBusy)return;
+    if(editor.photoBusy||editor.attempt?.pending)return;
     if(editor.dirty){$('#supplier-item-error').textContent='Save or discard your changes before deleting this item.';return;}
     if(!$('#supplier-delete-guard'))$('#overlay-root .modal-foot').insertAdjacentHTML('afterbegin',`<div class="recipe-discard-guard" id="supplier-delete-guard" role="alert"><span>Permanently delete ${e(editor.original.name)} from the catalog and inventory? This cannot be undone. Linked records prevent deletion.</span>${btn('Cancel','supplier-delete-cancel','','sm')}${btn('Delete permanently','supplier-delete-confirm','trash-2','catalog-delete-button sm')}</div>`);
     ctx.icons();
   }
   async function deleteItem(){
-    if(editor.photoBusy)return;
+    if(editor.photoBusy||editor.attempt?.pending)return;
     const current=editor;current.photoBusy=true;
     try{
       await api('/api/catalog/delete',{id:current.original.supplierItemId,confirmed:true});
@@ -181,13 +181,14 @@ export function createSupplierUI(ctx) {
     finally{current.photoBusy=false;}
   }
   function toggleActive(){
-    if(editor.photoBusy)return;
+    if(editor.photoBusy||editor.attempt?.pending)return;
     editor.draft.active=!editor.draft.active;editor.dirty=true;
     $('#catalog-active').value=String(editor.draft.active);
     const button=$('[data-action="supplier-toggle"]');button.innerHTML=icon('ban')+(editor.draft.active?'Deactivate':'Activate');ctx.icons();
     ctx.toast('Status updated. Save changes to apply.');
   }
   function requestDiscard() {
+    if(editor?.attempt?.pending){ctx.toast('Confirm the pending save with Save changes before discarding.');return false;}
     if(editor?.photoBusy){ctx.toast("Wait for the photo to finish before closing.");return false;}
     if(!$('#supplier-discard-guard'))$('#overlay-root .modal-foot').insertAdjacentHTML('afterbegin',`<div class="recipe-discard-guard" id="supplier-discard-guard" role="alert"><span>You have unsaved changes.</span>${btn("Keep editing",'supplier-keep','','sm')}${btn("Discard changes",'supplier-discard','','sm')}</div>`);
     $('#supplier-discard-guard button')?.focus();return false;
@@ -206,7 +207,7 @@ export function createSupplierUI(ctx) {
     'supplier-sort':el=>{const key=el.dataset.key;direction=sortKey===key&&direction==='asc'?'desc':'asc';sortKey=key;ctx.state().page=1;ctx.render();},
     'supplier-back':()=>{selected=null;ctx.state().q='';ctx.state().page=1;ctx.render();},
     'supplier-item':el=>edit(el.dataset.id),'supplier-save':save,'supplier-cancel':cancel,
-    'supplier-discard':()=>{if(editor.photoBusy)return;editor.dirty=false;ctx.close(true);editor=null;},'supplier-keep':()=>$('#supplier-discard-guard')?.remove(),
+    'supplier-discard':()=>{if(editor.photoBusy||editor.attempt?.pending)return;editor.dirty=false;ctx.close(true);editor=null;},'supplier-keep':()=>$('#supplier-discard-guard')?.remove(),
     'supplier-restore':restore,'supplier-keep-restore':()=>$('#supplier-restore-guard')?.remove(),
     'supplier-confirm-restore':()=>{try{const source=catalog().items.find(x=>x.supplierItemId===editor.original.supplierItemId);const result=restoreSupplierDraft(ctx.local(),source,{catalog:catalog()});ctx.setLocal(result.local);editor.dirty=false;ctx.close(true);editor=null;ctx.render();ctx.toast("Original item details restored in this preview.");}catch(error){$('#supplier-item-error').textContent=error.message||"Unable to restore. Try again.";$('#supplier-item-error').focus();}},
     'supplier-unit-add':()=>{const id=$('#catalog-new-unit').value,u=catalog().units.find(x=>x.id===id);if(!u)return;editor.draft.units.push({...u,itemUnitId:'local-'+crypto.randomUUID(),factor:'',base:false,ordering:false,receiving:false,stocktake:false});editor.dirty=true;refreshUnitOptions();renderConversions();},

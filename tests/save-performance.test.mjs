@@ -4,19 +4,19 @@ import {scheduleReads} from '../server/paginated-read.mjs';
 import {readTables,projectData} from '../server/live-data.mjs';
 import {operationsFixture} from './fixtures/save-refresh.mjs';
 
-test('Refresh shares one bounded request budget across tables and parallel history pages',async()=>{
- let active=0,peak=0;
- const calls=[];
- const raw=await readTables({request:async(path,{token})=>{
-  assert.equal(token,'authenticated-user');active++;peak=Math.max(peak,active);
-  const url=new URL(path,'https://test.invalid'),table=url.pathname.split('/').at(-1),offset=Number(url.searchParams.get('offset'));
-  calls.push([table,offset]);await new Promise(resolve=>setImmediate(resolve));active--;
+test('Concurrent users share a bounded read budget and histories use cursor pages',async()=>{
+ let active=0,peak=0;const calls=[];
+ const auth={request:async(path,{token})=>{
+  assert.ok(['user-a','user-b','user-c'].includes(token));active++;peak=Math.max(peak,active);
+  const url=new URL(path,'https://test.invalid'),table=url.pathname.split('/').at(-1),after=url.searchParams.get('id'),offset=after?Number(after.slice(3))+1:0,limit=Number(url.searchParams.get('limit'));
+  assert.equal(url.searchParams.has('offset'),false);calls.push([token,table,offset]);await new Promise(resolve=>setImmediate(resolve));active--;
   const total=table==='stock_count_lines'?4500:0;
-  return Array.from({length:Math.max(0,Math.min(1000,total-offset))},(_,i)=>({id:offset+i}));
- }},'authenticated-user','owner');
- assert.equal(peak,8);assert.equal(raw.stock_count_lines.length,4500);
- assert.deepEqual(raw.stock_count_lines.map(x=>x.id),Array.from({length:4500},(_,i)=>i));
- assert.ok(calls.some(([table,offset])=>table==='stock_count_lines'&&offset===4000));
+  return Array.from({length:Math.max(0,Math.min(limit,total-offset))},(_,i)=>({id:String(offset+i).padStart(6,'0')}));
+ }};
+ const values=await Promise.all(['user-a','user-b','user-c'].map(token=>readTables(auth,token,'owner')));
+ assert.ok(peak<=8);assert.ok(peak>=4);
+ for(const raw of values){assert.equal(raw.stock_count_lines.length,4500);assert.deepEqual(raw.stock_count_lines.map(x=>Number(x.id)),Array.from({length:4500},(_,i)=>i));}
+ assert.ok(calls.some(([,table,offset])=>table==='stock_count_lines'&&offset===4000));
 });
 
 test('Read scheduler releases slots after rejection and synchronous errors without caching',async()=>{

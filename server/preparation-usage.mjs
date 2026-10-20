@@ -1,9 +1,10 @@
+import {calculationRead} from './read-budget.mjs';
 import {ApiError,reply} from './auth.mjs';
 import {periodWindow} from '../src/preparation-model.js';
 export async function calculatePreparationUsage(auth,session,{start,end,location}){
  const rows=new Map(),days=new Map();
  for(let offset=0;;offset+=100){
-  const part=await auth.request('/rest/v1/rpc/preparation_usage_period',{token:session.token,method:'POST',body:{p_start:start,p_end:end,p_location:location==='all'?null:location,p_offset:offset,p_limit:100}});
+  const part=await calculationRead(()=>auth.request('/rest/v1/rpc/preparation_usage_period',{token:session.token,method:'POST',body:{p_start:start,p_end:end,p_location:location==='all'?null:location,p_offset:offset,p_limit:100}}));
   if(!Number.isInteger(part.meta?.processed))throw Error('Incomplete sales response.');
   for(const r of part.rows){const key=[r.date,r.locationId,r.itemId].join('|'),old=rows.get(key);if(old)old.baseQty+=Number(r.baseQty);else rows.set(key,{...r,baseQty:Number(r.baseQty)});}
   for(const d of part.days){const key=[d.date,d.locationId].join('|'),old=days.get(key);if(old){old.totalLines+=d.totalLines;old.incompleteLines+=d.incompleteLines;}else days.set(key,{...d});}

@@ -25,7 +25,7 @@ jobs:
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/llm-invoice-drafts.mjs supabase/migrations/20261011172215_llm_invoice_drafts_human_approval.sql supabase/migrations/20261011192921_invoice_review_receiving.sql supabase/migrations/20261011195918_invoice_line_item_type.sql supabase/migrations/20261011195920_invoice_line_category.sql supabase/migrations/20261020215843_invoice_human_document_classification.sql
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/order-receiving.mjs
           node supabase/tests/count-drafts.mjs "$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js"
-      - name: Testar falhas e recuperação de contagens no navegador
+      - name: Testar falhas e recuperação de salvamentos no navegador
         run: |
           npm install --prefix "$RUNNER_TEMP/count-browser-tests" --save-exact playwright@1.56.1
           "$RUNNER_TEMP/count-browser-tests/node_modules/.bin/playwright" install --with-deps chromium
@@ -37,6 +37,7 @@ jobs:
             sleep 1
           done
           node tests/browser/count-reliability.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
+          node tests/browser/save-reliability.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
   version:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate

@@ -14,3 +14,17 @@ export async function readPages(request,url,{pageSize=1000,concurrency=4}={}){
  }));
  return [...pages].sort((a,b)=>a[0]-b[0]).filter(([offset])=>offset<end).flatMap(([,page])=>page);
 }
+
+// Keyset pagination avoids scanning and rechecking RLS on every preceding row.
+export async function readCursorPages(request,url,{pageSize=250,key='id',signal}={}){
+ const rows=[];let cursor;
+ for(;;){
+  signal?.throwIfAborted();
+  const page=await request(`${url}&limit=${pageSize}${cursor===undefined?'':`&${key}=gt.${encodeURIComponent(cursor)}`}`);
+  if(!Array.isArray(page))throw Error('Invalid table response.');
+  if(page.length&&page.at(-1)[key]==null)throw Error('Missing pagination key.');
+  rows.push(...page);
+  if(page.length<pageSize)return rows;
+  const next=page.at(-1)[key];if(cursor!==undefined&&String(next)<=String(cursor))throw Error('Table pagination did not advance.');cursor=next;
+ }
+}

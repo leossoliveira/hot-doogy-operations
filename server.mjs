@@ -1,3 +1,6 @@
+import {randomUUID} from 'node:crypto';
+import {createWorkspaceReader} from './server/workspace-read.mjs';
+import {drainServer} from './server/graceful-shutdown.mjs';
 import {saveInventoryDraft} from './server/inventory-count.mjs';
 import {editOrder} from './server/order-edit.mjs';
 import {editTransfer,reportTransferIssue} from './server/transfer-edit.mjs';
@@ -25,10 +28,13 @@ import {fileURLToPath} from 'node:url';
 import {createAuth,ApiError,reply,jsonBody} from './server/auth.mjs';
 import {readTables,projectData} from './server/live-data.mjs';
 import {photos} from './server/photo-api.mjs';
-const root=path.dirname(fileURLToPath(import.meta.url)),port=Number(process.env.PORT||4173),auth=createAuth();
+const root=path.dirname(fileURLToPath(import.meta.url)),port=Number(process.env.PORT||4173),auth=createAuth({onDatabaseError:event=>console.warn(JSON.stringify(event))});
 const allowedHosts=new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
 const mime={'.mjs':'text/javascript; charset=utf-8','.wasm':'application/wasm','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
-http.createServer(async(req,res)=>{
+const workspaceReader=createWorkspaceReader();
+const server=http.createServer(async(req,res)=>{
+ const started=performance.now(),requestId=randomUUID();res.setHeader('X-Request-ID',requestId);
+ res.once('finish',()=>{const durationMs=Math.round(performance.now()-started);if(res.statusCode>=400||durationMs>2000)console.info(JSON.stringify({event:'http_request',requestId,method:req.method,path:req.url?.split('?')[0],status:res.statusCode,durationMs}));});
  try{
   const url=new URL(req.url,'http://localhost');
   if(!allowedHosts.has(req.headers.host)||req.headers['sec-fetch-site']==='cross-site')throw new ApiError(403,"Origin not allowed.");
@@ -37,6 +43,7 @@ http.createServer(async(req,res)=>{
   if(await auth.handle(req,res,url))return;
   if(url.pathname.startsWith('/api/')){
    const session=await auth.requireSession(req);
+   if(!['GET','HEAD'].includes(req.method))res.once('finish',()=>{if(res.statusCode<400)workspaceReader.invalidate(session);});
    requireStaffRequest(session.member.role,req.method,url.pathname);
    const profile=await loadProfile(auth,session);requireProfileRequest(profile,req.method,url.pathname);
    if(url.pathname.startsWith('/api/my-day'))return await myDayAPI(req,res,url,auth,session);
@@ -66,7 +73,7 @@ http.createServer(async(req,res)=>{
     if(!/^[a-f0-9-]{36}$/.test(id||'')||!/^[a-f0-9-]{36}$/.test(location||''))throw new ApiError(400,'Invalid count.');
     return reply(res,200,await auth.request('/rest/v1/rpc/inventory_count_notes',{token:session.token,method:'POST',body:{p_session:id,p_location:location}}));
    }
-   if(url.pathname==='/api/data'&&req.method==='GET'){const raw=await readTables(auth,session.token,session.member.role);const data=projectData(raw);data.access={role:session.member.role,profile};if(['owner','admin','manager','chef'].includes(session.member.role)){const summary=queueSalesSummary(auth,session,raw);data.preparationSales=summary.result?Object.fromEntries(Object.entries(summary.result).filter(([k])=>k!=='purchasingSales')):null;data.purchasingSales=summary.result?.purchasingSales||null;data.meta.preparationSalesStatus=summary.status;if(summary.result){data.meta.pendingImportRows=summary.result.days.reduce((n,x)=>n+x.incompleteLines,0);data.issues=summary.result.issues.map(x=>({...x,count:x.occurrences,label:x.code,locationName:data.locations.find(l=>l.id===x.locationId)?.name}));}}return await replyData(req,res,data);}
+   if(url.pathname==='/api/data'&&req.method==='GET'){const raw=await workspaceReader.read(auth,session);const data=projectData(raw);data.access={role:session.member.role,profile};if(['owner','admin','manager','chef'].includes(session.member.role)){const summary=queueSalesSummary(auth,session,raw,{start:url.searchParams.get('sales')==='1'});data.preparationSales=summary.result?Object.fromEntries(Object.entries(summary.result).filter(([k])=>k!=='purchasingSales')):null;data.purchasingSales=summary.result?.purchasingSales||null;data.meta.preparationSalesStatus=summary.status;if(summary.result){data.meta.pendingImportRows=summary.result.days.reduce((n,x)=>n+x.incompleteLines,0);data.issues=summary.result.issues.map(x=>({...x,count:x.occurrences,label:x.code,locationName:data.locations.find(l=>l.id===x.locationId)?.name}));}}return await replyData(req,res,data);}
    if(url.pathname==='/api/catalog/delete'&&req.method==='POST'){const body=await jsonBody(req,4096);if(body.confirmed!==true||!/^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.test(body.id||''))throw new ApiError(400,'Confirm deletion of a valid item.');return reply(res,200,await auth.request('/rest/v1/rpc/delete_catalog_item',{token:session.token,method:'POST',body:{p_id:body.id,p_confirmed:true}}));}
    if(url.pathname==='/api/doogy-ai/insights'&&req.method==='POST'){if(!['owner','admin'].includes(session.member.role))throw new ApiError(403,'Insights are available to administrators only.');const body=await jsonBody(req,4096);const data=projectData(await readTables(auth,session.token,session.member.role));return reply(res,200,await insightsService.start(session,data,body.location||'all',body.requestId));}
    if(url.pathname==='/api/doogy-ai/insights'&&req.method==='GET')return reply(res,200,await insightsService.result(session,url.searchParams.get('id')));
@@ -95,5 +102,8 @@ http.createServer(async(req,res)=>{
   if(file.startsWith(path.join(root,'public','data')+path.sep)||!file.startsWith(root+path.sep))throw new ApiError(403,"Access denied.");
   const body=await readFile(file);
   res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"});res.end(req.method==='HEAD'?undefined:body);
- }catch(error){reply(res,error.status||500,{error:error.status?error.message:"Unable to complete the request. Try again."});}
+ }catch(error){reply(res,error.status||500,{error:error.status?error.message:"Unable to complete the request. Try again.",...(error.databaseCode?{code:error.databaseCode,rejected:/^(P0001|42501|57014|55P03)$/.test(error.databaseCode)||/^(22|23|40)/.test(error.databaseCode)}:{})});}
 }).listen(port,'127.0.0.1',()=>console.log(`HOT DOOGY Operations → http://127.0.0.1:${port}`));
+
+const shutdown=drainServer(server);
+process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);

@@ -1,7 +1,8 @@
+import {bulkRead} from './read-budget.mjs';
 import {countSessions} from '../src/count-history.js';
 import {staffTables} from './staff-access.mjs';
 import {recipeLocations} from './recipe-locations.mjs';
-import {readPages,scheduleReads} from './paginated-read.mjs';
+import {readCursorPages,scheduleReads} from './paginated-read.mjs';
 import {enrichOperations} from './operation-evidence.mjs';
 import {organizationTables} from './table-scopes.mjs';
 import {ORGANIZATION_ID} from './supabase-config.mjs';
@@ -14,13 +15,13 @@ const date=v=>v?dateFormatter.format(new Date(v)):null;
 export const FACT_COLUMNS=['id','organization_id','location_id','menu_item_id','source_row_id','import_batch_id','fact_date','granularity','period_start','period_end','quantity','net_sales','gross_sales','discounts','refunds','external_item_id','external_item_name'];
 export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).map(k=>[k,f[k]]));
 export async function readTables(auth,token,role){
- const result={},read=scheduleReads(url=>auth.request(url,{token}));
- await Promise.all(TABLES.map(async table=>{
+ const result={},controller=new AbortController(),read=scheduleReads(url=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{token,signal:controller.signal}).catch(error=>{controller.abort(error);throw error;});}),4);
+ try{await Promise.all(TABLES.map(async table=>{
   if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
-  result[table]=await readPages(read,url);
- }));
+  result[table]=await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:table==='inventory_transactions'?100:500,signal:controller.signal});
+ }));}catch(error){controller.abort(error);throw error;}
  const receiptIds=(result.purchase_receipts||[]).filter(r=>r.received_by).map(r=>r.id);
  if(receiptIds.length){
   try{

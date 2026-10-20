@@ -21,7 +21,7 @@ test('membership removal revokes next request even with unexpired token',async()
  await assert.rejects(auth.requireSession(request(null,r.headers['Set-Cookie'].split(';')[0])),e=>e.status===403);
 });
 test('data reader paginates beyond 1000 and forwards user token to RLS',async()=>{
- const seen=[];const auth={request:async(url,{token})=>{assert.equal(token,'user-token');seen.push(url);return url.startsWith('/rest/v1/sales_item_facts?')?(url.includes('offset=0')?Array.from({length:1000},(_,id)=>({id})):[{id:1001}]):[];}};
+ const seen=[];const auth={request:async(url,{token})=>{assert.equal(token,'user-token');seen.push(url);if(!url.startsWith('/rest/v1/sales_item_facts?'))return [];const params=new URL(url,'https://test.invalid').searchParams,start=params.has('id')?Number(params.get('id').slice(3))+1:0,limit=Number(params.get('limit'));return Array.from({length:Math.min(limit,1001-start)},(_,i)=>({id:String(start+i).padStart(6,'0')}));}};
  const raw=await readTables(auth,'user-token');assert.equal(raw.sales_item_facts.length,1001);assert.ok(seen.some(s=>s.includes('organization_id=eq.')));
 });
 test('refresh loop defers during editing and never overlaps requests',async()=>{

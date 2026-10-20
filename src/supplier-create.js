@@ -44,8 +44,8 @@ export function createSupplierForms(ctx){
   ctx.toast(operationKind==='supplier'?'Supplier created.':'Item created.');
   try{await ctx.refresh();ctx.render();}catch{ctx.toast('Saved. The list updates on the next automatic refresh.','info');}
  }catch(error){
-  if([400,422].includes(error.status)){current.rejected();lock(form,false);}
-  message(form,error.status>=500?'The save could not be confirmed. Your draft is kept. Select Save to retry the same item safely.':error.message);
+  if(error.rejected||[400,409,422].includes(error.status)){current.rejected();lock(form,false);}
+  message(form,error.status>=500&&!error.rejected?'The save could not be confirmed. Your draft is kept. Select Save to retry the same item safely.':error.message);
  }finally{busy=false;if(button){button.disabled=false;button.innerHTML=label;}}
  }
 

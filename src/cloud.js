@@ -5,9 +5,9 @@ export async function api(path,body){
   value=await r.json();
  }catch(cause){
   const error=Error((body===undefined||path.startsWith('/api/auth/'))?'Connection interrupted. Please try again.':'The save could not be confirmed. Keep this form open and retry when the connection returns.');
-  error.status=503;if(cause?.name==='TimeoutError')error.name='TimeoutError';throw error;
+  error.status=r?.ok===false?r.status:503;error.rejected=false;if(cause?.name==='TimeoutError')error.name='TimeoutError';throw error;
  }
- if(!r.ok){const error=Error(value.error||'The service is temporarily unavailable. Please try again.');error.status=r.status;throw error;}
+ if(!r.ok){const error=Error(value.error||'The service is temporarily unavailable. Please try again.');error.status=r.status;error.code=value.code;error.rejected=value.rejected===true||[400,401,403,409,422].includes(r.status);throw error;}
  return value;
 }
 export const command=(action,payload,commandId=crypto.randomUUID())=>api('/api/command',{action,payload,commandId});

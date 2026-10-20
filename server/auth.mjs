@@ -7,15 +7,17 @@ export class ApiError extends Error {constructor(status,message){super(message);
 export async function jsonBody(req,max=1024*1024){let n=0,chunks=[];for await(const c of req){n+=c.length;if(n>max)throw new ApiError(413,"File is too large.");chunks.push(c);}try{return JSON.parse(Buffer.concat(chunks).toString());}catch{throw new ApiError(400,"Invalid data.");}}
 export function reply(res,status,value){res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));}
 const SESSION_MS=28800000,PENDING_MS=600000,MFA_MS=30*24*60*60*1000;
-export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HOT_DOOGY_TRUST_PROXY==='loopback',sessionDirectory=process.env.HOT_DOOGY_SESSION_DIR}={}){
+export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HOT_DOOGY_TRUST_PROXY==='loopback',sessionDirectory=process.env.HOT_DOOGY_SESSION_DIR,onDatabaseError=()=>{}}={}){
  const store=createSessionStore(sessionDirectory,{now,maxAge:MFA_MS}),sessions=store.sessions,limits=createLoginLimits({now}),mfaLimits=createLoginLimits({now});
- async function request(route,{token,method='GET',body}={}){
-  let r;try{r=await fetcher(SUPABASE_URL+route,{method,headers:{apikey:SUPABASE_KEY,...(token?{Authorization:`Bearer ${token}`} : {}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});}catch{throw new ApiError(503,"The database connection is temporarily unavailable. Please try again.");}
+ async function request(route,{token,method='GET',body,signal}={}){
+  let r;try{r=await fetcher(SUPABASE_URL+route,{method,headers:{apikey:SUPABASE_KEY,...(token?{Authorization:`Bearer ${token}`} : {}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(20000)]):AbortSignal.timeout(20000)});}catch{throw new ApiError(503,"The database connection is temporarily unavailable. Please try again.");}
   let data;try{data=r.status===204?null:await r.json();}catch{throw new ApiError(503,"The database response was interrupted. Please try again.");}
   if(!r.ok){
+   onDatabaseError({event:'database_error',route:route.split('?')[0],status:r.status,code:data?.code||null});
+   if(['57014','55P03','53300','53400'].includes(data?.code)){const failure=new ApiError(503,method==='GET'?'The database is busy. Please retry shortly.':'The database is busy. Your changes have not been saved. Please retry shortly.');failure.databaseCode=data.code;throw failure;}
    if(r.status>=500&&(route.startsWith('/auth/')||!data?.code))throw new ApiError(503,"The database is temporarily unavailable. Please try again.");
    if(route==='/auth/v1/token?grant_type=refresh_token'&&r.status===400&&['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired'].includes(data?.error_code||data?.code))throw new ApiError(401,"Your session has expired. Sign in again.");
-   if(route==='/rest/v1/rpc/save_llm_invoice_draft'&&data?.code==='P0001'){const failure=new ApiError(422,databaseErrorMessage(data));failure.databaseCode=data.code;throw failure;}
+   if(!route.startsWith('/auth/')&&data?.code==='P0001'){const failure=new ApiError(422,databaseErrorMessage(data));failure.databaseCode=data.code;throw failure;}
    if(route==='/rest/v1/rpc/catalog_create'&&/^(P0001|22|23)/.test(data?.code||''))throw new ApiError(400,databaseErrorMessage(data));
    if(route.startsWith('/auth/v1/factors')){
     if(r.status===429)throw new ApiError(429,"Too many attempts. Wait a few minutes before trying again.");
@@ -23,7 +25,7 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
     if(r.status===401)throw new ApiError(401,"Your session has expired. Sign in again.");
     throw new ApiError(r.status>=500?502:400,"Unable to verify your authenticator. Try again, or contact your administrator.");
    }
-   const failure=new ApiError(data?.code==='40001'?409:[401,403,429].includes(r.status)?r.status:502,route.startsWith('/auth/')?"Invalid email or password, or your session has expired.":databaseErrorMessage(data));failure.databaseCode=data?.code;throw failure;
+   const failure=new ApiError(['40001','40P01','23505'].includes(data?.code)?409:data?.code==='42501'?403:/^(22|23)/.test(data?.code||'')?422:[401,403,429].includes(r.status)?r.status:502,route.startsWith('/auth/')?"Invalid email or password, or your session has expired.":databaseErrorMessage(data));failure.databaseCode=data?.code;throw failure;
   }
   return data;
  }

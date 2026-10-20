@@ -16,7 +16,7 @@ test('failed calculation is reported independently and retried with backoff',asy
  const raw={},session={};let calls=0,clock=0;const options={now:()=>clock,calculate:async()=>{calls++;throw Error('timeout');}};
  queueSalesSummary({},session,raw,options);await session.salesJob;
  assert.equal(queueSalesSummary({},session,raw,options).status,'error');assert.equal(calls,1);
- clock=61000;assert.equal(queueSalesSummary({},session,raw,options).status,'loading');await session.salesJob;assert.equal(calls,2);
+ clock=301000;assert.equal(queueSalesSummary({},session,raw,options).status,'loading');await session.salesJob;assert.equal(calls,2);
 });
 test('login shows loading progress and prevents duplicate submissions',async()=>{
  const oldFetch=globalThis.fetch,oldDocument=globalThis.document;let finish,count=0;const feedback={};
