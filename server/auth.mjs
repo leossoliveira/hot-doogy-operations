@@ -10,9 +10,12 @@ const SESSION_MS=28800000,PENDING_MS=600000,MFA_MS=30*24*60*60*1000;
 export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HOT_DOOGY_TRUST_PROXY==='loopback',sessionDirectory=process.env.HOT_DOOGY_SESSION_DIR}={}){
  const store=createSessionStore(sessionDirectory,{now,maxAge:MFA_MS}),sessions=store.sessions,limits=createLoginLimits({now}),mfaLimits=createLoginLimits({now});
  async function request(route,{token,method='GET',body}={}){
-  const r=await fetcher(SUPABASE_URL+route,{method,headers:{apikey:SUPABASE_KEY,...(token?{Authorization:`Bearer ${token}`} : {}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});
-  const data=await r.json().catch(()=>null);
+  let r;try{r=await fetcher(SUPABASE_URL+route,{method,headers:{apikey:SUPABASE_KEY,...(token?{Authorization:`Bearer ${token}`} : {}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(20000)});}catch{throw new ApiError(503,"The database connection is temporarily unavailable. Please try again.");}
+  let data;try{data=r.status===204?null:await r.json();}catch{throw new ApiError(503,"The database response was interrupted. Please try again.");}
   if(!r.ok){
+   if(r.status>=500&&(route.startsWith('/auth/')||!data?.code))throw new ApiError(503,"The database is temporarily unavailable. Please try again.");
+   if(route==='/auth/v1/token?grant_type=refresh_token'&&r.status===400&&['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired'].includes(data?.error_code||data?.code))throw new ApiError(401,"Your session has expired. Sign in again.");
+   if(route==='/rest/v1/rpc/catalog_create'&&/^(P0001|22|23)/.test(data?.code||''))throw new ApiError(400,databaseErrorMessage(data));
    if(route.startsWith('/auth/v1/factors')){
     if(r.status===429)throw new ApiError(429,"Too many attempts. Wait a few minutes before trying again.");
     if(['mfa_verification_failed','mfa_challenge_expired','mfa_verification_rejected'].includes(data?.error_code))throw new ApiError(400,"That code is invalid or expired. Enter a new code from your authenticator app.");
@@ -50,7 +53,7 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
   if(!s||expired(s)){sessions.delete(id);store.save();throw new ApiError(401,"Your session has expired. Sign in again.");}
   if(s.expiresAt<=now()+60000){
    if(!s.refreshing)s.refreshing=request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:s.refresh}}).then(t=>{setTokens(s,t);store.save();}).finally(()=>s.refreshing=null);
-   try{await s.refreshing;}catch(e){sessions.delete(id);store.save();throw e;}
+   try{await s.refreshing;}catch(e){if([401,403].includes(e.status)){sessions.delete(id);store.save();}throw e;}
   }
   try{await validate(s);if(expired(s))throw new ApiError(401,"Your session has expired. Sign in again.");store.save();return s;}catch(e){if([401,403].includes(e.status)){sessions.delete(id);store.save();}throw e;}
  }
