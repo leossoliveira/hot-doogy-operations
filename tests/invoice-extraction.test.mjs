@@ -25,6 +25,9 @@ test('both providers accept a purchase receipt draft with weight, rounding and h
   let request;
   const result=await provider(Buffer.from('synthetic receipt'),'image/jpeg',{config:{key:'fake',model:'test',url:'http://localhost/v1/responses',token:'fake',agent:'invoice-analysis'},fetcher:async(url,args)=>{request=JSON.parse(args.body);return {ok:true,json:async()=>({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(receipt)}]}]})};}});
   assert.match(request.instructions,/Accept an itemized purchase receipt/);
+  assert.match(request.instructions,/US month\/day\/year/);
+  assert.match(request.instructions,/visually re-read each printed digit/);
+  assert.match(request.instructions,/Do not substitute the upload date, filename date/);
   assert.match(request.instructions,/delivery receipt or receiving proof only acknowledges delivery/);
   assert.match(request.instructions,/never Cash, Total Tendered or Change/);
   assert.match(request.instructions,/Do not create item lines for tendered cash or change/);
