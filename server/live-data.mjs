@@ -2,7 +2,7 @@ import {bulkRead} from './read-budget.mjs';
 import {countSessions} from '../src/count-history.js';
 import {staffTables} from './staff-access.mjs';
 import {recipeLocations} from './recipe-locations.mjs';
-import {readCursorPages,scheduleReads} from './paginated-read.mjs';
+import {readCursorPages,readUuidPages,scheduleReads} from './paginated-read.mjs';
 import {enrichOperations} from './operation-evidence.mjs';
 import {organizationTables} from './table-scopes.mjs';
 import {ORGANIZATION_ID} from './supabase-config.mjs';
@@ -20,7 +20,9 @@ export async function readTables(auth,token,role){
   if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
-  result[table]=await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:table==='inventory_transactions'?100:500,signal:controller.signal});
+  result[table]=table==='sales_item_facts'
+   ?await readUuidPages(read,url,{pageSize:1000,signal:controller.signal})
+   :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal});
  }));}catch(error){controller.abort(error);throw error;}
  const receiptIds=(result.purchase_receipts||[]).filter(r=>r.received_by).map(r=>r.id);
  if(receiptIds.length){

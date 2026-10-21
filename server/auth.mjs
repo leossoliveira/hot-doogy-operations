@@ -9,6 +9,7 @@ export function reply(res,status,value){res.writeHead(status,{'Content-Type':'ap
 const SESSION_MS=28800000,PENDING_MS=600000,MFA_MS=30*24*60*60*1000;
 export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HOT_DOOGY_TRUST_PROXY==='loopback',sessionDirectory=process.env.HOT_DOOGY_SESSION_DIR,onDatabaseError=()=>{}}={}){
  const store=createSessionStore(sessionDirectory,{now,maxAge:MFA_MS}),sessions=store.sessions,limits=createLoginLimits({now}),mfaLimits=createLoginLimits({now});
+ const validations=new WeakMap();
  async function request(route,{token,method='GET',body,signal}={}){
   let r;try{r=await fetcher(SUPABASE_URL+route,{method,headers:{apikey:SUPABASE_KEY,...(token?{Authorization:`Bearer ${token}`} : {}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(20000)]):AbortSignal.timeout(20000)});}catch{throw new ApiError(503,"The database connection is temporarily unavailable. Please try again.");}
   let data;try{data=r.status===204?null:await r.json();}catch{throw new ApiError(503,"The database response was interrupted. Please try again.");}
@@ -58,7 +59,13 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
    if(!s.refreshing)s.refreshing=request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:s.refresh}}).then(t=>{setTokens(s,t);store.save();}).finally(()=>s.refreshing=null);
    try{await s.refreshing;}catch(e){if([401,403].includes(e.status)){sessions.delete(id);store.save();}throw e;}
   }
-  try{await validate(s);if(expired(s))throw new ApiError(401,"Your session has expired. Sign in again.");store.save();return s;}catch(e){if([401,403].includes(e.status)){sessions.delete(id);store.save();}throw e;}
+  try{
+   // Simultaneous list/photo requests share only the current validation. No TTL:
+   // the next request still checks live membership, MFA and account revocation.
+   let entry=validations.get(s);
+   if(!entry||entry.token!==s.token){entry={token:s.token};entry.promise=validate(s).finally(()=>{if(validations.get(s)===entry)validations.delete(s);});validations.set(s,entry);}
+   await entry.promise;if(expired(s))throw new ApiError(401,"Your session has expired. Sign in again.");store.save();return s;
+  }catch(e){if([401,403].includes(e.status)){sessions.delete(id);store.save();}throw e;}
  }
  async function requireSession(req){const s=await getSession(req);if(s.pending||!s.allowed)throw new ApiError(403,"Complete two-step verification before accessing your workspace.");return s;}
  function publicSession(s){return {user:s.user,role:s.member.role,mfa:s.pending?{required:true,step:s.factors.some(f=>f.status==='verified')?'verify':'enroll',factors:s.factors.filter(f=>f.status==='verified'&&f.factor_type==='totp').map(f=>({id:f.id,name:f.friendly_name||'Authenticator app'}))}:{required:false,verified:s.mfaRequired}};}

@@ -742,7 +742,7 @@ configureWriteObserver((path,body)=>{
 function refreshPhotos(){
  if(photoRefresh)return;
  const owner=session;
- photoRefresh=loadCloudPhotos().then(photos=>{if(session!==owner||!data)return;data.photoStorageConnected=true;local.itemPhotos=photos.items;local.recipePhotos=photos.recipes;confirmedLocal=structuredClone(local);if(!dialog&&!supplierUI.dirty&&!preparationUI.dirty&&!purchasingUI.dirty)render();}).catch(()=>{if(session===owner&&data)data.photoStorageConnected=false;}).finally(()=>{photoRefresh=null;});
+ photoRefresh=loadCloudPhotos().then(photos=>{if(session!==owner||!data)return;const changed=JSON.stringify([local.itemPhotos,local.recipePhotos])!==JSON.stringify([photos.items,photos.recipes]);data.photoStorageConnected=true;local.itemPhotos=photos.items;local.recipePhotos=photos.recipes;confirmedLocal=structuredClone(local);if(changed&&!dialog&&!supplierUI.dirty&&!preparationUI.dirty&&!purchasingUI.dirty)render();}).catch(()=>{if(session===owner&&data)data.photoStorageConnected=false;}).finally(()=>{photoRefresh=null;});
 }
 function refreshAfterSave(){
  const owner=session;workspaceRefresh=null;

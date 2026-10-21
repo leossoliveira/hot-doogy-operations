@@ -28,3 +28,21 @@ export async function readCursorPages(request,url,{pageSize=250,key='id',signal}
   const next=page.at(-1)[key];if(cursor!==undefined&&String(next)<=String(cursor))throw Error('Table pagination did not advance.');cursor=next;
  }
 }
+
+// UUID key ranges are disjoint and exhaustive. Unlike offset workers, inserts
+// or deletes before a page cannot shift later pages or silently drop history.
+// The caller's scheduler still bounds both per-workspace and process-wide I/O.
+export async function readUuidPages(request,url,{pageSize=1000,signal}={}){
+ signal?.throwIfAborted();
+ const first=await request(`${url}&limit=${pageSize}`);
+ if(!Array.isArray(first))throw Error('Invalid table response.');
+ const cursor=first.at(-1)?.id;
+ if(first.length&&!/^[0-9a-f]{8}-[0-9a-f-]{27}$/.test(cursor||''))throw Error('Missing UUID pagination key.');
+ if(first.length<pageSize)return first;
+ const bounds=['00000000-0000-0000-0000-000000000000','40000000-0000-0000-0000-000000000000','80000000-0000-0000-0000-000000000000','c0000000-0000-0000-0000-000000000000'];
+ const pages=await Promise.all(bounds.map((lower,i)=>{
+  const upper=bounds[i+1];if(upper&&upper<=cursor)return [];
+  return readCursorPages(request,`${url}&id=gt.${cursor}&id=gte.${lower}${upper?'&id=lt.'+upper:''}`,{pageSize,signal});
+ }));
+ return first.concat(...pages);
+}

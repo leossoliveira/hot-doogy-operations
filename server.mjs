@@ -19,6 +19,7 @@ import {invoiceDownload} from './server/invoice-download.mjs';
 import {serveTaskCalendar} from './server/my-day-calendar.mjs';
 import {updateInvoiceStatus,deleteInvoice,deleteOrder} from './server/invoice-status.mjs';
 import {replyData} from './server/compressed-json.mjs';
+import {replyStatic} from './server/static-response.mjs';
 import {queueSalesSummary} from './server/sales-summary.mjs';
 import {invoiceUpload} from './server/invoice-api.mjs';
 import http from 'node:http';
@@ -101,7 +102,7 @@ const server=http.createServer(async(req,res)=>{
   const relative=part==='/'?'index.html':part.startsWith('/src/')?part.slice(1):'public'+part,file=path.resolve(root,relative);
   if(file.startsWith(path.join(root,'public','data')+path.sep)||!file.startsWith(root+path.sep))throw new ApiError(403,"Access denied.");
   const body=await readFile(file);
-  res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"});res.end(req.method==='HEAD'?undefined:body);
+  return await replyStatic(req,res,body,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"});
  }catch(error){reply(res,error.status||500,{error:error.status?error.message:"Unable to complete the request. Try again.",...(error.databaseCode?{code:error.databaseCode,rejected:/^(P0001|42501|57014|55P03)$/.test(error.databaseCode)||/^(22|23|40)/.test(error.databaseCode)}:{})});}
 }).listen(port,'127.0.0.1',()=>console.log(`HOT DOOGY Operations → http://127.0.0.1:${port}`));
 
