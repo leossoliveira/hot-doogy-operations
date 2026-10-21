@@ -15,7 +15,9 @@ const date=v=>v?dateFormatter.format(new Date(v)):null;
 export const FACT_COLUMNS=['id','organization_id','location_id','menu_item_id','source_row_id','import_batch_id','fact_date','granularity','period_start','period_end','quantity','net_sales','gross_sales','discounts','refunds','external_item_id','external_item_name'];
 export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).map(k=>[k,f[k]]));
 export async function readTables(auth,token,role,{batch=false}={}){
- const result={},initial={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{controller.abort(error);throw error;});}),4);
+ // Batches may use idle global slots; the process-wide ceiling remains eight
+ // across every user, so a single refresh does not leave half the budget idle.
+ const result={},initial={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{controller.abort(error);throw error;});}),batch?8:4);
  try{
   if(batch){
    const tables=TABLES.filter(table=>role!=='staff'||staffTables.has(table)),groups=[];
