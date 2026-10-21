@@ -16,11 +16,11 @@ export async function readPages(request,url,{pageSize=1000,concurrency=4}={}){
 }
 
 // Keyset pagination avoids scanning and rechecking RLS on every preceding row.
-export async function readCursorPages(request,url,{pageSize=250,key='id',signal}={}){
+export async function readCursorPages(request,url,{pageSize=250,key='id',signal,firstPage}={}){
  const rows=[];let cursor;
  for(;;){
   signal?.throwIfAborted();
-  const page=await request(`${url}&limit=${pageSize}${cursor===undefined?'':`&${key}=gt.${encodeURIComponent(cursor)}`}`);
+  const page=firstPage===undefined?await request(`${url}&limit=${pageSize}${cursor===undefined?'':`&${key}=gt.${encodeURIComponent(cursor)}`}`):firstPage;firstPage=undefined;
   if(!Array.isArray(page))throw Error('Invalid table response.');
   if(page.length&&page.at(-1)[key]==null)throw Error('Missing pagination key.');
   rows.push(...page);
@@ -32,9 +32,9 @@ export async function readCursorPages(request,url,{pageSize=250,key='id',signal}
 // UUID key ranges are disjoint and exhaustive. Unlike offset workers, inserts
 // or deletes before a page cannot shift later pages or silently drop history.
 // The caller's scheduler still bounds both per-workspace and process-wide I/O.
-export async function readUuidPages(request,url,{pageSize=1000,signal}={}){
+export async function readUuidPages(request,url,{pageSize=1000,signal,firstPage}={}){
  signal?.throwIfAborted();
- const first=await request(`${url}&limit=${pageSize}`);
+ const first=firstPage===undefined?await request(`${url}&limit=${pageSize}`):firstPage;
  if(!Array.isArray(first))throw Error('Invalid table response.');
  const cursor=first.at(-1)?.id;
  if(first.length&&!/^[0-9a-f]{8}-[0-9a-f-]{27}$/.test(cursor||''))throw Error('Missing UUID pagination key.');

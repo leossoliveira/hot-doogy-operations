@@ -23,6 +23,7 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/db-version-tests" --save-exact @electric-sql/pglite@0.3.14
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/release-versioning.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/list-read-performance.mjs
+          PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/workspace-read-batch.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/llm-invoice-drafts.mjs supabase/migrations/20261011172215_llm_invoice_drafts_human_approval.sql supabase/migrations/20261011192921_invoice_review_receiving.sql supabase/migrations/20261011195918_invoice_line_item_type.sql supabase/migrations/20261011195920_invoice_line_category.sql supabase/migrations/20261020215843_invoice_human_document_classification.sql
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/order-receiving.mjs
           node supabase/tests/count-drafts.mjs "$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js"

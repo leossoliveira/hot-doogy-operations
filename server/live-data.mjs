@@ -14,15 +14,24 @@ const dateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'
 const date=v=>v?dateFormatter.format(new Date(v)):null;
 export const FACT_COLUMNS=['id','organization_id','location_id','menu_item_id','source_row_id','import_batch_id','fact_date','granularity','period_start','period_end','quantity','net_sales','gross_sales','discounts','refunds','external_item_id','external_item_name'];
 export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).map(k=>[k,f[k]]));
-export async function readTables(auth,token,role){
- const result={},controller=new AbortController(),read=scheduleReads(url=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{token,signal:controller.signal}).catch(error=>{controller.abort(error);throw error;});}),4);
- try{await Promise.all(TABLES.map(async table=>{
+export async function readTables(auth,token,role,{batch=false}={}){
+ const result={},initial={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{controller.abort(error);throw error;});}),4);
+ try{
+  if(batch){
+   const tables=TABLES.filter(table=>role!=='staff'||staffTables.has(table)),groups=[];
+   for(let i=0;i<tables.length;i+=8)groups.push(tables.slice(i,i+8));
+   await Promise.all(groups.map(async tables=>{
+    const pages=await read('/rest/v1/rpc/workspace_read_batch',{method:'POST',body:{p_organization_id:ORGANIZATION_ID,p_tables:tables}});
+    for(const table of tables){if(!Array.isArray(pages?.[table])||pages[table].length>(table==='sales_item_facts'?1000:500))throw Error('Incomplete workspace batch.');initial[table]=pages[table];}
+   }));
+  }
+  await Promise.all(TABLES.map(async table=>{
   if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
   result[table]=table==='sales_item_facts'
-   ?await readUuidPages(read,url,{pageSize:1000,signal:controller.signal})
-   :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal});
+   ?await readUuidPages(read,url,{pageSize:1000,signal:controller.signal,firstPage:initial[table]})
+   :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal,firstPage:initial[table]});
  }));}catch(error){controller.abort(error);throw error;}
  const receiptIds=(result.purchase_receipts||[]).filter(r=>r.received_by).map(r=>r.id);
  if(receiptIds.length){

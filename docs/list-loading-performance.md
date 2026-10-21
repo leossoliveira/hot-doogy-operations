@@ -24,3 +24,11 @@ The policy fixture contains schema expressions only. Test records are synthetic.
 Publish only this change on the current production branch, excluding unrelated local handover work. The release deployer applies the included migration transactionally before switching the application. If activation fails, the prior application remains compatible with the read-policy optimization. Do not reset/replay production or remove migration history. A future policy rollback must be a separately versioned migration using the preserved baseline expressions.
 
 Production release identity and observed timings are recorded after deployment, not inferred from local tests.
+
+## Production measurement and bounded batches
+
+Release v0.1.103 (`81fb6f0efc9cada4103c64adf02c166854c9dd1a`) and schema `20261021012310` activated at 2026-10-21 01:36:17 UTC. Its first authenticated reload measured 11,995 ms, down from 25,552 ms. This was still too slow. Production logs showed repeated Data API communication remained material even after the query improvement.
+
+Migration `20261021013805_bounded_workspace_read_batches` adds an explicitly allowlisted, security-invoker read function. Each call returns first pages for at most eight tables, at most 500 rows per table (1,000 for compact sales facts). It uses the same organization filters, columns, ordering and user RLS as the existing reader. Subsequent cursor pages retrieve every remaining row. The normal workspace reader uses seven first-page requests instead of fifty; staff requests retain their narrower table list. Per-workspace and process-wide request limits are unchanged. No completed-response cache or stale success state is added.
+
+The isolated batch test verifies all 50 tables, bounded/ordered pages, tenant/location/MFA enforcement, rejection of arbitrary table names, anonymous denial, and that revoking SELECT cannot be bypassed by the function. JavaScript tests verify pagination after seeded first pages, staff table filtering, token forwarding, concurrency and failure on incomplete batches.

@@ -1,7 +1,7 @@
 import {readTables} from './live-data.mjs';
 // Share only in-flight reads within the same authenticated session/generation.
 // Successful writes invalidate the generation; no cross-user or stale cache.
-export function createWorkspaceReader({read=readTables}={}){
+export function createWorkspaceReader({read=(auth,token,role)=>readTables(auth,token,role,{batch:true})}={}){
  const states=new WeakMap();
  function state(session){let value=states.get(session);if(!value){value={generation:0};states.set(session,value);}return value;}
  return {
