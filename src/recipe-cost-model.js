@@ -9,7 +9,9 @@ const uniqueValue = values => values.length && values.every(valid) && new Set(va
 // Cost of one base unit of a purchased item at a store, from its active suppliers' approved prices.
 // Null when there is no price or when suppliers disagree, so totals are never understated.
 export function supplierBaseCost(item, scope, data, local = {}) {
-  const vendors = (data.supplierCatalog?.items || []).map(row => supplierItemWithEdits(row, local)).filter(row => row.itemId === item.id && row.active !== false && row.supplierActive !== false && row.supplierBusinessActive !== false && row.stores?.some(s => s.id === scope && s.active !== false && s.locationActive !== false));
+  // Item identity is immutable in local overlays. Avoid cloning every unrelated
+  // supplier and price history for every ingredient on the Food Cost list.
+  const vendors = (data.supplierCatalog?.items || []).filter(row => row.itemId === item.id).map(row => supplierItemWithEdits(row, local)).filter(row => row.active !== false && row.supplierActive !== false && row.supplierBusinessActive !== false && row.stores?.some(s => s.id === scope && s.active !== false && s.locationActive !== false));
   const costs = vendors.map(row => {
     const price = resolveSupplierPrice(row, scope);
     const priceUnit = row.units.find(u => u.id === price.unitId);
