@@ -1,13 +1,13 @@
-import {calculationRead} from './read-budget.mjs';
+import {readCalculationPage} from './read-budget.mjs';
 import {purchasingSales} from './purchasing-sales.mjs';
 import {createHash} from 'node:crypto';
 export function salesSignature(raw){return createHash('sha256').update(JSON.stringify(Object.fromEntries(['inventory_items','menu_items','sales_import_batches','locations','recipes','recipe_versions','recipe_components','inventory_item_units','menu_item_modifier_rules','modifiers','sales_item_facts'].map(k=>[k,raw[k]])))).digest('hex');}
 export async function salesSummary(auth,session,raw){
  const signature=salesSignature(raw);
  if(session.salesSummary?.signature===signature)return session.salesSummary.result;
- const rows=new Map(),itemRows=new Map(),days=new Map(),issues=new Map();let offset=0,fullUsageAvailable=true;
+ const rows=new Map(),itemRows=new Map(),days=new Map(),issues=new Map();let offset=0,pageSize=25,fullUsageAvailable=true;
  const total=raw.sales_item_facts.filter(r=>r.source_row_id).length;
- while(offset<total){const start=offset;offset+=50;const part=await calculationRead(()=>auth.request('/rest/v1/rpc/operations_preparation_sales',{token:session.token,method:'POST',body:{p_offset:start,p_limit:50}}));
+ while(offset<total){const start=offset;const {value:part,limit}=await readCalculationPage(size=>auth.request('/rest/v1/rpc/operations_preparation_sales',{token:session.token,method:'POST',body:{p_offset:start,p_limit:size}}),pageSize);offset+=limit;pageSize=limit;
  if(!Array.isArray(part.itemRows))fullUsageAvailable=false;
  for(const x of part.itemRows||[]){const k=[x.date,x.locationId,x.itemId].join('|'),old=itemRows.get(k);if(old)old.baseQty+=Number(x.baseQty);else itemRows.set(k,{...x,baseQty:Number(x.baseQty)});}
  for(const x of part.rows){const k=[x.date,x.locationId,x.itemId].join('|'),old=rows.get(k);if(old)old.baseQty+=Number(x.baseQty);else rows.set(k,{...x,baseQty:Number(x.baseQty)});}

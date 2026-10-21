@@ -44,8 +44,8 @@ test('purchase history filters partial receipts and clamps pagination after filt
 test('supplier names sort naturally A–Z regardless of case',()=>{assert.deepEqual(['Zeta','alpha','Supplier 10','Supplier 2','Beta'].map(name=>({name})).sort(alphabetical).map(x=>x.name),['alpha','Beta','Supplier 2','Supplier 10','Zeta']);});
 test('background summary aggregates all purchasing pages without changing Prep totals and caches the result',async()=>{
  const raw={inventory_items:[{id:'i',item_type:'purchased'}],sales_item_facts:Array.from({length:201},()=>({source_row_id:'id'}))},session={token:'test'},calls=[];
- const auth={request:async(path,{body})=>{calls.push(body.p_offset);return {rows:[],itemRows:[{date:'2026-09-20',locationId:'l',itemId:'i',baseQty:body.p_offset<200?2.5:2}],days:[{date:'2026-09-20',locationId:'l',totalLines:Math.min(body.p_limit,201-body.p_offset),incompleteLines:0}],issues:[]};}};
- const result=await salesSummary(auth,session,raw);assert.deepEqual(result.rows,[]);assert.equal(result.purchasingSales.rows[0].baseQty,12);assert.equal(result.days[0].totalLines,201);assert.equal(await salesSummary(auth,session,raw),result);assert.equal(calls.length,5);
+ const auth={request:async(path,{body})=>{calls.push(body.p_offset);return {rows:[],itemRows:[{date:'2026-09-20',locationId:'l',itemId:'i',baseQty:body.p_offset<200?body.p_limit*0.05:2}],days:[{date:'2026-09-20',locationId:'l',totalLines:Math.min(body.p_limit,201-body.p_offset),incompleteLines:0}],issues:[]};}};
+ const result=await salesSummary(auth,session,raw);assert.deepEqual(result.rows,[]);assert.equal(result.purchasingSales.rows[0].baseQty,12);assert.equal(result.days[0].totalLines,201);assert.equal(await salesSummary(auth,session,raw),result);assert.equal(calls.length,9);
 });
 
 test('order history combines supplier, status and inclusive New York dates across daylight saving time',()=>{
