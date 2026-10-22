@@ -24,7 +24,7 @@ export async function createPreparationDatabase(){
  create table recipes(id uuid primary key,organization_id uuid,name text,output_inventory_item_id uuid,production_location_id uuid,classification text,active boolean default true);
  create table recipe_versions(id uuid primary key,organization_id uuid,recipe_id uuid,status text,yield_quantity numeric,yield_item_unit_id uuid,version_number int);
  create table recipe_components(id uuid primary key,organization_id uuid,recipe_version_id uuid,component_inventory_item_id uuid,component_item_unit_id uuid,quantity numeric,waste_percent numeric default 0,sort_order int default 0,location_id uuid,component_type text default 'ingredient');
- create table recipe_production_locations(organization_id uuid,recipe_id uuid,location_id uuid);
+
  create table hr_team_members(id uuid primary key,organization_id uuid,first_name text,last_name text,status text,location_ids uuid[]);
  create table prep_plans(id uuid primary key,organization_id uuid,location_id uuid);create table prep_plan_items(id uuid primary key,prep_plan_id uuid,inventory_item_id uuid);
  create table inventory_transactions(id uuid primary key default gen_random_uuid(),organization_id uuid,location_id uuid,storage_area_id uuid,inventory_item_id uuid,transaction_type text,quantity_base numeric(18,6),source_type text,source_id uuid,occurred_at timestamptz,created_by uuid);
@@ -65,5 +65,6 @@ export async function createPreparationDatabase(){
  await db.exec(optimized.slice(optimized.indexOf('CREATE OR REPLACE FUNCTION private.web_command('),optimized.indexOf('CREATE OR REPLACE FUNCTION private.web_preparation_sales(')));
  await db.exec(legacy.slice(legacy.indexOf('create or replace function public.operations_command('),legacy.indexOf('create or replace function private.web_preparation_sales(')));
  await db.exec(read('20261021124641_atomic_preparation_and_whatsapp_service.sql'));
+ await db.exec(read('20261022011850_preparation_registered_production_location.sql'));
  return db;
 }
