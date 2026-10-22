@@ -54,3 +54,11 @@ test('both providers return payment proofs, simple receipts and delivery proofs 
   assert.ok(result.extraction.warnings.some(w=>/Low confidence/.test(w)));
  }
 });
+
+test('ship-to street numbers override incorrect model store names without matching only Natick',()=>{
+ const data={locations:[{id:'mall',name:'Natick Mall'},{id:'plaza',name:'Sherwood Plaza'}]};
+ for(const street of ['1300 Worcester St., D, Natick, MA 01760','1300 WORCESTER STREET Natick Massachusetts 01760'])assert.equal(invoiceSuggestions({location_name:'Natick Mall',ship_to_address:street},data).locationId,'plaza');
+ assert.equal(invoiceSuggestions({location_name:'Sherwood Plaza',ship_to_address:'1245 Worcester St, Natick MA 01760'},data).locationId,'mall');
+ for(const street of ['Worcester St, Natick MA','999 Worcester St, Natick MA','1300 Worcester St, Boston MA','1300 Worcester St Natick MA / 1245 Worcester St Natick MA'])assert.equal(invoiceSuggestions({location_name:'Natick Mall',ship_to_address:street},data).locationId,'');
+ assert.equal(invoiceSuggestions({ship_to_address:'1300 Worcester St Natick MA'},{locations:[data.locations[0]]}).locationId,'');
+});

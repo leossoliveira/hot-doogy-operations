@@ -9,9 +9,14 @@ const businessName=x=>norm(String(x||'').replace(/\b(incorporated|inc|llc|ltd|co
 export function invoiceSuggestions(extraction,data){
  const unique=rows=>rows.length===1?rows[0].id:'';
  const supplierId=unique((data.suppliers||[]).filter(r=>businessName(extraction.supplier_name)&&businessName(r.name)===businessName(extraction.supplier_name)));
- const locations=data.locations||[],name=norm(extraction.location_name),address=String(extraction.ship_to_address||'').toLowerCase();
- const exact=locations.filter(r=>name&&norm(r.name)===name);
- const locationId=unique(exact.length?exact:locations.filter(r=>{const tokens=r.name.toLowerCase().split(/\W+/).filter(t=>t.length>3&&!['mall','plaza','store'].includes(t));return tokens.length&&tokens.every(t=>new RegExp('\\b'+t+'\\b').test(address));}));
+ const locations=data.locations||[],name=norm(extraction.location_name);
+ const address=String(extraction.ship_to_address||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ // Resolve ship-to evidence before model-suggested names. Both stores are in Natick.
+ const addresses=[['1300','sherwoodplaza'],['1245','natickmall']];
+ const matches=addresses.filter(([number])=>new RegExp('\\b'+number+' worcester (?:st|street)\\b').test(address)&&/\bnatick\b/.test(address)&&/\b(?:ma|massachusetts)\b/.test(address));
+ const locationId=address
+  ?matches.length===1?unique(locations.filter(r=>norm(r.name)===matches[0][1])):''
+  :unique(locations.filter(r=>name&&norm(r.name)===name));
  const orders=(data.orders||[]).filter(o=>o.supplierId===supplierId&&o.locationId===locationId&&o.status!=='cancelled'&&extraction.order_number&&norm(o.number)===norm(extraction.order_number));
  return {supplierId,locationId,orderId:unique(orders)};
 }
