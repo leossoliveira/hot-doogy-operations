@@ -11,7 +11,7 @@ create table waste_events(id uuid primary key,organization_id uuid,location_id u
 insert into locations values('${id(2)}','${org}');insert into storage_areas values('${id(3)}','${org}','${id(2)}');insert into inventory_items values('${id(4)}','${org}',true);insert into location_inventory_items values('${id(4)}','${id(2)}',true);insert into inventory_item_units values('${id(5)}','${org}','${id(4)}',12);set test.role='manager';set test.mfa='yes';`);
 await db.exec("alter table waste_event_lines add column id uuid default gen_random_uuid() primary key;alter table waste_event_lines add column estimated_cost numeric;");
 await db.exec(fs.readFileSync('supabase/migrations/20261011212134_record_waste.sql','utf8'));
-await db.exec(fs.readFileSync('supabase/migrations/20261022130509_edit_waste.sql','utf8'));
+await db.exec(fs.readFileSync('supabase/migrations/20261022184059_edit_waste.sql','utf8'));
 const payload={locationId:id(2),areaId:id(3),itemId:id(4),unitId:id(5),quantity:2,occurredAt:'2026-01-01T12:00:00Z',reason:'Expired',notes:''};
 await db.query('select public.record_waste($1,$2)',[id(8),JSON.stringify(payload)]);
 const line=(await db.query('select * from waste_event_lines')).rows[0];
