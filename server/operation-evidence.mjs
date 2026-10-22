@@ -1,3 +1,4 @@
+import {invoiceOrderReceiving} from './invoice-order-receiving.mjs';
 import {invoiceHistory} from '../src/invoice-financial.js';
 // Derive evidence only from explicit relationships; never infer payment or stock.
 export function enrichOperations({orders,invoices,receipts,transfers,t,base,loc,area}){
@@ -17,6 +18,11 @@ export function enrichOperations({orders,invoices,receipts,transfers,t,base,loc,
   let comparable=0,full=0,any=false;
   for(const l of o.lines){const matches=o.receipts.filter(r=>r.status==='completed').flatMap(r=>r.lines).filter(r=>r.purchaseOrderLineId===l.id&&r.receivedItemUnitId===l.purchaseItemUnitId);l.orderedQuantity=l.orderedPurchaseQty;l.estimatedUnitPrice=l.estimatedUnitPrice??l.estimatedUnitCost;l.receivedDates=[...new Set(o.receipts.filter(r=>r.status==='completed'&&r.lines.some(rl=>rl.purchaseOrderLineId===l.id&&rl.receivedItemUnitId===l.purchaseItemUnitId&&Number(rl.quantityReceived)>0)).map(r=>r.receivedAt).filter(Boolean))].sort();if(matches.length){comparable++;l.receivedQuantity=matches.reduce((n,r)=>n+Number(r.quantityReceived),0);any ||=l.receivedQuantity>0;if(l.receivedQuantity>=l.orderedPurchaseQty)full++;}else l.receivedQuantity=null;}
   o.receiptEvidence={computedStatus:o.receipts.some(r=>r.historicalConfirmation)?'confirmed_received':o.lines.length&&full===o.lines.length?'fully_received':any?'partially_received':o.receipts.length?'receipt_recorded':'no_receipt_recorded',orderLineCount:o.lines.length,comparableLineCount:comparable};
+  const declarations=invoiceOrderReceiving(o);
+  if(declarations){
+   o.invoiceReceiving=declarations;
+   if(['ordered','partially_received'].includes(o.status)&&!any&&!o.receipts.length){o.status='received';o.statusLabel='Received';o.receiptEvidence.computedStatus='invoice_received';}
+  }
   o.paymentEvidence={paidInvoiceCount:o.invoices.filter(i=>i.status==='paid').length};attach(o,o.receipts,o.invoices);
  }
  for(const i of invoices){
