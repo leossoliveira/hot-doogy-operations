@@ -732,6 +732,7 @@ configureWriteObserver((path,body)=>{
  refreshGeneration++;workspaceRefresh=null;
  const match=path.match(/^\/api\/(?:orders|transfers|invoices)\/([a-f0-9-]{36})/);
  if(match)pendingSavedRecords.add(match[1]);
+ if(path==='/api/waste/edit'&&body.lineId)pendingSavedRecords.add(body.lineId);
  if(path==='/api/preparation/team-member'&&body.id)pendingSavedRecords.add(body.id);
  if(path==='/api/inventory/count-draft'&&body.action==='complete')pendingSavedRecords.add(body.id);
  for(const change of body?.payload?.changes||[]){

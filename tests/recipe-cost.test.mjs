@@ -47,3 +47,24 @@ test('waste loss value: purchased items use supplier price without ingredient yi
   assert.equal(itemQuantityValue({itemId: 'ingredient', itemUnitId: 'missing', quantity: 1, locationId: 'store'}, data), null, 'unknown unit');
   assert.equal(each.factor, 1);
 });
+test('waste uses latest approved available supplier cost, while recipe costing remains strict',async()=>{
+ const {itemQuantityValue}=await import('../src/recipe-cost-model.js');const {data,recipe}=recipeCostFixture();
+ data.supplierCatalog.items[0].currentPrices[0].date='2026-09-12';
+ const other=structuredClone(data.supplierCatalog.items[0]);other.supplierItemId='other';other.currentPrices[0].amount=6;other.currentPrices[0].date='2026-09-20';data.supplierCatalog.items.push(other);
+ const input={itemId:'ingredient',itemUnitId:'item-each',quantity:2,locationId:'store',pricePolicy:'latest-approved'};
+ assert.equal(itemQuantityValue(input,data),12);assert.equal(recipeCost(recipe,'store',data).total,null);
+ other.currentPrices[0].status='pending';assert.equal(itemQuantityValue(input,data),4,'pending price never used');
+ other.currentPrices[0].status='approved';other.currentPrices[0].locationId='other-store';assert.equal(itemQuantityValue(input,data),4,'supplier without a price here does not block available price');
+ other.currentPrices[0].locationId='store';other.currentPrices[0].date='2026-09-12';assert.equal(itemQuantityValue(input,data),null,'conflicting prices on same date remain unknown');
+});
+test('waste converts case and box supplier prices to each, scoped to each location',async()=>{
+ const {itemQuantityValue}=await import('../src/recipe-cost-model.js');const {data}=recipeCostFixture();
+ const item=data.ingredientItems[0];item.units.push({id:'box',itemUnitId:'box-unit',factor:12},{id:'case',itemUnitId:'case-unit',factor:96});
+ data.supplierCatalog.items=[
+  {itemId:item.id,supplierItemId:'case-vendor',units:item.units,stores:[{id:'store'},{id:'second'}],currentPrices:[{amount:38.75,unitId:'case',locationId:null,status:'approved',date:'2026-09-12'}]},
+  {itemId:item.id,supplierItemId:'box-vendor',units:item.units,stores:[{id:'store'},{id:'second'}],currentPrices:[{amount:6.99,unitId:'box',locationId:'store',status:'approved',date:'2026-09-20'}]}
+ ];
+ const input={itemId:item.id,itemUnitId:'box-unit',quantity:1,locationId:'store',pricePolicy:'latest-approved'};
+ assert.equal(itemQuantityValue(input,data),6.99);
+ assert.equal(itemQuantityValue({...input,itemUnitId:'item-each',quantity:24,locationId:'second'},data),38.75/4);
+});

@@ -8,21 +8,25 @@ const uniqueValue = values => values.length && values.every(valid) && new Set(va
 
 // Cost of one base unit of a purchased item at a store, from its active suppliers' approved prices.
 // Null when there is no price or when suppliers disagree, so totals are never understated.
-export function supplierBaseCost(item, scope, data, local = {}) {
+export function supplierBaseCost(item, scope, data, local = {}, policy = 'consistent') {
   // Item identity is immutable in local overlays. Avoid cloning every unrelated
   // supplier and price history for every ingredient on the Food Cost list.
   const vendors = (data.supplierCatalog?.items || []).filter(row => row.itemId === item.id).map(row => supplierItemWithEdits(row, local)).filter(row => row.active !== false && row.supplierActive !== false && row.supplierBusinessActive !== false && row.stores?.some(s => s.id === scope && s.active !== false && s.locationActive !== false));
-  const costs = vendors.map(row => {
+  const priced = vendors.map(row => {
     const price = resolveSupplierPrice(row, scope);
     const priceUnit = row.units.find(u => u.id === price.unitId);
-    return valid(price.amount) && price.amount >= 0 && positive(priceUnit?.factor) ? price.amount / Number(priceUnit.factor) : null;
+    return {cost: valid(price.amount) && price.amount >= 0 && positive(priceUnit?.factor) ? price.amount / Number(priceUnit.factor) : null, date: Date.parse(price.date) || 0};
   });
-  return uniqueValue(costs);
+  if (policy === 'latest-approved') {
+    const available = priced.filter(p => p.cost != null).sort((a,b) => b.date-a.date);
+    return available.length ? uniqueValue(available.filter(p => p.date === available[0].date).map(p => p.cost)) : null;
+  }
+  return uniqueValue(priced.map(p => p.cost));
 }
 
 // Value of a quantity of any item at a store: purchased items use supplier prices, prep items use their recipe cost
 // per unit of yield. The ingredient yield percent is not applied: waste discards the item as it was stocked.
-export function itemQuantityValue({itemId, itemUnitId, quantity, locationId}, data, local = {}) {
+export function itemQuantityValue({itemId, itemUnitId, quantity, locationId, pricePolicy = 'consistent'}, data, local = {}) {
   const items = ingredientItemsWithEdits(data.ingredientItems || [], local);
   const item = items.find(i => i.id === itemId), unit = item?.units?.find(u => u.itemUnitId === itemUnitId);
   if (!item || !positive(unit?.factor) || !positive(quantity)) return null;
@@ -34,7 +38,7 @@ export function itemQuantityValue({itemId, itemUnitId, quantity, locationId}, da
     const cost = recipeCost(child, locationId, data, local);
     return cost.total == null ? null : cost.total * base / (Number(child.yieldQuantity) * Number(yieldUnit.factor));
   }
-  const baseCost = supplierBaseCost(item, locationId, data, local);
+  const baseCost = supplierBaseCost(item, locationId, data, local, pricePolicy);
   return baseCost == null ? null : base * baseCost;
 }
 
