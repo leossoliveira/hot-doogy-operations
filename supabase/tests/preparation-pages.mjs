@@ -34,6 +34,12 @@ insert into sales_item_facts values('${store}','${org}','${other}','2026-10-01',
 const refresh=await readFile(new URL('../migrations/20261021021507_refresh_derived_sales_cache.sql',import.meta.url),'utf8');
 await db.exec(refresh.split('-- Preserve the deployed authorization')[0]);
 await db.exec(await readFile(new URL('../migrations/20261022141610_bounded_preparation_sales_pages.sql',import.meta.url),'utf8'));
+const catalogCache=process.argv.includes('--catalog-cache');
+if(catalogCache){
+ for(const table of ['public.menu_items','public.location_menu_items','public.pos_item_mappings','public.pos_modifier_mappings','public.modifiers','public.menu_item_modifier_rules','public.recipes','public.recipe_versions','public.recipe_components','public.inventory_item_units','private.modifier_recipe_contexts','private.combo_selection_options','private.menu_sales_consumption_policies','public.units'])await db.exec(`create table ${table}(id integer primary key)`);
+ await db.exec(await readFile(new URL('../migrations/20261022143712_cache_preparation_catalog_signatures.sql',import.meta.url),'utf8'));
+}
+
 const call=async(after=null,signature=null,limit=250)=>(await db.query('select public.operations_preparation_sales_page($1,$2,$3) value',[after,limit,signature])).rows[0].value;
 const scoped=async(start='2026-10-01',end=start,location=store)=>(await db.query('select public.preparation_usage_period_page($1,$2,$3) value',[start,end,location])).rows[0].value;
 await db.exec("set test.slow='yes';set role authenticated");
@@ -68,6 +74,6 @@ insert into sales_item_facts select id,'${org}','${store}','2026-10-01',id from 
 insert into private.restaurant_sale_cache select s.id,'catalog-a',md5(s.raw_data::text||b.organization_id::text||b.location_id::text||b.period_start::text||b.period_end::text),s.raw_data from sales_import_rows s join sales_import_batches b on b.id=s.batch_id on conflict do nothing;
 set test.uid='${store}';set test.role='manager';set role authenticated;`);
 let count=0,calls=0,cursor=null,maxPageMs=0;
-do{const start=performance.now(),p=await call(cursor);maxPageMs=Math.max(maxPageMs,performance.now()-start);count+=p.meta.processed;calls++;cursor=p.meta.nextCursor;if(!p.meta.hasMore)break;}while(calls<100);
-assert.equal(count,16050);assert.equal(calls,65);assert.ok(maxPageMs<3000);
-await db.close();console.log(JSON.stringify({coldPageMs:Math.round(coldMs),coldProcessed:first.meta.processed,coldPages:pages.length,coldTotalRows:25,warmPageMs:Math.round(warmMs),stressRows:count,stressCalls:calls,maxPageMs:Math.round(maxPageMs),checks:'cold progress commits, complete totals, warm reuse, keyset bounds, date/store/tenant/role/MFA/anon isolation, signature mismatch'}));
+do{const start=performance.now(),p=await call(cursor);maxPageMs=Math.max(maxPageMs,performance.now()-start);count+=p.meta.processed;calls++;cursor=p.meta.nextCursor;if(!p.meta.hasMore)break;}while(calls<1000);
+assert.equal(count,16050);assert.equal(calls,catalogCache?251:65);assert.ok(maxPageMs<3000);
+await db.close();console.log(JSON.stringify({catalogCache,coldPageMs:Math.round(coldMs),coldProcessed:first.meta.processed,coldPages:pages.length,coldTotalRows:25,warmPageMs:Math.round(warmMs),stressRows:count,stressCalls:calls,maxPageMs:Math.round(maxPageMs),checks:'cold progress commits, complete totals, warm reuse, keyset bounds, date/store/tenant/role/MFA/anon isolation, signature mismatch'}));

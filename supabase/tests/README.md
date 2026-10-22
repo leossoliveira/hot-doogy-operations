@@ -138,3 +138,14 @@ remain available. The three new functions can then be removed in a new migration
 retain the derived cache and all operational data. After authorized publication,
 verify real cold and warm runs and PostgreSQL timeout logs; isolated timings alone
 do not establish that production timeouts have stopped.
+
+Production follow-up `20261022143712_cache_preparation_catalog_signatures`
+addresses residual timeouts observed during the first live validation. It reuses
+the unchanged catalog hash across pages and invalidates it transactionally after
+INSERT/UPDATE/DELETE/TRUNCATE on every one of the 16 source tables. Changes to the
+hash function's definition also invalidate reuse. The cache is private with RLS
+and no client grants. Pages yield after 250 ms of evaluation work and handle at
+most 64 sales, leaving additional time for aggregation and concurrent activity.
+Run `PGLITE_MODULE_PATH=... node supabase/tests/preparation-catalog-signature.mjs`
+for the 64 mutation cases, rollback, engine-change, permissions and page-cap checks.
+This does not change financial, stock or recipe records, nor extend DB timeouts.
