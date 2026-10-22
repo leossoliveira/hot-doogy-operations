@@ -66,6 +66,43 @@ class SourceVerification(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     adapter.prepare(payload, path)
 
+    def test_native_channel_media_with_text_body(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = str(pathlib.Path(tmp) / 'transcript.sqlite')
+            payload = self.payload()
+            native_database(path, payload, image=False)
+            with sqlite3.connect(path) as db:
+                event = json.loads(db.execute('select event_json from transcript_events').fetchone()[0])
+            message = event['message']
+            message['content'] = 'Synthetic Prep / 3 units / Synthetic Cook'
+            media = {'kind': 'image', 'contentType': 'image/jpeg',
+                     'url': 'media://inbound/synthetic.jpg', 'path': '/synthetic/staged/input.jpg'}
+            message['__openclaw']['media'] = [media]
+
+            def save():
+                with sqlite3.connect(path) as db:
+                    db.execute('update transcript_events set event_json=?', (json.dumps(event),))
+
+            save()
+            result = adapter.prepare(payload, path)
+            self.assertEqual(adapter.prepare(payload, path), result)
+            for patch in [{'kind': 'document'}, {'contentType': 'text/plain'},
+                          {'url': 'https://example.com/photo.jpg'}, {'url': 'media://inbound/'}]:
+                message['__openclaw']['media'] = [dict(media, **patch)]
+                save()
+                with self.assertRaises(ValueError):
+                    adapter.prepare(payload, path)
+            message['content'] = json.dumps({'__openclaw': {'media': [media]}})
+            message['__openclaw']['media'] = []
+            save()
+            with self.assertRaises(ValueError):
+                adapter.prepare(payload, path)
+            message['__openclaw']['media'] = [media]
+            message['__openclaw']['senderId'] = '+10000000000'
+            save()
+            with self.assertRaises(ValueError):
+                adapter.prepare(payload, path)
+
     def test_commit_failure_never_returns_success_and_check_rolls_back(self):
         class Cursor:
             def __enter__(self):

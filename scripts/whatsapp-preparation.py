@@ -56,8 +56,22 @@ def source_message(group, message_id, database=DB):
 def has_image(message):
     # User text saying "photo attached" is not attachment evidence.
     content = message.get('content', [])
-    return isinstance(content, list) and any(isinstance(part, dict) and part.get('type') in
-                                            ('image', 'image_url', 'input_image') for part in content)
+    if isinstance(content, list) and any(isinstance(part, dict) and part.get('type') in
+                                        ('image', 'image_url', 'input_image') for part in content):
+        return True
+    # OpenClaw persists channel attachments separately from the text body.
+    # This metadata is read only after source_message authenticates the native
+    # transcript, conversation and sender; never parse attachment claims in text.
+    meta = message.get('__openclaw', {})
+    media = meta.get('media', []) if isinstance(meta, dict) else []
+    return isinstance(media, list) and any(
+        isinstance(part, dict) and part.get('kind') == 'image'
+        and part.get('contentType') in ('image/jpeg', 'image/png', 'image/webp', 'image/gif')
+        and isinstance(part.get('url'), str)
+        and part['url'].startswith('media://inbound/')
+        and len(part['url']) > len('media://inbound/')
+        for part in media)
+
 
 
 def prepare(payload, database=DB):
