@@ -17,15 +17,24 @@ export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).ma
 export async function readTables(auth,token,role,{batch=false}={}){
  // Batches may use idle global slots; the process-wide ceiling remains eight
  // across every user, so a single refresh does not leave half the budget idle.
- const result={},initial={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{controller.abort(error);throw error;});}),batch?8:4);
+ const result={},initial={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),batch?8:4);
  try{
   if(batch){
    const tables=TABLES.filter(table=>role!=='staff'||staffTables.has(table)),groups=[];
    for(let i=0;i<tables.length;i+=8)groups.push(tables.slice(i,i+8));
-   await Promise.all(groups.map(async tables=>{
-    const pages=await read('/rest/v1/rpc/workspace_read_batch',{method:'POST',body:{p_organization_id:ORGANIZATION_ID,p_tables:tables}});
+   async function readGroup(tables){
+    let pages;
+    try{pages=await read('/rest/v1/rpc/workspace_read_batch',{method:'POST',body:{p_organization_id:ORGANIZATION_ID,p_tables:tables}});}
+    catch(error){
+     // A confirmed timeout is safe to retry: this RPC only reads. Split
+     // sequentially so recovery reduces work per statement and adds no fan-out.
+     if(error.databaseCode!=='57014'||tables.length===1)throw error;
+     const middle=Math.ceil(tables.length/2);
+     await readGroup(tables.slice(0,middle));await readGroup(tables.slice(middle));return;
+    }
     for(const table of tables){if(!Array.isArray(pages?.[table])||pages[table].length>(table==='sales_item_facts'?1000:500))throw Error('Incomplete workspace batch.');initial[table]=pages[table];}
-   }));
+   }
+   await Promise.all(groups.map(readGroup));
   }
   await Promise.all(TABLES.map(async table=>{
   if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';

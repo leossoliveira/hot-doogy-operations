@@ -15,7 +15,7 @@ export function createAuth({fetcher=fetch,now=Date.now,trustProxy=process.env.HO
   let data;try{data=r.status===204?null:await r.json();}catch{throw new ApiError(503,"The database response was interrupted. Please try again.");}
   if(!r.ok){
    onDatabaseError({event:'database_error',route:route.split('?')[0],status:r.status,code:data?.code||null});
-   if(['57014','55P03','53300','53400'].includes(data?.code)){const failure=new ApiError(503,method==='GET'?'The database is busy. Please retry shortly.':'The database is busy. Your changes have not been saved. Please retry shortly.');failure.databaseCode=data.code;throw failure;}
+   if(['57014','55P03','53300','53400'].includes(data?.code)){const failure=new ApiError(503,(method==='GET'||route==='/rest/v1/rpc/workspace_read_batch'||route==='/rest/v1/rpc/operations_auth_status')?'The database is busy. Please retry shortly.':'The database is busy. Your changes have not been saved. Please retry shortly.');failure.databaseCode=data.code;throw failure;}
    if(r.status>=500&&(route.startsWith('/auth/')||!data?.code))throw new ApiError(503,"The database is temporarily unavailable. Please try again.");
    if(route==='/auth/v1/token?grant_type=refresh_token'&&r.status===400&&['refresh_token_not_found','refresh_token_already_used','session_not_found','session_expired'].includes(data?.error_code||data?.code))throw new ApiError(401,"Your session has expired. Sign in again.");
    if(!route.startsWith('/auth/')&&data?.code==='P0001'){const failure=new ApiError(422,databaseErrorMessage(data));failure.databaseCode=data.code;throw failure;}

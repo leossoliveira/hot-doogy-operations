@@ -76,3 +76,20 @@ test('individual photos read only the requested record through the user token an
   await assert.rejects(photos({method:'GET'},{},new URL(`http://test/api/photos/${kind}/${id}`),{request:async()=>[]},{token:'user-token'},options),error=>error.status===404);assert.equal(accessed,1);
  }
 });
+
+test('workspace timeouts split read-only batches without losing tables or caller scope',async()=>{
+ const successful=[],sizes=[];
+ const result=await readTables({request:async(path,{token,body,signal})=>{
+  assert.equal(token,'scoped-token');assert.equal(signal.aborted,false);
+  assert.ok(path.endsWith('/workspace_read_batch'));sizes.push(body.p_tables.length);
+  if(body.p_tables.length>2)throw Object.assign(Error('timeout'),{databaseCode:'57014'});
+  successful.push(...body.p_tables);
+  return Object.fromEntries(body.p_tables.map(table=>[table,[]]));
+ }},'scoped-token','owner',{batch:true});
+ assert.deepEqual(successful.sort(),[...TABLES].sort());assert.equal(Object.keys(result).length,TABLES.length);assert.ok(sizes.includes(8)&&sizes.includes(2));
+ for(const code of ['42501','57014']){
+  let calls=0;
+  await assert.rejects(readTables({request:async()=>{calls++;throw Object.assign(Error('failed'),{databaseCode:code});}},'scoped-token','owner',{batch:true}),/failed/);
+  assert.ok(calls<=TABLES.length*2);
+ }
+});

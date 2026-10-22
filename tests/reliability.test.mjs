@@ -53,3 +53,10 @@ test('deployment shutdown drains accepted writes before closing the server',asyn
  let drained=false,done;const completed=new Promise(resolve=>done=resolve);const request=fetch(`http://127.0.0.1:${server.address().port}`,{method:'POST',body:'write'});await started;
  const shutdown=drainServer(server,{timeout:1000,onDrained:()=>{drained=true;done();}});shutdown();await pause();assert.equal(drained,false);release();assert.equal(await (await request).text(),'saved');await completed;assert.equal(drained,true);shutdown();
 });
+
+test('read-only POST timeouts do not claim unsaved changes',async()=>{
+ const auth=createAuth({fetcher:async()=>({ok:false,status:500,json:async()=>({code:'57014'})})});
+ for(const route of ['workspace_read_batch','operations_auth_status','operations_command']){
+  await assert.rejects(auth.request('/rest/v1/rpc/'+route,{method:'POST',body:{}}),error=>error.status===503&&error.message.includes('Your changes have not been saved')===(route==='operations_command'));
+ }
+});
