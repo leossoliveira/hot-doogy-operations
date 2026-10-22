@@ -35,6 +35,14 @@ await db.exec(original.slice(original.indexOf('create or replace function privat
 await db.exec(fs.readFileSync(process.argv[2],'utf8'));
 await db.exec('alter table invoices add column payment_date date,add column payment_method text');
 await db.exec(fs.readFileSync(new URL('../migrations/20261011172226_editable_invoice_drafts.sql',import.meta.url),'utf8'));
+if(process.env.INVOICE_ORDER_MIGRATION){
+ await db.exec(`alter table supplier_items add column supplier_product_name text,add column active boolean default true;
+ alter table units add column symbol text;
+ alter table purchase_order_lines add column id uuid primary key default gen_random_uuid();
+ create table purchase_receipt_lines(id uuid primary key default gen_random_uuid(),purchase_order_line_id uuid);
+ update supplier_items set supplier_product_name='Synthetic item';`);
+ await db.exec(fs.readFileSync(process.env.INVOICE_ORDER_MIGRATION,'utf8'));
+}
 const payload={locationId:u(3),supplierId:u(4),number:'TEST-1',date:'2026-10-11',dueDate:'2026-11-01',total:10,documentKind:'invoice',documentReviewed:true,sourceSha256:hash,extraction:{document_type:'invoice'},items:[{description:'Synthetic item',sku:'SKU1',unit:'Each',quantity:2,unit_price:5,line_total:10}],currency:'USD'};
 const save=(id=u(20),p=payload)=>db.query('select save_llm_invoice_draft($1,$2) result',[id,JSON.stringify(p)]);
 await assert.rejects(save(u(20),{...payload,documentKind:'receipt'}));await assert.rejects(save(u(20),{...payload,documentReviewed:false}));
@@ -128,5 +136,33 @@ if(process.argv[6]){
  assert.equal((await db.query('select count(*)::int n from inventory_transactions')).rows[0].n,0);
  assert.equal((await db.query('select count(*)::int n from purchase_receipts')).rows[0].n,0);
  console.log('PASS: reviewed receipts/proofs keep original classification, require human confirmation and retain scope, MFA, duplicate and approval protections');
+}
+if(process.env.INVOICE_ORDER_MIGRATION){
+ const unmatched=(await save(u(200),{...payload,number:'UNMATCHED',items:[{description:'Unknown <product>',sku:null,unit:'CASE',quantity:2,unit_price:7,line_total:14}]})).rows[0].result;
+ let lines=(await db.query('select * from purchase_order_lines where purchase_order_id=$1',[unmatched.orderId])).rows;
+ assert.equal(lines.length,1);assert.equal(lines[0].description,'Unknown <product>');assert.equal(lines[0].inventory_item_id,null);assert.equal(lines[0].source_unit,'CASE');
+ assert.equal((await db.query('select order_number from purchase_orders where id=$1',[unmatched.orderId])).rows[0].order_number,'UNMATCHED');
+ await assert.rejects(db.query('insert into purchase_receipt_lines(purchase_order_line_id) values($1)',[lines[0].id]),/Match the invoice product/);
+ await db.query('update invoice_lines set quantity=3 where id=$1',[lines[0].source_invoice_line_id]);
+ lines=(await db.query('select * from purchase_order_lines where purchase_order_id=$1',[unmatched.orderId])).rows;
+ assert.equal(lines.length,1);assert.equal(lines[0].ordered_purchase_qty,'3');
+ const byName=(await save(u(201),{...payload,number:'BY-NAME',items:[{...payload.items[0],sku:null}]})).rows[0].result;
+ assert.equal((await db.query('select inventory_item_id from purchase_order_lines where purchase_order_id=$1',[byName.orderId])).rows[0].inventory_item_id,u(6));
+ const adopted=(await db.query('select id from purchase_order_lines where purchase_order_id=$1',[byName.orderId])).rows[0].id;
+ await db.query('update purchase_order_lines set source_invoice_line_id=null where id=$1',[adopted]);
+ const migration=fs.readFileSync(process.env.INVOICE_ORDER_MIGRATION,'utf8');
+ const repair=migration.slice(migration.indexOf('do $repair$'),migration.indexOf('update public.purchase_orders p set order_number=substring'));
+ await db.exec(repair);await db.exec(repair);
+ const adoption=(await db.query('select id,source_invoice_line_id from purchase_order_lines where purchase_order_id=$1',[byName.orderId])).rows;
+ assert.equal(adoption.length,1);assert.equal(adoption[0].id,adopted);assert.ok(adoption[0].source_invoice_line_id);
+ const missing=(await save(u(202),{...payload,number:'MISSING',items:[{description:'Unspecified quantity',sku:null,unit:null,quantity:null,unit_price:null,line_total:null}]})).rows[0].result;
+ assert.equal((await db.query('select ordered_purchase_qty from purchase_order_lines where purchase_order_id=$1',[missing.orderId])).rows[0].ordered_purchase_qty,null);
+ await assert.rejects(db.query('update purchase_order_lines set purchase_order_id=$1 where id=$2',[byName.orderId,lines[0].id]),/same order and organization/);
+ await db.exec(`insert into supplier_items(id,organization_id,supplier_id,inventory_item_id,sku,supplier_product_name) values('${u(210)}','${u(2)}','${u(4)}','${u(6)}','OTHER','Synthetic item')`);
+ const ambiguous=(await save(u(203),{...payload,number:'AMBIGUOUS',items:[{...payload.items[0],sku:null}]})).rows[0].result;
+ assert.equal((await db.query('select inventory_item_id from purchase_order_lines where purchase_order_id=$1',[ambiguous.orderId])).rows[0].inventory_item_id,null);
+ assert.equal((await db.query('select count(*)::int n from inventory_transactions')).rows[0].n,0);
+ assert.equal((await db.query('select count(*)::int n from purchase_receipts')).rows[0].n,0);
+ console.log('PASS: unmatched lines, missing quantities, exact unique names, ambiguity, source isolation, sync without duplicates, receipt guard, prefix-free creation/edit/approval');
 }
 await db.close();console.log('PASS: draft creation, receipt rejection, scope/MFA/roles, duplicate/idempotency, exact SKU/unit mapping, From Invoice draft order, original hash binding, approval/payment gates, stale protection, zero receipt/stock writes.');

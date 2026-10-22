@@ -7,7 +7,9 @@ export function mountOrderReceiving(order, {root, e, icon, onReportIssue}) {
  table.tHead.rows[0].insertAdjacentHTML('beforeend', '<th>Receiving</th>');
  for (const row of table.tBodies[0].rows) {
   const line = order.lines.find(line => line.id === row.dataset.orderLine);
-  const name = e(line.name || line.itemName || 'item');
+  const name = e(line.productDescription || line.name || line.itemName || 'item');
+  if(line.sourceInvoiceLineId&&line.orderedPurchaseQty!=null&&Number(line.orderedPurchaseQty)<=0){row.insertAdjacentHTML('beforeend','<td>Credit / adjustment — no receipt</td>');continue;}
+  if(line.catalogPending||line.sourceInvoiceLineId&&line.orderedPurchaseQty==null){row.insertAdjacentHTML('beforeend','<td>Match product, unit and quantity before receiving</td>');continue;}
   const history = (line.receiptIssues || []).map(issue => `<small class="transfer-line-progress not-sent">Not received: ${e(issue.quantity)} · ${e(issue.reason)}</small>`).join('');
   row.insertAdjacentHTML('beforeend', `<td>${active && remainingToReceive(line) > 0 ? `<span class="transfer-line-actions"><button type="button" class="icon-btn transfer-line-check" data-receive-choice="received" aria-pressed="false" aria-label="Mark ${name} as received" title="Mark as received">${icon('check')}</button><button type="button" class="icon-btn transfer-line-issue" data-receive-choice="issue" aria-haspopup="dialog" aria-label="Report issue for ${name}" title="Report issue">${icon('info')}</button></span>` : remainingToReceive(line) === 0 ? '<span class="transfer-line-badge shipped">Received</span>' : 'Pending'}${history}</td>`);
   for (const button of row.querySelectorAll('[data-receive-choice]')) button.onclick = () => {
