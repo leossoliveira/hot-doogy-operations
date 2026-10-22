@@ -1,14 +1,11 @@
-import {readCalculationPage} from './read-budget.mjs';
+import {preparationPages} from './preparation-pages.mjs';
 import {ApiError,reply} from './auth.mjs';
 import {periodWindow} from '../src/preparation-model.js';
 export async function calculatePreparationUsage(auth,session,{start,end,location}){
  const rows=new Map(),days=new Map();
- for(let offset=0,pageSize=25;;){
-  const {value:part,limit}=await readCalculationPage(size=>auth.request('/rest/v1/rpc/preparation_usage_period',{token:session.token,method:'POST',body:{p_start:start,p_end:end,p_location:location==='all'?null:location,p_offset:offset,p_limit:size}}),pageSize);
-  if(!Number.isInteger(part.meta?.processed)||part.meta.processed<0||part.meta.processed>limit)throw Error('Incomplete sales response.');
+ for await(const part of preparationPages(auth,session,'preparation_usage_period_page',{p_start:start,p_end:end,p_location:location==='all'?null:location})){
   for(const r of part.rows){const key=[r.date,r.locationId,r.itemId].join('|'),old=rows.get(key);if(old)old.baseQty+=Number(r.baseQty);else rows.set(key,{...r,baseQty:Number(r.baseQty)});}
   for(const d of part.days){const key=[d.date,d.locationId].join('|'),old=days.get(key);if(old){old.totalLines+=d.totalLines;old.incompleteLines+=d.incompleteLines;}else days.set(key,{...d});}
-  if(part.meta.processed<limit)break;offset+=limit;pageSize=limit;
  }
  return {meta:{source:'Sales and registered recipes',extractedAt:new Date().toISOString()},rows:[...rows.values()],days:[...days.values()]};
 }

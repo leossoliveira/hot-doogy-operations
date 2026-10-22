@@ -111,3 +111,30 @@ OpenClaw records WhatsApp waste directly in the tables with service credentials,
 Migration `20261016125418_invoice_document_storage_verified.sql` adds the read-only computed field `public.storage_verified(invoice_documents)`, which repeats the `private.invoice_has_verified_s3` integrity check for one document and returns false outside the caller's organization or store. The app reads it with `invoice_documents?select=*,storage_verified`. Managers see a **Verify original** button on invoices whose attached file has no valid S3 confirmation, typically originals attached before the September 24 S3 gate. The button reuses the existing human review, S3 upload and `invoice-s3-confirm` flow. Re-uploading writes to the same canonical path and confirms the existing document row. No verification is granted automatically.
 
 Validate it in isolated PGlite with `invoice-document-storage-verified.mjs <migration>`. On October 16 the check body was also compared read-only against production and matched `invoice_has_verified_s3` for verified and unverified documents. Applied with user authorization on October 16, 2026. The CLI created it as 20261016124904, and the filename follows the recorded remote version 20261016125418. Verified: anonymous execution denied, authenticated execution granted, security definer set, and PostgREST resolves `invoice_documents?select=storage_verified`. No business records changed. The server/UI that selects the field is committed locally but not deployed; deploy it only after this migration, as now. To roll back, revert the application first, then drop the function. It holds no data.
+
+## Time-bounded Prep sales pages — October 22, 2026
+
+Run `PGLITE_MODULE_PATH=<absolute PGlite entrypoint> node supabase/tests/preparation-pages.mjs`.
+The isolated PostgreSQL fixture applies the existing cache helper and the new
+`20261022141610_bounded_preparation_sales_pages.sql` migration. It tests cold
+400 ms evaluations, committed partial cache progress, cursor continuation and
+complete prepared/purchased totals, warm cache reuse, a 16,050-sale stress case,
+and date/store/tenant/role/MFA/anonymous restrictions. Signature changes reject
+continuation rather than combining different recipe catalogs. Operational rows
+are preserved. This reduced fixture does not reproduce production hardware,
+real recipe complexity, RLS timing, lock contention or concurrent external jobs.
+
+The new RPCs preserve the old endpoints for deployment compatibility. A page
+handles at most 250 sales and cooperatively yields after one second of evaluation
+work, checking between sales. Existing database statement timeouts are unchanged;
+a single slow evaluation or database outage can still fail. The server retains
+its global one-calculation-at-a-time budget, retries only confirmed timeouts with
+a smaller capacity, validates progress, and publishes totals only after all pages
+finish. Keyset pagination avoids rescanning skipped history. The catalog hash is
+computed once per page, with up to ten times as many warm sales per hash as before.
+
+Deploy the migration before the server. Rollback the server first; the old RPCs
+remain available. The three new functions can then be removed in a new migration;
+retain the derived cache and all operational data. After authorized publication,
+verify real cold and warm runs and PostgreSQL timeout logs; isolated timings alone
+do not establish that production timeouts have stopped.

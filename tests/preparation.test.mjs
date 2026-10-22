@@ -41,12 +41,12 @@ test('Prep usage calculates its own scoped sales pages independently of workspac
  const {calculatePreparationUsage}=await import('../server/preparation-usage.mjs');
  const calls=[],session={token:'session-token',salesSummary:null,salesJob:Promise.resolve()};
  const result=await calculatePreparationUsage({request:async(path,options)=>{
-  calls.push({path,...options});const first=options.body.p_offset===0;
-  return {meta:{processed:first?25:1},rows:[{date:'2026-09-22',locationId:'store',itemId:'prep',baseQty:first?4:6}],days:[{date:'2026-09-22',locationId:'store',totalLines:first?25:1,incompleteLines:0}]};
+  calls.push({path,...options});const first=options.body.p_after===null;
+  return {meta:{processed:first?25:1,hasMore:first,nextCursor:'10000000-0000-4000-8000-'+(first?'000000000025':'000000000026'),catalogSignature:'catalog'},itemRows:[],issues:[],rows:[{date:'2026-09-22',locationId:'store',itemId:'prep',baseQty:first?4:6}],days:[{date:'2026-09-22',locationId:'store',totalLines:first?25:1,incompleteLines:0}]};
  }},session,{start:'2026-09-08',end:'2026-09-29',location:'store'});
  assert.equal(result.rows[0].baseQty,10);assert.equal(result.days[0].totalLines,26);
- assert.deepEqual(calls.map(c=>c.body.p_offset),[0,25]);
- assert.ok(calls.every(c=>c.path==='/rest/v1/rpc/preparation_usage_period'&&c.body.p_location==='store'&&c.body.p_start==='2026-09-08'&&c.token==='session-token'));
+ assert.deepEqual(calls.map(c=>c.body.p_after),[null,'10000000-0000-4000-8000-000000000025']);
+ assert.ok(calls.every(c=>c.path==='/rest/v1/rpc/preparation_usage_period_page'&&c.body.p_location==='store'&&c.body.p_start==='2026-09-08'&&c.token==='session-token'));
  assert.equal(session.salesSummary,null);
 });
 test('Prep jobs are independent per date/location and never return another range results',async()=>{

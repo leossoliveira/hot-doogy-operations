@@ -43,9 +43,9 @@ test('ordinary workspace reads never launch sales calculations',async()=>{
  for(let i=0;i<30;i++)assert.equal(queueSalesSummary({},session,{},options).status,'idle');await pause();assert.equal(calls,0);
 });
 test('background calculations share a global one-query budget and use bounded pages',async()=>{
- let active=0,peak=0,total=0;const auth={request:async(path,{body})=>{active++;peak=Math.max(peak,active);assert.equal(body.p_limit,25);await pause();active--;total++;return {rows:[],itemRows:[],days:[],issues:[]};}};
+ let active=0,peak=0,total=0;const auth={request:async(path,{body})=>{active++;peak=Math.max(peak,active);assert.equal(body.p_limit,250);await pause();active--;total++;return {meta:{processed:0,hasMore:false,catalogSignature:"catalog",nextCursor:null},rows:[],itemRows:[],days:[],issues:[]};}};
  await Promise.all(Array.from({length:3},(_,i)=>salesSummary(auth,{token:String(i)},{sales_item_facts:Array.from({length:101},()=>({source_row_id:'row'}))})));
- assert.equal(peak,1);assert.equal(total,15);
+ assert.equal(peak,1);assert.equal(total,3);
 });
 test('deployment shutdown drains accepted writes before closing the server',async()=>{
  let finish;const started=new Promise(r=>finish=r);let release;const gate=new Promise(r=>release=r);

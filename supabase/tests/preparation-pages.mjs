@@ -1,0 +1,73 @@
+import {readFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const {PGlite}=await import(pathToFileURL(process.env.PGLITE_MODULE_PATH).href);
+const db=new PGlite(),org='6013ed02-626a-497c-b951-619069035532',store='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
+await db.exec(`create schema auth;create schema private;create role anon;create role authenticated;create role service_role;
+create type public.member_role as enum('owner','admin','manager','chef','staff');
+create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+create function private.mfa_authorized() returns boolean language sql stable as $$select current_setting('test.mfa',true)='yes'$$;
+create function private.has_org_role(uuid,public.member_role[]) returns boolean language sql stable as $$select $1='${org}'::uuid and current_setting('test.role',true)=any($2::text[])$$;
+create function private.can_location(uuid) returns boolean language sql stable as $$select $1='${store}'::uuid$$;
+create function private.restaurant_catalog_signature(uuid) returns text language sql stable as $$select coalesce(nullif(current_setting('test.signature',true),''),'catalog-a')$$;
+create table locations(id uuid primary key);insert into locations values('${store}'),('${other}');
+create table inventory_items(id uuid primary key,item_type text);insert into inventory_items values('${store}','prepared'),('${other}','purchased');
+create table sales_import_batches(id uuid primary key,organization_id uuid,location_id uuid,period_start date,period_end date);
+create table sales_import_rows(id uuid primary key,batch_id uuid references sales_import_batches,raw_data jsonb);
+create table sales_item_facts(id uuid primary key,organization_id uuid,location_id uuid,fact_date date,source_row_id uuid);
+create table private.restaurant_sale_cache(source_row_id uuid primary key,catalog_signature text,raw_signature text,evaluation jsonb);
+create sequence private.evaluations;
+create function private.restaurant_evaluate_sale(p_row uuid) returns jsonb language plpgsql as $$declare until_time timestamptz;begin
+ perform nextval('private.evaluations');
+ if current_setting('test.slow',true)='yes' then
+ until_time:=clock_timestamp()+interval '400 milliseconds';while clock_timestamp()<until_time loop perform 1;end loop;
+ end if;
+ return (select raw_data from public.sales_import_rows where id=p_row);end$$;
+grant usage on schema auth,private to authenticated;
+set test.uid='${store}';set test.mfa='yes';set test.role='manager';
+insert into sales_import_batches values('${store}','${org}','${store}','2026-10-01','2026-10-02');
+insert into sales_import_rows select ('10000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'${store}',
+ jsonb_build_object('usage',jsonb_build_array(jsonb_build_object('item_id','${store}','quantity_base',2),jsonb_build_object('item_id','${other}','quantity_base',3)),
+ 'issues',case when n%2=0 then '[{"code":"missing_mapping"}]'::jsonb else '[]'::jsonb end) from generate_series(1,25)n;
+insert into sales_item_facts select id,'${org}','${store}','2026-10-01',id from sales_import_rows;
+insert into sales_item_facts values('${store}','${org}','${other}','2026-10-01','${store}'),('${other}','${other}','${store}','2026-10-01','${other}');`);
+const refresh=await readFile(new URL('../migrations/20261021021507_refresh_derived_sales_cache.sql',import.meta.url),'utf8');
+await db.exec(refresh.split('-- Preserve the deployed authorization')[0]);
+await db.exec(await readFile(new URL('../migrations/20261022141610_bounded_preparation_sales_pages.sql',import.meta.url),'utf8'));
+const call=async(after=null,signature=null,limit=250)=>(await db.query('select public.operations_preparation_sales_page($1,$2,$3) value',[after,limit,signature])).rows[0].value;
+const scoped=async(start='2026-10-01',end=start,location=store)=>(await db.query('select public.preparation_usage_period_page($1,$2,$3) value',[start,end,location])).rows[0].value;
+await db.exec("set test.slow='yes';set role authenticated");
+const coldStart=performance.now(),first=await call(),coldMs=performance.now()-coldStart;
+assert.ok(first.meta.processed>=1&&first.meta.processed<=4);assert.equal(first.meta.hasMore,true);assert.ok(coldMs<3000);
+await db.exec('reset role');
+assert.equal((await db.query('select count(*)::int n from private.restaurant_sale_cache')).rows[0].n,first.meta.processed);
+await db.exec("set role authenticated");
+let pages=[first],after=first.meta.nextCursor;
+while(pages.at(-1).meta.hasMore){const start=performance.now(),page=await call(after,'catalog-a',250);assert.ok(performance.now()-start<3000);pages.push(page);after=page.meta.nextCursor;}
+assert.equal(pages.reduce((n,p)=>n+p.meta.processed,0),25);
+assert.equal(pages.flatMap(p=>p.rows).reduce((n,r)=>n+r.baseQty,0),50);
+assert.equal(pages.flatMap(p=>p.itemRows).reduce((n,r)=>n+r.baseQty,0),125);
+assert.equal(pages.flatMap(p=>p.days).reduce((n,d)=>n+d.incompleteLines,0),12);
+await db.exec("set test.slow='no'");
+const warmStart=performance.now(),warm=await call(),warmMs=performance.now()-warmStart;
+assert.equal(warm.meta.processed,25);assert.equal(warm.meta.hasMore,false);
+assert.equal((await scoped()).meta.processed,25);assert.equal((await scoped('2026-10-02')).meta.processed,0);
+assert.equal((await scoped('2026-10-01','2026-10-01',other)).meta.processed,0);
+await assert.rejects(scoped(null),e=>e.code==='22023');await assert.rejects(scoped('2026-10-02','2026-10-01'),e=>e.code==='22023');
+await assert.rejects(call(null,null,251),e=>e.code==='22023');await assert.rejects(call(null,'old'),e=>e.code==='40001');
+await db.exec("set test.role='staff'");await assert.rejects(call(),e=>e.code==='42501');assert.equal((await scoped()).meta.processed,25);
+await db.exec("set test.mfa='no'");await assert.rejects(scoped(),e=>e.code==='42501');
+await db.exec("set test.mfa='yes';set test.uid=''");await assert.rejects(scoped(),e=>e.code==='42501');
+await db.exec('reset role;set role anon');await assert.rejects(call(),e=>e.code==='42501');
+await db.exec('reset role');
+assert.equal(Number((await db.query('select last_value from private.evaluations')).rows[0].last_value),25);
+assert.equal((await db.query('select count(*)::int n from sales_import_rows')).rows[0].n,25);
+// Warm historical stress: cached 16,050 sales, both ingredient types, no repeated evaluation.
+await db.exec(`insert into sales_import_rows select ('20000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'${store}',raw_data from generate_series(1,16025)n cross join lateral (select raw_data from sales_import_rows limit 1)r;
+insert into sales_item_facts select id,'${org}','${store}','2026-10-01',id from sales_import_rows s where not exists(select 1 from sales_item_facts f where f.id=s.id);
+insert into private.restaurant_sale_cache select s.id,'catalog-a',md5(s.raw_data::text||b.organization_id::text||b.location_id::text||b.period_start::text||b.period_end::text),s.raw_data from sales_import_rows s join sales_import_batches b on b.id=s.batch_id on conflict do nothing;
+set test.uid='${store}';set test.role='manager';set role authenticated;`);
+let count=0,calls=0,cursor=null,maxPageMs=0;
+do{const start=performance.now(),p=await call(cursor);maxPageMs=Math.max(maxPageMs,performance.now()-start);count+=p.meta.processed;calls++;cursor=p.meta.nextCursor;if(!p.meta.hasMore)break;}while(calls<100);
+assert.equal(count,16050);assert.equal(calls,65);assert.ok(maxPageMs<3000);
+await db.close();console.log(JSON.stringify({coldPageMs:Math.round(coldMs),coldProcessed:first.meta.processed,coldPages:pages.length,coldTotalRows:25,warmPageMs:Math.round(warmMs),stressRows:count,stressCalls:calls,maxPageMs:Math.round(maxPageMs),checks:'cold progress commits, complete totals, warm reuse, keyset bounds, date/store/tenant/role/MFA/anon isolation, signature mismatch'}));
