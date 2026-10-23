@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.mjs",
+    "start": "node scripts/start-local.mjs",
     "test": "node scripts/test.mjs",
     "check": "node scripts/check.mjs && node scripts/check-migrations.mjs && node scripts/check-frontend.mjs",
     "test:ci": "npm test",

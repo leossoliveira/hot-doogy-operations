@@ -16,6 +16,8 @@ npm start
 
 O endereço local é http://127.0.0.1:4173. Em produção, acesse https://management.hotdoogy.com sem túnel SSH. O acesso usa o login individual de uma conta ativa vinculada à organização, com MFA administrativo. Não há senha compartilhada adicional do navegador. Consulte [a documentação da hospedagem](deploy/README.md).
 
+Na prévia local, `npm start` preserva as sessões verificadas por MFA em `.secrets/local-preview/auth/`, com criptografia e permissões privadas. Faça login e a verificação uma vez no mesmo navegador e endereço (`127.0.0.1:4173`); a sessão dura até 30 dias desde a verificação, inclusive entre reinícios. Sair da conta, limpar os cookies, expirar ou revogar a sessão exige um novo login. Os dados continuam vindo do Supabase com as permissões da conta. Não incluir o diretório de sessões em cópias ou compartilhamentos. `HOT_DOOGY_SESSION_DIR`, quando definido, mantém precedência. A execução direta com `node server.mjs` depende dessa variável para persistir sessões.
+
 ## Configuração
 
 O servidor aceita `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. Para o armazenamento, configure as variáveis `SUPABASE_S3_*` no servidor ou indique o arquivo privado em `HOT_DOOGY_S3_CONFIG`. O [modelo de configuração](deploy/supabase-s3.env.example) contém apenas os nomes e valores públicos. Não há caminhos para pastas de um computador específico. Nunca coloque credenciais no código, em commits ou nos arquivos públicos.
