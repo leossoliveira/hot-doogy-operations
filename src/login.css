@@ -16,15 +16,7 @@
 @media(pointer:coarse){.login-text-button,.login-back{min-height:44px;display:inline-flex;align-items:center}}
 
 /* Shared entry shell: initial load, session restore, and post-login loading. */
-.workspace-loading{display:grid;grid-template-columns:clamp(210px,14.3vw,280px) minmax(0,1fr);min-height:100vh;min-height:100dvh;background:#fff;color:#242424}
-.workspace-loading-sidebar{position:relative;background:#fafafa;border-right:1px solid #efefef;min-height:100%;padding:18px 8px}
-.workspace-loading-brand{display:flex;align-items:center;gap:12px;padding:0 8px}
-.workspace-loading-mark{display:block;width:38px;height:48px;background:#f1f1f1;flex-shrink:0}
-.workspace-loading-brand>div{flex:1;min-width:0}
-.workspace-loading-line{display:block;width:135px;max-width:100%;height:14px;background:#f1f1f1}
-.workspace-loading-line.short{width:83px;height:10px;margin-top:13px}
-.workspace-loading-nav{height:34px;margin-top:87px;background:#ececec}
-.workspace-loading-footer{position:absolute;bottom:0;left:0;right:0;height:54px;border-top:1px solid #f1f1f1}
+.workspace-loading{display:grid;grid-template-columns:minmax(0,1fr);min-height:100vh;min-height:100dvh;background:#fff;color:#242424}
 .workspace-loading-main{display:grid;place-items:center;min-width:0;padding:24px}
 .workspace-loading-status{display:grid;place-items:center}
 .workspace-loading-spinner{display:block;width:50px;height:50px;border:5px solid #242424;border-bottom-color:transparent;border-left-color:transparent;border-radius:50%;animation:workspace-loading-spin .85s linear infinite}
@@ -34,5 +26,5 @@
 .workspace-loading-error p{margin-top:12px;line-height:1.6;color:#666}
 .workspace-loading-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:24px}
 @keyframes workspace-loading-spin{to{transform:rotate(360deg)}}
-@media(max-width:700px){.workspace-loading{grid-template-columns:1fr}.workspace-loading-sidebar{display:none}.workspace-loading-spinner{width:40px;height:40px;border-width:4px}}
+@media(max-width:700px){.workspace-loading-spinner{width:40px;height:40px;border-width:4px}}
 @media(prefers-reduced-motion:reduce){.workspace-loading-spinner{animation:none}}
