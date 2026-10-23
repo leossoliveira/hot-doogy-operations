@@ -15,6 +15,13 @@ const dateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'
 const date=v=>v?dateFormatter.format(new Date(v)):null;
 export const FACT_COLUMNS=['id','organization_id','location_id','menu_item_id','source_row_id','import_batch_id','fact_date','granularity','period_start','period_end','quantity','net_sales','gross_sales','discounts','refunds','external_item_id','external_item_name'];
 export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).map(k=>[k,f[k]]));
+const largeHistories=new Set(['purchase_order_lines','invoice_lines','inventory_transactions']);
+export function workspaceReadGroups(tables){
+ const sales=tables.filter(table=>table==='sales_item_facts'),histories=tables.filter(table=>largeHistories.has(table));
+ const remaining=tables.filter(table=>table!=='sales_item_facts'&&!largeHistories.has(table)),groups=[sales,histories].filter(group=>group.length);
+ for(let i=0;i<remaining.length;i+=8)groups.push(remaining.slice(i,i+8));
+ return groups;
+}
 export async function readTables(auth,token,role,{batch=false}={}){
  // Batches may use idle global slots; the process-wide ceiling remains eight
  // across every user, so a single refresh does not leave half the budget idle.
@@ -25,12 +32,13 @@ export async function readTables(auth,token,role,{batch=false}={}){
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
   result[table]=table==='sales_item_facts'
    ?await readUuidPages(batch?path=>readSalesPage(read,path):read,url,{pageSize:1000,signal:controller.signal,firstPage})
-   :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal,firstPage});
+   :batch&&largeHistories.has(table)
+    ?await readCursorPages(read,url,{pageSize:1000,firstPageSize:500,signal:controller.signal,firstPage})
+    :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal,firstPage});
  }
  try{
   if(batch){
-   const tables=TABLES.filter(table=>role!=='staff'||staffTables.has(table)),groups=[];
-   for(let i=0;i<tables.length;i+=8)groups.push(tables.slice(i,i+8));
+   const tables=TABLES.filter(table=>role!=='staff'||staffTables.has(table)),groups=workspaceReadGroups(tables);
    async function readGroup(tables){
     let pages;
     try{pages=await read('/rest/v1/rpc/workspace_read_batch',{method:'POST',body:{p_organization_id:ORGANIZATION_ID,p_tables:tables}});}

@@ -16,15 +16,16 @@ export async function readPages(request,url,{pageSize=1000,concurrency=4}={}){
 }
 
 // Keyset pagination avoids scanning and rechecking RLS on every preceding row.
-export async function readCursorPages(request,url,{pageSize=250,key='id',signal,firstPage}={}){
+export async function readCursorPages(request,url,{pageSize=250,key='id',signal,firstPage,firstPageSize=pageSize}={}){
  const rows=[];let cursor;
  for(;;){
   signal?.throwIfAborted();
+  const expectedSize=firstPage===undefined?pageSize:firstPageSize;
   const page=firstPage===undefined?await request(`${url}&limit=${pageSize}${cursor===undefined?'':`&${key}=gt.${encodeURIComponent(cursor)}`}`):firstPage;firstPage=undefined;
   if(!Array.isArray(page))throw Error('Invalid table response.');
   if(page.length&&page.at(-1)[key]==null)throw Error('Missing pagination key.');
   rows.push(...page);
-  if(page.length<pageSize)return rows;
+  if(page.length<expectedSize)return rows;
   const next=page.at(-1)[key];if(cursor!==undefined&&String(next)<=String(cursor))throw Error('Table pagination did not advance.');cursor=next;
  }
 }
