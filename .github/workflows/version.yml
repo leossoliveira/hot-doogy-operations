@@ -48,6 +48,7 @@ jobs:
           node tests/browser/count-reliability.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
           node tests/browser/save-reliability.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
           node tests/browser/all-forms-save-feedback.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
+          node tests/browser/careers-details.mjs "$RUNNER_TEMP/count-browser-tests/node_modules/playwright/index.mjs"
   version:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
