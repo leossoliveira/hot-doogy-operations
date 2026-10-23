@@ -1,3 +1,4 @@
+import {readSalesPage} from './sales-page-read.mjs';
 import {bulkRead} from './read-budget.mjs';
 import {countSessions} from '../src/count-history.js';
 import {staffTables} from './staff-access.mjs';
@@ -23,7 +24,7 @@ export async function readTables(auth,token,role,{batch=false}={}){
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
   const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
   result[table]=table==='sales_item_facts'
-   ?await readUuidPages(read,url,{pageSize:1000,signal:controller.signal,firstPage})
+   ?await readUuidPages(batch?path=>readSalesPage(read,path):read,url,{pageSize:1000,signal:controller.signal,firstPage})
    :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal,firstPage});
  }
  try{

@@ -11,14 +11,14 @@ import {staffTables} from '../server/staff-access.mjs';
 const pause=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('batched first pages avoid repeated reads while complete remaining history retains its token and bounds',async()=>{
- const sales=Array.from({length:1201},(_,i)=>({id:`10000000-0000-4000-8000-${String(i).padStart(12,'0')}`}));
+ const sales=Array.from({length:16050},(_,i)=>({id:`${Math.floor(i/16050*0x100000000).toString(16).padStart(8,'0')}-0000-4000-8000-${String(i).padStart(12,'0')}`}));
  for(const role of ['owner','staff']){
   let batches=0,reads=0,active=0,peak=0;const requested=[];
   const auth={request:async(path,{token,body})=>{
    assert.equal(token,'scoped-token');active++;peak=Math.max(peak,active);await pause();active--;
    if(path.endsWith('/workspace_read_batch')){batches++;assert.ok(body.p_tables.length<=8);requested.push(...body.p_tables);return Object.fromEntries(body.p_tables.map(table=>[table,table==='sales_item_facts'?sales.slice(0,1000):[]]));}
-   reads++;assert.ok(path.startsWith('/rest/v1/sales_item_facts?'));const params=new URL(path,'http://test').searchParams;
-   return sales.filter(row=>params.getAll('id').every(filter=>{const [op,value]=filter.split('.');return op==='gt'?row.id>value:op==='gte'?row.id>=value:row.id<value;})).slice(0,Number(params.get('limit')));
+   reads++;assert.equal(path,'/rest/v1/rpc/workspace_sales_page');
+   return sales.filter(row=>(!body.p_after||row.id>body.p_after)&&(!body.p_lower||row.id>=body.p_lower)&&(!body.p_upper||row.id<body.p_upper)).slice(0,body.p_limit);
   }};
   const result=await readTables(auth,'scoped-token',role,{batch:true});
   assert.deepEqual(requested,TABLES.filter(table=>role!=='staff'||staffTables.has(table)));assert.equal(batches,Math.ceil(requested.length/8));assert.ok(peak>4&&peak<=8);

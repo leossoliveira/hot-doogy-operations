@@ -21,6 +21,7 @@ insert into units(id,is_system) values('44444444-4444-4444-8444-444444444444',tr
 insert into inventory_transactions(id,organization_id,location_id) select ('10000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'${org}','${org}' from generate_series(1,501)n;
 insert into sales_item_facts(id,organization_id,location_id) select ('10000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'${org}','${org}' from generate_series(1,1001)n;`);
 await db.exec(await readFile(new URL('../migrations/20261021013805_bounded_workspace_read_batches.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../migrations/20261023120837_indexed_workspace_sales_pages.sql',import.meta.url),'utf8'));
 assert.equal((await db.query("select prosecdef from pg_proc where proname='workspace_read_batch'")).rows[0].prosecdef,false);
 assert.equal((await db.query("select has_function_privilege('anon','public.workspace_read_batch(uuid,text[])','execute') permitted")).rows[0].permitted,false);
 await db.exec(`set test.uid='${org}';set test.mfa='yes';set role authenticated;`);
