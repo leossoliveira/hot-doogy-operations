@@ -19,7 +19,7 @@ test('history refuses nonadvancing cursors and propagates continuation failure',
  await assert.rejects(readCursorPages(async()=>Array(1000).fill(data[499]),'/history',{pageSize:1000,firstPageSize:500,firstPage:data.slice(0,500)}),/did not advance/);
  await assert.rejects(readCursorPages(async path=>{if(path.includes(data[1499].id))throw Error('page failed');return select(data,path);},'/history?order=id',{pageSize:1000,firstPageSize:500,firstPage:data.slice(0,500)}),/page failed/);
 });
-test('large histories and sales across simultaneous users share the same two-read ceiling',async()=>{
+test('large histories and sales across simultaneous users share the same four-read ceiling',async()=>{
  const data={invoice_lines:rows(3715),purchase_order_lines:rows(3735),inventory_transactions:rows(2445),sales_item_facts:rows(16050)};
  let active=0,peak=0;const tokens=new Set();
  const auth={request:async(path,{token,body,signal})=>{
@@ -32,7 +32,7 @@ test('large histories and sales across simultaneous users share the same two-rea
   }finally{active--;}
  }};
  const results=await Promise.all(['a','b','c'].map(token=>readTables(auth,token,'owner',{batch:true})));
- assert.equal(peak,2);assert.equal(tokens.size,3);
+ assert.equal(peak,4);assert.equal(tokens.size,3);
  for(const result of results){assert.equal(Object.keys(result).length,TABLES.length);for(const [table,expected] of Object.entries(data))assert.deepEqual(result[table],expected);}
  const groups=workspaceReadGroups(TABLES);assert.deepEqual(groups[0],['sales_item_facts']);assert.ok(groups.every(group=>group.length<=8));assert.deepEqual(groups.flat().sort(),[...TABLES].sort());
 });

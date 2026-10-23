@@ -1,5 +1,5 @@
 import {readSalesPage} from './sales-page-read.mjs';
-import {bulkRead} from './read-budget.mjs';
+import {bulkRead,READ_CONCURRENCY} from './read-budget.mjs';
 import {countSessions} from '../src/count-history.js';
 import {staffTables} from './staff-access.mjs';
 import {recipeLocations} from './recipe-locations.mjs';
@@ -23,9 +23,9 @@ export function workspaceReadGroups(tables){
  return groups;
 }
 export async function readTables(auth,token,role,{batch=false}={}){
- // Keep only two requests in flight per workspace and across the process.
- // More parallel pages contend for the Nano database's CPU and memory.
- const result={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),2);
+ // Bound per-workspace and process-wide reads to the same small budget.
+ // Micro has twice Nano RAM; deployments can lower the limit to 1–3.
+ const result={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),READ_CONCURRENCY);
  async function completeTable(table,firstPage){
   if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';

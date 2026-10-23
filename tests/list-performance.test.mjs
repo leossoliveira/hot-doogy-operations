@@ -21,7 +21,7 @@ test('batched first pages avoid repeated reads while complete remaining history 
    return sales.filter(row=>(!body.p_after||row.id>body.p_after)&&(!body.p_lower||row.id>=body.p_lower)&&(!body.p_upper||row.id<body.p_upper)).slice(0,body.p_limit);
   }};
   const result=await readTables(auth,'scoped-token',role,{batch:true});
-  assert.deepEqual([...requested].sort(),TABLES.filter(table=>role!=='staff'||staffTables.has(table)).sort());assert.equal(batches,workspaceReadGroups(requested).length);assert.equal(peak,2);
+  assert.deepEqual([...requested].sort(),TABLES.filter(table=>role!=='staff'||staffTables.has(table)).sort());assert.equal(batches,workspaceReadGroups(requested).length);assert.equal(peak,4);
   assert.deepEqual(result.sales_item_facts,role==='staff'?[]:sales);if(role==='staff')assert.equal(reads,0);
  }
  await assert.rejects(readTables({request:async()=>({})},'scoped-token','owner',{batch:true}),/Incomplete workspace batch/);

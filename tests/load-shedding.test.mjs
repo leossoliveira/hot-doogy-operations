@@ -7,7 +7,7 @@ const pause=()=>new Promise(resolve=>setImmediate(resolve));
 test('default read budget bounds concurrent work across callers',async()=>{
  const budget=createReadBudget();let active=0,peak=0;
  await Promise.all(Array.from({length:20},()=>budget.read(async()=>{active++;peak=Math.max(peak,active);await pause();active--;})));
- assert.equal(peak,2);
+ assert.equal(peak,4);
 });
 test('full and expired queues reject without running stale work; subsequent work recovers',async()=>{
  let now=0,release,ran=0;const budget=createReadBudget(1,{maxQueue:2,maxWaitMs:100,now:()=>now});

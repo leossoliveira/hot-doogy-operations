@@ -1,7 +1,8 @@
 // Interactive reads take priority. A bounded calculation page runs only while
-// the read queue is idle. Limit concurrent work on the shared Nano database.
+// the read queue is idle. Limit concurrent work on the Micro database. Heavy calculations stay exclusive.
 // Values are never cached/shared: every request keeps its caller's token/RLS.
-export function createReadBudget(concurrency=2,{maxQueue=128,maxWaitMs=15000,now=Date.now}={}){
+export const READ_CONCURRENCY=[1,2,3,4].includes(Number(process.env.HOT_DOOGY_READ_CONCURRENCY))?Number(process.env.HOT_DOOGY_READ_CONCURRENCY):4;
+export function createReadBudget(concurrency=READ_CONCURRENCY,{maxQueue=128,maxWaitMs=15000,now=Date.now}={}){
  let active=0,calculating=false;const reads=[],calculations=[];
  function start(entry,calculation){
   if(now()-entry.queuedAt>=maxWaitMs){entry.reject(busyError());return;}
