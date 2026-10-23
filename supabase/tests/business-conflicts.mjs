@@ -1,0 +1,16 @@
+import {readFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const {PGlite}=await import(pathToFileURL(process.env.PGLITE_MODULE_PATH).href);
+const db=new PGlite();
+await db.exec(`create schema private;create role authenticated;create table public.conflict_test(value integer);insert into public.conflict_test values(1);
+create function private.preparation_sales_page() returns void language plpgsql security definer set search_path='' as $$begin update public.conflict_test set value=2;raise exception 'The recipe catalog changed. Restart the calculation.' using errcode='40001';end$$;
+create function public.save_inventory_count() returns void language plpgsql security invoker set search_path='' as $$begin raise exception 'Count changed' using errcode = '40001';end$$;
+revoke all on function private.preparation_sales_page() from public;grant execute on function private.preparation_sales_page() to authenticated;`);
+const metadata=async()=>(await db.query("select proname,prosecdef,proconfig,proacl from pg_proc p join pg_namespace n on n.oid=p.pronamespace where (n.nspname,proname) in (('private','preparation_sales_page'),('public','save_inventory_count')) order by proname")).rows;
+const before=await metadata();
+await db.exec(await readFile(new URL('../migrations/20261023223429_non_retryable_business_conflicts.sql',import.meta.url),'utf8'));
+assert.deepEqual(await metadata(),before);
+for(const fn of ['private.preparation_sales_page','public.save_inventory_count'])await assert.rejects(db.query(`select ${fn}()`),e=>e.code==='PT409');
+assert.equal((await db.query('select value from public.conflict_test')).rows[0].value,1);
+await db.close();console.log('Business conflicts return PT409, roll back writes and preserve security/permissions.');

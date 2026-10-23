@@ -1,5 +1,5 @@
 import {countDatabaseMessage} from './inventory-count-messages.mjs';
-export const databaseWriteRejected=code=>/^(P0001|42501|57014|55P03|21000)$/.test(code||'')||/^(22|23|40)/.test(code||'');
+export const databaseWriteRejected=code=>/^(PT409|P0001|42501|57014|55P03|21000)$/.test(code||'')||/^(22|23|40)/.test(code||'');
 // Translate known database validation messages without changing stored enum values or records.
 const messages=new Map([
  ['A reviewed financial invoice is required','Review the original document and confirm that it supports this purchase before saving the invoice.'],
@@ -60,6 +60,7 @@ export function databaseErrorMessage(data){
  if(data?.code==='21000')return 'The database rejected this save. No changes were saved. Please retry after the service is corrected.';
  if(data?.message?.startsWith('INVOICE_S3_REQUIRED:'))return 'Upload and verify the original invoice document before marking it Approved or Paid.';
  if(countDatabaseMessage(data?.message))return data.message;
+ if(data?.code==='PT409')return 'This record changed. Reload it before trying again.';
  if(data?.code==='40001')return 'This invoice changed. Reload its status before saving.';
 
  if(data?.code==='P0001'&&data?.message?.startsWith('HR '))return data.message;
