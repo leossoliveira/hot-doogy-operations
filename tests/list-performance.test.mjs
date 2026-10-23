@@ -93,3 +93,40 @@ test('workspace timeouts split read-only batches without losing tables or caller
   assert.ok(calls<=TABLES.length*2);
  }
 });
+
+test('history continuation starts before an unrelated first batch finishes, without returning partial data',async()=>{
+ let releaseSlow,continued,finished=false;
+ const slow=new Promise(resolve=>{releaseSlow=resolve;}),continuation=new Promise(resolve=>{continued=resolve;});
+ const rows=Array.from({length:501},(_,i)=>({id:String(i).padStart(6,'0')}));
+ let active=0,peak=0;
+ const pending=readTables({request:async(path,{body,token,signal})=>{
+  assert.equal(token,'pipeline-token');assert.equal(signal.aborted,false);active++;peak=Math.max(peak,active);
+  try{
+   if(body?.p_tables){
+    if(body.p_tables.includes('waste_events'))await slow;
+    return Object.fromEntries(body.p_tables.map(table=>[table,table==='invoice_lines'?rows.slice(0,500):[]]));
+   }
+   assert.match(path,/\/invoice_lines\?/);assert.match(path,/id=gt.000499/);continued();return rows.slice(500);
+  }finally{active--;}
+ }},'pipeline-token','owner',{batch:true}).then(value=>{finished=true;return value;});
+ try{
+  // The slow batch is intentionally held: waiting for all first pages would
+  // deadlock here. No timing threshold is needed to demonstrate the overlap.
+  await Promise.race([continuation,new Promise((_,reject)=>{const timer=setTimeout(()=>reject(Error('Continuation blocked by unrelated batch')),1000);timer.unref();})]);
+  assert.equal(finished,false);assert.ok(peak<=8);
+ }finally{releaseSlow();}
+ const result=await pending;assert.deepEqual(result.invoice_lines,rows);assert.equal(Object.keys(result).length,TABLES.length);
+});
+
+test('a late first-page failure aborts the workspace even after other histories complete',async()=>{
+ let continued;const continuation=new Promise(resolve=>{continued=resolve;});let sharedSignal;
+ await assert.rejects(readTables({request:async(path,{body,signal})=>{
+  sharedSignal=signal;
+  if(body?.p_tables){
+   if(body.p_tables.includes('waste_events')){await continuation;throw Error('late batch failure');}
+   return Object.fromEntries(body.p_tables.map(table=>[table,table==='invoice_lines'?Array.from({length:500},(_,i)=>({id:String(i).padStart(6,'0')})):[]]));
+  }
+  continued();return [];
+ }},'pipeline-token','owner',{batch:true}),/late batch failure/);
+ assert.equal(sharedSignal.aborted,true);
+});

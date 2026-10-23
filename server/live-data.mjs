@@ -17,7 +17,15 @@ export const compactFact=f=>Object.fromEntries(FACT_COLUMNS.filter(k=>k in f).ma
 export async function readTables(auth,token,role,{batch=false}={}){
  // Batches may use idle global slots; the process-wide ceiling remains eight
  // across every user, so a single refresh does not leave half the budget idle.
- const result={},initial={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),batch?8:4);
+ const result={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),batch?8:4);
+ async function completeTable(table,firstPage){
+  if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
+  const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
+  const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
+  result[table]=table==='sales_item_facts'
+   ?await readUuidPages(read,url,{pageSize:1000,signal:controller.signal,firstPage})
+   :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal,firstPage});
+ }
  try{
   if(batch){
    const tables=TABLES.filter(table=>role!=='staff'||staffTables.has(table)),groups=[];
@@ -32,18 +40,16 @@ export async function readTables(auth,token,role,{batch=false}={}){
      const middle=Math.ceil(tables.length/2);
      await readGroup(tables.slice(0,middle));await readGroup(tables.slice(middle));return;
     }
-    for(const table of tables){if(!Array.isArray(pages?.[table])||pages[table].length>(table==='sales_item_facts'?1000:500))throw Error('Incomplete workspace batch.');initial[table]=pages[table];}
+    for(const table of tables){if(!Array.isArray(pages?.[table])||pages[table].length>(table==='sales_item_facts'?1000:500))throw Error('Incomplete workspace batch.');}
+    // Start continuation pages immediately; unrelated slow first pages must
+    // not hold up a complete history. All reads still share the same budget.
+    await Promise.all(tables.map(table=>completeTable(table,pages[table])));
    }
+   for(const table of TABLES)if(!tables.includes(table))result[table]=[];
    await Promise.all(groups.map(readGroup));
   }
-  await Promise.all(TABLES.map(async table=>{
-  if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
-  const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';
-  const url=`/rest/v1/${table}?select=${select}&${scope}order=${table==='location_settings'?'location_id':'id'}`;
-  result[table]=table==='sales_item_facts'
-   ?await readUuidPages(read,url,{pageSize:1000,signal:controller.signal,firstPage:initial[table]})
-   :await readCursorPages(read,url,{key:table==='location_settings'?'location_id':'id',pageSize:500,signal:controller.signal,firstPage:initial[table]});
- }));}catch(error){controller.abort(error);throw error;}
+  else await Promise.all(TABLES.map(table=>completeTable(table)));
+ }catch(error){controller.abort(error);throw error;}
  const receiptIds=(result.purchase_receipts||[]).filter(r=>r.received_by).map(r=>r.id);
  if(receiptIds.length){
   try{
