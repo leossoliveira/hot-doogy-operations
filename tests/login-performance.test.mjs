@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {gunzipSync} from 'node:zlib';
+import {gunzipSync,brotliDecompressSync} from 'node:zlib';
 import {readPages} from '../server/paginated-read.mjs';
 import {compactFact} from '../server/live-data.mjs';
 import {replyData} from '../server/compressed-json.mjs';
@@ -17,4 +17,7 @@ test('workspace compression is negotiated and preserves the full data with no-st
  const value={name:'Operação',rows:Array.from({length:1000},(_,id)=>({id,name:'HOT DOOGY'}))};let headers,body;const res={writeHead(status,h){assert.equal(status,200);headers=h;},end(b){body=b;}};
  await replyData({headers:{'accept-encoding':'gzip, deflate'}},res,value);assert.equal(headers['Content-Encoding'],'gzip');assert.equal(headers['Cache-Control'],'no-store');assert.deepEqual(JSON.parse(gunzipSync(body)),value);assert.ok(body.length<JSON.stringify(value).length/3);
  await replyData({headers:{'accept-encoding':'gzip;q=0'}},res,value);assert.equal(headers['Content-Encoding'],undefined);assert.deepEqual(JSON.parse(body),value);
+ await replyData({headers:{'accept-encoding':'gzip, br'}},res,value);assert.equal(headers['Content-Encoding'],'br');assert.deepEqual(JSON.parse(brotliDecompressSync(body)),value);
+ await replyData({headers:{'accept-encoding':'br;q=0, gzip;q=0.5'}},res,value);assert.equal(headers['Content-Encoding'],'gzip');assert.deepEqual(JSON.parse(gunzipSync(body)),value);
+ await replyData({headers:{'accept-encoding':'br;q=0, gzip;q=0, *;q=1'}},res,value);assert.equal(headers['Content-Encoding'],undefined);assert.deepEqual(JSON.parse(body),value);
 });
