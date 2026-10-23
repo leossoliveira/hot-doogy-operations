@@ -1,7 +1,7 @@
 import {preparationPages} from './preparation-pages.mjs';
 import {purchasingSales} from './purchasing-sales.mjs';
 import {createHash} from 'node:crypto';
-export function salesSignature(raw){return createHash('sha256').update(JSON.stringify(Object.fromEntries(['inventory_items','menu_items','sales_import_batches','locations','recipes','recipe_versions','recipe_components','inventory_item_units','menu_item_modifier_rules','modifiers','sales_item_facts'].map(k=>[k,raw[k]])))).digest('hex');}
+export function salesSignature(raw){return createHash('sha256').update(JSON.stringify(Object.fromEntries(['inventory_items','menu_items','sales_import_batches','locations','recipes','recipe_versions','recipe_components','inventory_item_units','menu_item_modifier_rules','modifiers','sales_item_facts','workspace_sales_summary'].map(k=>[k,raw[k]])))).digest('hex');}
 export async function salesSummary(auth,session,raw){
  const signature=salesSignature(raw);
  if(session.salesSummary?.signature===signature)return session.salesSummary.result;

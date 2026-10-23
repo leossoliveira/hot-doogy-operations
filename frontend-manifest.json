@@ -4,8 +4,8 @@
     "src/a11y.css": "333b9224efe40144b877ec1e32e8e307bfeb79da001bba183a6e76196e7b6886",
     "src/access.js": "fb85ce086f540872b585b3cd41583b1c8b920ff0088cb8b8c5b3780e8c8b2116",
     "src/app.bundle.css": "0fcd8ed0ac11270da218b454f0ed8a164fb0a0bc16a204c97a323f62b2e27b3b",
-    "src/app.bundle.js": "cea8c1ef15fa40de23109f35a34f3b365a6eec90275181fd4bf941d4f00d8196",
-    "src/app.js": "a50392891b176bb87f2cac8b0bc4e5b24b0a8182513c167e97c46111ed902bd4",
+    "src/app.bundle.js": "d3e6e5fd8611a62a0703506562b0a38ff652cd7e2877bd2bf0e869d0899514a7",
+    "src/app.js": "91dc7c351f52290a792d0ff2885e8b4772bfdba96938ee022278b3112d0e80ea",
     "src/careers-model.js": "a004dd240bcc074df6dfc439a5eab941b1f7b661609f117dd21e20c1b5b2970d",
     "src/careers-ui.js": "34a3a761e3a8de9b6cfb039dac24d728243e095915bef63c82cdbb10bd7dea4e",
     "src/careers.css": "69c406517ec6cb15bb729e233eca285bbc4260346e86a0701686956678c71cf4",
@@ -60,7 +60,7 @@
     "src/preparation-model.js": "c2ad539b4a04804f0d1e3bfaf4f3458f2e1c05c67ca65c3255fd3222d70b8dad",
     "src/preparation-pdf.js": "e3dc75a59be6b23df0662fbc41f213e93a0f48e7284f48f6bf118bf013576150",
     "src/preparation-sales.js": "4cc0aec9fc51dd020465a584bb791cc80d0d44102f483c67ac63b1c6d24591d0",
-    "src/preparation-ui.js": "81f701d666a4381441c2045aafcd66d35c653976ab8f6b813eff7b316390ce76",
+    "src/preparation-ui.js": "543027fe156c65b58f5e547ddbfd1300aaad0af203d4d3e51c2344b66bb4f9eb",
     "src/purchasing-model.js": "a0ec884863287a50c62bf380eb47193ef9823baaa3c1f9e965357814cd1bcdda",
     "src/purchasing-ui.js": "ab84c65cf4d507b3dfe663176127529854d6e217e420b6b965cc27874c27c408",
     "src/recipe-cost-model.js": "f51d1eaeba6406fc298e85755f8ce67d845cf8740bc57c8ca66ec63b2a0d7bed",
@@ -89,6 +89,6 @@
     "src/waste-ui.js": "92711fc26c3c8d0896e00d0c33054c9cb5a5989797d542276b7d4e3d3776eb6b",
     "src/workday-import-ui.js": "38f86e973a155a536d5f2b3c8eb7e166a0d19b8de1a8d0eb7cbd429ae3750fca",
     "src/workspace-loading.js": "de451e2823ad6c84c45512fa6660bffe70f9654d5d45f96a96aee963440505f9",
-    "src/workspace-scope.js": "95aeb41a677cf7a23b5f833a6fe6e91828bf937e466c056ab53aaf79329655de"
+    "src/workspace-scope.js": "5203ad2074079101f4512bce0dfae81a887deaafbefe5dd9fa85c0cfe0770976"
   }
 }

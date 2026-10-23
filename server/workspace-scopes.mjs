@@ -4,6 +4,7 @@ export const CATALOG_TABLES=['locations','suppliers','supplier_categories','inve
 export function tablesForScope(scope,all){
  if(scope==='bootstrap')return BOOTSTRAP_TABLES;
  if(scope==='catalog')return CATALOG_TABLES;
+ if(scope==='operations')return all.filter(table=>table!=='sales_item_facts');
  if(scope==='full')return all;
  throw Object.assign(Error('Invalid workspace scope.'),{status:400});
 }

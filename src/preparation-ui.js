@@ -27,7 +27,7 @@ export function createPreparationUI(ctx){
   const now=()=>new Date().toISOString(),today=()=>toLocalDateTime(now()).slice(0,10);
   const $=s=>document.querySelector(s);
   const locations=()=>data().locations;
-  function init(){if(ps.start)return;const lastSale=(data().salesPeriods?.facts||[]).map(f=>f.date).filter(Boolean).sort().at(-1);ps.end=lastSale||shiftDay(today(),-1);ps.start=shiftDay(ps.end,-6);ps.from=locations().find(l=>l.name.includes('Sherwood'))?.id||'';ps.to=locations().find(l=>l.name.includes('Natick'))?.id||'';ps.delivery=today();}
+  function init(){if(ps.start)return;const lastSale=(data().salesDaily||data().salesPeriods?.facts||[]).map(f=>f.date).filter(Boolean).sort().at(-1);ps.end=lastSale||shiftDay(today(),-1);ps.start=shiftDay(ps.end,-6);ps.from=locations().find(l=>l.name.includes('Sherwood'))?.id||'';ps.to=locations().find(l=>l.name.includes('Natick'))?.id||'';ps.delivery=today();}
   const catalog=()=>[...new Map(items().filter(i=>i.type==='prepared'&&i.active!==false&&i.locationActive!==false).map(i=>[i.id,i])).values()].sort((a,b)=>(a.internalName||a.name).localeCompare(b.internalName||b.name));
   const prepPicker=createMultiSelect({action:'prep-items-filter',label:'Prep',allSummary:'All',rows:()=>catalog().map(i=>({id:i.id,name:i.internalName||i.name})),current:()=>ps.item,onChange:value=>{ps.item=value;ps.page=1;render();},beforeOpen:()=>closeDatePicker(false)});
   const option=(value,label,current)=>`<option value="${e(value)}" ${value===current?'selected':''}>${e(label)}</option>`;

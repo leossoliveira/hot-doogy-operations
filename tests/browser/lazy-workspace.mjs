@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true,...(process.env.COUNT_BROWSER
 const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(10000);
 const raw=operationsFixture(2);for(const row of raw.inventory_items)row.active=true;for(const row of raw.supplier_items)row.active=true;raw.suppliers[0].active=true;
 for(const row of raw.location_inventory_items)row.active=true;
-const responses={overview:projectData({locations:raw.locations,inventory_items:raw.inventory_items,location_inventory_items:raw.location_inventory_items,recipes:raw.recipes,recipe_versions:raw.recipe_versions}),full:projectData(raw),catalog:projectData(Object.fromEntries(CATALOG_TABLES.map(t=>[t,raw[t]||[]]))),bootstrap:projectData({locations:raw.locations})};
+const responses={operations:projectData(raw),overview:projectData({locations:raw.locations,inventory_items:raw.inventory_items,location_inventory_items:raw.location_inventory_items,recipes:raw.recipes,recipe_versions:raw.recipe_versions}),full:projectData(raw),catalog:projectData(Object.fromEntries(CATALOG_TABLES.map(t=>[t,raw[t]||[]]))),bootstrap:projectData({locations:raw.locations})};
 for(const [scope,value] of Object.entries(responses)){value.meta.workspaceScope=scope;value.meta.preparationSalesStatus='idle';}
 const reads=[],errors=[],assets=[];page.on('request',request=>{const path=new URL(request.url()).pathname;if(path.startsWith('/src/'))assets.push(path);});let releaseFull,failFull=false,holdPhotos=false,releasePhotos;
 page.on('pageerror',e=>errors.push(e.message));
@@ -17,7 +17,7 @@ await page.route('**/api/**',async route=>{
  if(url.pathname==='/api/auth/session')return route.fulfill({json:{user:{id:'actor',email:'test@example.invalid'},role:'owner'}});
  if(url.pathname==='/api/data'){
   const scope=url.searchParams.get('scope')||'full';reads.push(scope);
-  if(scope==='full'){if(failFull)return route.fulfill({status:503,json:{error:'Temporary history failure'}});await new Promise(r=>releaseFull=r);}
+  if(['full','operations'].includes(scope)){if(failFull)return route.fulfill({status:503,json:{error:'Temporary history failure'}});await new Promise(r=>releaseFull=r);}
   return route.fulfill({json:responses[scope]});
  }
  if(url.pathname==='/api/photos'){if(holdPhotos)await new Promise(r=>releasePhotos=r);return route.fulfill({json:{items:holdPhotos?{'item-0':'/synthetic-photo'}:{},recipes:{}}});}

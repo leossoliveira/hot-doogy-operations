@@ -32,9 +32,16 @@ test('scope is part of in-flight identity; bootstrap cannot satisfy a history re
 });
 test('overview uses an independent dashboard scope; incomplete scopes cannot render history',()=>{
  assert.equal(routeScope('overview'),'overview');assert.equal(routeScope('suppliers'),'catalog');
- for(const route of ['inventory','invoices','purchases','sales','recipes','reports'])assert.equal(routeScope(route),'full');
+ for(const route of ['sales','reports'])assert.equal(routeScope(route),'full');
  assert.equal(scopeCovers('bootstrap','catalog'),false);assert.equal(scopeCovers('catalog','full'),false);assert.equal(scopeCovers('full','bootstrap'),true);assert.equal(refreshScope('full','catalog'),'full');
 });
 
 test('overview and catalog never cover each other',()=>{assert.equal(scopeCovers('overview','catalog'),false);assert.equal(scopeCovers('catalog','overview'),false);assert.equal(scopeCovers('overview','full'),false);assert.equal(scopeCovers('full','overview'),true);assert.equal(refreshScope('overview','catalog'),'catalog');});
 test('overview reads a single scoped RPC, never history pages',async()=>{const calls=[];const result={locations:[],overview_sales_daily:[]};const raw=await readTables({request:async(path,options)=>{calls.push(path);assert.equal(options.token,'actor');assert.ok(options.body.p_organization_id);return result;}},'actor','owner',{scope:'overview'});assert.equal(raw,result);assert.deepEqual(calls,['/rest/v1/rpc/overview_dashboard_read']);});
+
+test('operations omits raw sales but retains complete operational history',()=>{const selected=tablesForScope('operations',TABLES);assert.equal(selected.includes('sales_item_facts'),false);assert.equal(selected.length,TABLES.length-1);for(const route of ['inventory','invoices','purchases','recipes','prices','transfers','preparation','waste'])assert.equal(routeScope(route),'operations');for(const scope of ['overview','catalog','bootstrap'])assert.equal(scopeCovers('operations',scope),true);assert.equal(scopeCovers('operations','full'),false);});
+test('operational reads use caller-scoped sales totals, never raw sales pages',async()=>{
+ const paths=[],summary={daily:[{date:'2026-10-01',locationId:'store',quantity:2,netSales:10,factCount:1}],signature:'content-hash'};
+ const raw=await readTables({request:async(path,{body,token})=>{assert.equal(token,'actor');paths.push(path);if(path.endsWith('workspace_sales_summary'))return summary;assert.ok(!body.p_tables.includes('sales_item_facts'));return Object.fromEntries(body.p_tables.map(table=>[table,[]]));}},'actor','owner',{batch:true,scope:'operations'});
+ assert.deepEqual(raw.sales_item_facts,[]);assert.equal(raw.workspace_sales_summary,summary);assert.equal(projectData(raw).salesDaily[0].netSales,10);assert.equal(paths.filter(p=>p.endsWith('workspace_sales_summary')).length,1);
+});
