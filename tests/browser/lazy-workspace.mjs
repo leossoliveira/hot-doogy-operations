@@ -10,7 +10,7 @@ const raw=operationsFixture(2);for(const row of raw.inventory_items)row.active=t
 for(const row of raw.location_inventory_items)row.active=true;
 const responses={full:projectData(raw),catalog:projectData(Object.fromEntries(CATALOG_TABLES.map(t=>[t,raw[t]||[]]))),bootstrap:projectData({locations:raw.locations})};
 for(const [scope,value] of Object.entries(responses)){value.meta.workspaceScope=scope;value.meta.preparationSalesStatus='idle';}
-const reads=[],errors=[];let releaseFull,failFull=false;
+const reads=[],errors=[],assets=[];page.on('request',request=>{const path=new URL(request.url()).pathname;if(path.startsWith('/src/'))assets.push(path);});let releaseFull,failFull=false;
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/api/**',async route=>{
  const url=new URL(route.request().url());
@@ -26,7 +26,7 @@ await page.route('**/api/**',async route=>{
 try{
  await page.goto('http://127.0.0.1:4196/#overview');
  await page.getByRole('button',{name:'View business summary',exact:true}).waitFor();
- assert.deepEqual(reads,['bootstrap']);assert.equal(await page.getByText('Net sales',{exact:true}).count(),0);
+ assert.deepEqual(reads,['bootstrap']);assert.deepEqual(assets.sort(),['/src/app.bundle.css','/src/app.bundle.js']);assert.equal(await page.getByText('Net sales',{exact:true}).count(),0);
  // The summary is explicit. While its history request is held, navigation works.
  await page.getByRole('button',{name:'View business summary',exact:true}).click();
  await page.getByRole('status').filter({hasText:'Loading records'}).waitFor();

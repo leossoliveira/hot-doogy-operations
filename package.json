@@ -6,13 +6,17 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node scripts/test.mjs",
-    "check": "node scripts/check.mjs && node scripts/check-migrations.mjs",
+    "check": "node scripts/check.mjs && node scripts/check-migrations.mjs && node scripts/check-frontend.mjs",
     "test:ci": "npm test",
     "test:historical": "node scripts/test.mjs --historical",
     "backup": "python3 scripts/backup.py",
-    "test:backup": "python3 -B -m unittest discover -s tests/backup -v"
+    "test:backup": "python3 -B -m unittest discover -s tests/backup -v",
+    "build": "node scripts/build-frontend.mjs"
   },
   "engines": {
     "node": ">=24 <25"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
   }
 }
