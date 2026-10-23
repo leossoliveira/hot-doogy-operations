@@ -10,7 +10,7 @@ const raw=operationsFixture(2);for(const row of raw.inventory_items)row.active=t
 for(const row of raw.location_inventory_items)row.active=true;
 const responses={overview:projectData({locations:raw.locations,inventory_items:raw.inventory_items,location_inventory_items:raw.location_inventory_items,recipes:raw.recipes,recipe_versions:raw.recipe_versions}),full:projectData(raw),catalog:projectData(Object.fromEntries(CATALOG_TABLES.map(t=>[t,raw[t]||[]]))),bootstrap:projectData({locations:raw.locations})};
 for(const [scope,value] of Object.entries(responses)){value.meta.workspaceScope=scope;value.meta.preparationSalesStatus='idle';}
-const reads=[],errors=[],assets=[];page.on('request',request=>{const path=new URL(request.url()).pathname;if(path.startsWith('/src/'))assets.push(path);});let releaseFull,failFull=false;
+const reads=[],errors=[],assets=[];page.on('request',request=>{const path=new URL(request.url()).pathname;if(path.startsWith('/src/'))assets.push(path);});let releaseFull,failFull=false,holdPhotos=false,releasePhotos;
 page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/api/**',async route=>{
  const url=new URL(route.request().url());
@@ -20,7 +20,7 @@ await page.route('**/api/**',async route=>{
   if(scope==='full'){if(failFull)return route.fulfill({status:503,json:{error:'Temporary history failure'}});await new Promise(r=>releaseFull=r);}
   return route.fulfill({json:responses[scope]});
  }
- if(url.pathname==='/api/photos')return route.fulfill({json:{items:{},recipes:{}}});
+ if(url.pathname==='/api/photos'){if(holdPhotos)await new Promise(r=>releasePhotos=r);return route.fulfill({json:{items:holdPhotos?{'item-0':'/synthetic-photo'}:{},recipes:{}}});}
  return route.fulfill({json:{}});
 });
 try{
@@ -48,6 +48,14 @@ try{
  await page.getByText('Net sales',{exact:true}).waitFor();
  await page.getByRole('heading',{name:'Needs your attention',exact:true}).waitFor();
  await page.getByRole('heading',{name:'Purchasing activity',exact:true}).waitFor();
+ // A late photo refresh must not dismiss the newly opened calendar.
+ holdPhotos=true;releaseFull=null;await page.reload();await page.getByText('Net sales',{exact:true}).waitFor();
+ const detailsRequested=page.waitForRequest(request=>request.url().includes('/api/data?scope=full'));
+ await page.getByRole('button',{name:'Date: select a day or date range',exact:true}).click();await detailsRequested;
+ for(let i=0;i<100&&!releaseFull;i++)await new Promise(r=>setTimeout(r,20));releaseFull();
+ await page.getByRole('button',{name:'Apply',exact:true}).waitFor();
+ for(let i=0;i<100&&!releasePhotos;i++)await new Promise(r=>setTimeout(r,20));assert.ok(releasePhotos);releasePhotos();await page.waitForTimeout(200);
+ assert.equal(await page.getByRole('button',{name:'Apply',exact:true}).count(),1);
  assert.deepEqual(errors,[]);
  console.log('PASS automatic original Overview, deferred history on other routes, navigation and catalog editing during delayed history, stale-response protection, visible failure and successful retry.');
 }catch(error){console.error({reads,errors,screen:await page.locator('#main').innerText()});throw error;}finally{await browser.close();}
