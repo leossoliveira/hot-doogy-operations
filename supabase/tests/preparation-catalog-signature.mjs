@@ -15,9 +15,19 @@ declare org uuid:='${org}';signature text;deadline timestamptz;processed integer
  if processed>=p_limit or clock_timestamp()>deadline then exit;end if;processed:=processed+1;
  end loop;return jsonb_build_object('processed',processed,'signature',signature);end $$;`);
 await db.exec(await readFile(new URL('../migrations/20261022143712_cache_preparation_catalog_signatures.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../migrations/20261023021423_fix_catalog_signature_safe_updates.sql',import.meta.url),'utf8'));
+// PGlite does not load Supabase's safeupdate hook. Check its required predicate
+// in the installed definition, then exercise every trigger below in PostgreSQL.
+const invalidator=(await db.query("select pg_get_functiondef('private.invalidate_preparation_catalog_signature()'::regprocedure) definition")).rows[0].definition;
+assert.match(invalidator,/where organization_id is not null/i);
+// Invalidate every organization, including an already-invalid cache. Both are
+// required to prevent concurrent computation from reviving stale signatures.
+await db.exec(`insert into private.preparation_catalog_signatures(organization_id,signature,generation) values('00000000-0000-4000-8000-000000000001',null,7);
+insert into public.units values(99,'invalidate');`);
+assert.equal((await db.query("select generation from private.preparation_catalog_signatures where organization_id='00000000-0000-4000-8000-000000000001'")).rows[0].generation,8);
 const signature=async()=>(await db.query('select private.preparation_catalog_signature($1) value',[org])).rows[0].value;
 const calls=async()=>Number((await db.query('select last_value from private.hash_calls')).rows[0].last_value);
-assert.equal(await signature(),'1');assert.equal(await signature(),'1');assert.equal(await calls(),1);
+assert.equal(await signature(),'2');assert.equal(await signature(),'2');assert.equal(await calls(),2);
 let mutations=0;
 for(const table of tables){
  for(const sql of [`insert into ${table} values(2,'new')`,`update ${table} set value='changed' where id=2`,`delete from ${table} where id=2`,`truncate ${table}`]){

@@ -21,7 +21,8 @@ await page.route('**/api/**',async route=>{
  }
  if(path==='/api/catalog/create'){
   creates.push(route.request().postDataJSON());
-  if(creates.length===1)return route.abort('connectionreset');
+  if(creates.length===1)return route.fulfill({status:502,json:{error:'The database rejected this save. No changes were saved. Please retry after the service is corrected.',code:'21000',rejected:true}});
+  if(creates.length===2)return route.abort('connectionreset');
   return route.fulfill({json:{ok:true}});
  }
  if(path==='/api/hr')return route.fulfill({json:{team:[],workdays:[],profiles:[],members:[],locations:data.locations,users:[]}});
@@ -44,8 +45,15 @@ try{
  console.log('PASS supplier edit: DB timeout is actionable; fields retained; unknown response replays exactly; refresh failure does not reverse successful save.');
  refreshFails=false;await page.locator('[data-action="supplier-back"]').click();await page.locator('[data-action="supplier-create"]').click();
  await page.locator('#supplier-create-form [name="name"]').fill('Synthetic supplier');await page.getByRole('button',{name:'Save',exact:true}).click();
- await page.locator('#supplier-create-error').filter({hasText:'not be confirmed'}).waitFor();await page.getByRole('button',{name:'Save',exact:true}).click();await page.locator('#supplier-create-form').waitFor({state:'detached'});assert.deepEqual(creates[0],creates[1]);
- console.log('PASS supplier creation: response loss retains the draft and command identity.');
+ await page.locator('#supplier-create-error').filter({hasText:'No changes were saved'}).waitFor();
+ assert.equal(await page.locator('#supplier-create-form [name="name"]').isEnabled(),true);
+ await page.locator('#supplier-create-form [name="name"]').fill('Corrected synthetic supplier');await page.getByRole('button',{name:'Save',exact:true}).click();
+ await page.locator('#supplier-create-error').filter({hasText:'not be confirmed'}).waitFor();
+ await page.reload();await page.locator('[data-action="supplier-create"]').click();
+ await page.locator('#supplier-create-error').filter({hasText:'previous save was not confirmed'}).waitFor();
+ assert.equal(await page.locator('#supplier-create-form [name="name"]').inputValue(),'Corrected synthetic supplier');
+ await page.getByRole('button',{name:'Save',exact:true}).click();await page.locator('#supplier-create-form').waitFor({state:'detached'});assert.deepEqual(creates[1],creates[2]);
+ console.log('PASS supplier creation: confirmed rejection unlocks fields; response loss survives reload and retries the exact draft without a duplicate.');
  for(const route of ['overview','inventory','suppliers','recipes','purchases','preparation','invoices','transfers','waste','reports','hr-team','my-day']){
   await page.evaluate(route=>{location.hash=route;},route);await page.waitForTimeout(80);assert.ok((await page.locator('#app').innerText()).length>100);assert.equal(await page.evaluate(()=>location.hash),'#'+route);
  }

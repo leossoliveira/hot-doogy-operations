@@ -1,4 +1,6 @@
 import {randomUUID} from 'node:crypto';
+import {createPhotoAdmission} from './server/photo-admission.mjs';
+import {databaseWriteRejected} from './server/database-errors.mjs';
 import {createWorkspaceReader} from './server/workspace-read.mjs';
 import {drainServer} from './server/graceful-shutdown.mjs';
 import {saveInventoryDraft} from './server/inventory-count.mjs';
@@ -33,7 +35,9 @@ const root=path.dirname(fileURLToPath(import.meta.url)),port=Number(process.env.
 const allowedHosts=new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
 const mime={'.mjs':'text/javascript; charset=utf-8','.wasm':'application/wasm','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
 const workspaceReader=createWorkspaceReader();
+const admitPhoto=createPhotoAdmission();
 const server=http.createServer(async(req,res)=>{
+ let releasePhoto;
  const started=performance.now(),requestId=randomUUID();res.setHeader('X-Request-ID',requestId);
  res.once('finish',()=>{const durationMs=Math.round(performance.now()-started);if(res.statusCode>=400||durationMs>2000)console.info(JSON.stringify({event:'http_request',requestId,method:req.method,path:req.url?.split('?')[0],status:res.statusCode,durationMs}));});
  try{
@@ -43,6 +47,9 @@ const server=http.createServer(async(req,res)=>{
   if(url.pathname.startsWith('/calendar/my-day/'))return await serveTaskCalendar(req,res,url,auth);
   if(await auth.handle(req,res,url))return;
   if(url.pathname.startsWith('/api/')){
+   if(req.method==='GET'&&/^\/api\/photos\/(items|recipes)\/[a-f0-9-]{36}$/.test(url.pathname)){
+    releasePhoto=await admitPhoto(res);if(!releasePhoto)return;
+   }
    const session=await auth.requireSession(req);
    if(!['GET','HEAD'].includes(req.method))res.once('finish',()=>{if(res.statusCode<400)workspaceReader.invalidate(session);});
    requireStaffRequest(session.member.role,req.method,url.pathname);
@@ -104,7 +111,8 @@ const server=http.createServer(async(req,res)=>{
   if(file.startsWith(path.join(root,'public','data')+path.sep)||!file.startsWith(root+path.sep))throw new ApiError(403,"Access denied.");
   const body=await readFile(file);
   return await replyStatic(req,res,body,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'"});
- }catch(error){reply(res,error.status||500,{error:error.status?error.message:"Unable to complete the request. Try again.",...(error.databaseCode?{code:error.databaseCode,rejected:/^(P0001|42501|57014|55P03)$/.test(error.databaseCode)||/^(22|23|40)/.test(error.databaseCode)}:{})});}
+ }catch(error){if(!res.destroyed)reply(res,error.status||500,{error:error.status?error.message:"Unable to complete the request. Try again.",...(error.databaseCode?{code:error.databaseCode,rejected:databaseWriteRejected(error.databaseCode)}:{})});}
+ finally{releasePhoto?.();}
 }).listen(port,'127.0.0.1',()=>console.log(`HOT DOOGY Operations → http://127.0.0.1:${port}`));
 
 const shutdown=drainServer(server);
