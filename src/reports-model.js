@@ -7,6 +7,7 @@ import {safeCsv,norm} from './model.js';
 
 const template=(id,title,group,description,filters,dateLabel='Record date')=>({id,title,group,description,filters,dateLabel});
 export const REPORTS=[
+ template('supplier-usage','Usage by Supplier','Purchasing','Compare sales-derived usage by supplier with the previous matching period.',['supplier'],'Sale date'),
  template('sales','Daily Sales Summary','Sales','Review daily revenue, discounts and quantities.',['category','item'],'Sale date'),
  template('mix','Product Mix (PMIX)','Sales','Rank menu items by net sales or items sold across selected stores; review sales contribution and ABC concentration.',['category','item'],'Sale date'),
  template('hours','Hourly & Weekday Sales','Sales','Find busy hours and weekdays using transaction timestamps.',['category','item','weekday','hour'],'Sale date'),
@@ -85,7 +86,7 @@ export function buildReport(id,data,filters={},location='all',local={}){
   rows=foodCostRows(data,local,location).map(r=>({locationId:r.location.id,location:r.location.name,itemId:r.recipe.id,name:r.recipe.name,categoryIds:r.categories.map(c=>c.id),category:r.categories.map(c=>c.name).join(', '),status:r.status,version:r.recipe.version,recipeStatus:r.recipe.status,cost:r.cost.total,price:r.cost.sellingPrice,foodCost:r.cost.foodCostPercent,margin:r.cost.grossMargin,optimalPrice:r.optimalPrice,note:r.cost.issues.join(' · ')})).filter(r=>f.category==='all'||(Array.isArray(f.category)?f.category:[f.category]).some(id=>r.categoryIds.includes(id)));
   columns=[locationCol,itemCol,col('version','Recipe version','number'),col('recipeStatus','Recipe status'),col('cost','Unit cost','money'),col('price','Selling price','money'),col('foodCost','Food cost','percent'),col('margin','Theoretical margin','percent'),col('optimalPrice','Price at 25% target','money'),col('status','Target status'),col('note','Calculation notes')];
   warnings.push('Current catalog calculation, not historical profitability. Uses the latest displayed recipe version, including drafts, and a 25% target. Margin excludes operating expenses.');
- }else if(['usage','reorder'].includes(id)){
+ }else if(['usage','supplier-usage','reorder'].includes(id)){
   columns=[locationCol,itemCol,col('supplier','Supplier'),col('current','Theoretical usage','number'),unitCol,col('previous','Prior comparable period','number'),col('variation','Change','percent'),col('note','Coverage')];
   if(!f.start||!f.end)warnings.push('Choose both start and end dates to calculate demand.');
   else for(const l of (data.locations||[]).filter(l=>location==='all'||l.id===location)){

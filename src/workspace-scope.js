@@ -3,7 +3,7 @@ export function scopeCovers(loaded,required){const scope=loaded??'full';return s
 export function routeScope(route){
  if(route==='overview')return 'overview';
  if(route==='settings'||route==='my-day'||route.startsWith('my-day-'))return 'bootstrap';
- if(['inventory','invoices','purchases','recipes','prices','transfers','preparation','waste'].includes(route))return 'operations';
+ if(['inventory','invoices','purchases','purchase-planning','report-supplier-usage','recipes','prices','transfers','preparation','waste'].includes(route))return 'operations';
  if(route==='suppliers')return 'catalog';
  return 'full';
 }

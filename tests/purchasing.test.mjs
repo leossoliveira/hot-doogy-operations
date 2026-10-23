@@ -80,17 +80,17 @@ test('Planning works first and retains its own dates, supplier and entered quant
  try{
   let plan;
   const ui=createPurchasingUI({data:()=>data,local:()=>local,state:()=>state,render:()=>{},toast:m=>messages.push(m),heading:()=>'',icon:()=>'',orderTable:()=>'',newOrder:value=>{plan=value;}});
-  ui.actions['purchase-tab']({dataset:{tab:'planning'}});
-  assert.match(ui.page(),/id="purchase-start" type="date" value=""/);
+  ui.page('planning');
+  assert.match(ui.page('planning'),/id="purchase-start" type="date" value=""/);
   ui.changed({id:'purchase-start',dataset:{}});ui.changed({dataset:{purchaseChange:'supplier'},value:'a'});
   ui.input({dataset:{purchaseQty:'v1'},value:'2'});ui.actions['purchase-review']();
   assert.equal(plan.supplierId,'a');assert.equal(plan.lines[0].qty,2);assert.match(plan.notes,/09\/20\/2026/);
-  ui.actions['purchase-tab']({dataset:{tab:'usage'}});
-  assert.match(ui.page(),/id="purchase-start" type="date" value=""/);
-  assert.match(ui.page(),/aria-label="Supplier: All"/);
+  ui.page('usage');
+  assert.match(ui.page('usage'),/id="purchase-start" type="date" value=""/);
+  assert.match(ui.page('usage'),/aria-label="Supplier: All"/);
   inputs['#purchase-start'].value='2026-09-13';inputs['#purchase-end'].value='2026-09-13';ui.changed({id:'purchase-start',dataset:{}});ui.changed({dataset:{purchaseChange:'supplier'},value:'b'});
-  ui.actions['purchase-tab']({dataset:{tab:'planning'}});
-  assert.match(ui.page(),/id="purchase-start" type="date" value="2026-09-20"/);
+  ui.page('planning');
+  assert.match(ui.page('planning'),/id="purchase-start" type="date" value="2026-09-20"/);
   ui.actions['purchase-review']();assert.equal(plan.supplierId,'a');assert.equal(plan.lines[0].qty,2);assert.match(plan.notes,/09\/20\/2026/);assert.deepEqual(messages,[]);
  }finally{if(previousDocument===undefined)delete globalThis.document;else globalThis.document=previousDocument;}
 });
@@ -116,4 +116,15 @@ test('delivery sorting is chronological before pagination and keeps missing date
  const orders=[{id:'none'},{id:'new',expectedAt:'2026-10-05'},{id:'old',expectedAt:'2025-12-31'}];
  assert.deepEqual(purchaseHistory(orders,{deliverySort:'asc'}).rows.map(x=>x.id),['old','new','none']);
  assert.deepEqual(purchaseHistory(orders,{deliverySort:'desc'}).rows.map(x=>x.id),['new','old','none']);
+});
+
+
+test('Purchasing opens history without tabs and exposes separate planning and usage pages',async()=>{
+ const {createPurchasingUI}=await import('../src/purchasing-ui.js');
+ const {data,local}=fixture();data.meta={};const state={store:'all',q:'',page:1};
+ const ui=createPurchasingUI({data:()=>data,local:()=>local,state:()=>state,render:()=>{},toast:()=>{},heading:(_group,title,_description,actions='')=>`<h1>${title}</h1>${actions}`,icon:()=>'',orderTable:()=>'<table>Order history</table>',orders:()=>[],newOrder:()=>{}});
+ const history=ui.page();assert.match(history,/Order history/);assert.match(history,/New immediate order/);assert.match(history,/data-action="purchase-planning"/);assert.doesNotMatch(history,/Purchasing sections|purchase-tab|Usage by Supplier/);
+ assert.match(ui.page('planning'),/Purchase planning/);assert.match(ui.page('planning'),/Back to orders/);
+ assert.match(ui.page('usage'),/Usage by Supplier/);assert.match(ui.page('usage'),/Back to reports/);
+ assert.match(ui.page(),/Order history/);
 });
