@@ -30,8 +30,8 @@ test('scope is part of in-flight identity; bootstrap cannot satisfy a history re
  const [bootstrap,full]=await Promise.all([reader.read({},session,'bootstrap'),reader.read({},session,'full')]);
  assert.equal(bootstrap.scope,'bootstrap');assert.equal(full.scope,'full');assert.deepEqual(scopes,['bootstrap','full']);
 });
-test('overview starts without summaries; incomplete scopes cannot render history',()=>{
- assert.equal(routeScope('overview'),'bootstrap');assert.equal(routeScope('overview',{overviewExpanded:true}),'full');assert.equal(routeScope('suppliers'),'catalog');
+test('overview requires full dashboard data; incomplete scopes cannot render history',()=>{
+ assert.equal(routeScope('overview'),'full');assert.equal(routeScope('suppliers'),'catalog');
  for(const route of ['inventory','invoices','purchases','sales','recipes','reports'])assert.equal(routeScope(route),'full');
  assert.equal(scopeCovers('bootstrap','catalog'),false);assert.equal(scopeCovers('catalog','full'),false);assert.equal(scopeCovers('full','bootstrap'),true);assert.equal(refreshScope('full','catalog'),'full');
 });

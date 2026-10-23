@@ -25,11 +25,10 @@ await page.route('**/api/**',async route=>{
 });
 try{
  await page.goto('http://127.0.0.1:4196/#overview');
- await page.getByRole('button',{name:'View business summary',exact:true}).waitFor();
- assert.deepEqual(reads,['bootstrap']);assert.deepEqual(assets.sort(),['/src/app.bundle.css','/src/app.bundle.js']);assert.equal(await page.getByText('Net sales',{exact:true}).count(),0);
- // The summary is explicit. While its history request is held, navigation works.
- await page.getByRole('button',{name:'View business summary',exact:true}).click();
+ // Original dashboard loads automatically; navigation remains usable during its request.
  await page.getByRole('status').filter({hasText:'Loading records'}).waitFor();
+ assert.deepEqual(reads,['bootstrap','full']);assert.deepEqual(assets.sort(),['/src/app.bundle.css','/src/app.bundle.js']);
+ assert.equal(await page.getByRole('button',{name:'View business summary',exact:true}).count(),0);
  await page.evaluate(()=>{location.hash='suppliers';});
  await page.locator('[data-action="supplier"]').first().waitFor();
  assert.ok(reads.includes('catalog'));await page.locator('[data-action="supplier"]').first().click();
@@ -41,6 +40,10 @@ try{
  await page.getByText('Temporary history failure',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Try again',exact:true}).count(),1);
  failFull=false;releaseFull=null;await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByRole('status').filter({hasText:'Loading records'}).waitFor();
  for(let i=0;i<100&&!releaseFull;i++)await new Promise(r=>setTimeout(r,20));assert.ok(releaseFull);releaseFull();await page.locator('#main .stats, #main .inventory-workspace, #main table').first().waitFor();
+ await page.evaluate(()=>{location.hash='overview';});
+ await page.getByText('Net sales',{exact:true}).waitFor();
+ await page.getByRole('heading',{name:'Needs your attention',exact:true}).waitFor();
+ await page.getByRole('heading',{name:'Purchasing activity',exact:true}).waitFor();
  assert.deepEqual(errors,[]);
- console.log('PASS bootstrap-only opening, opt-in history, navigation and catalog editing during delayed history, stale-response protection, visible failure and successful retry.');
+ console.log('PASS automatic original Overview, deferred history on other routes, navigation and catalog editing during delayed history, stale-response protection, visible failure and successful retry.');
 }catch(error){console.error({reads,errors,screen:await page.locator('#main').innerText()});throw error;}finally{await browser.close();}
