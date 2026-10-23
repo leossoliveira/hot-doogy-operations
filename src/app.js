@@ -1,3 +1,4 @@
+import {workspaceLoading} from './workspace-loading.js';
 import {mountOrderReceiving,selectedReceiptLines,receiptPayload,receiptFormBody,openOrderIssue} from './order-receiving.js';
 import {createCountSync,sectionIsPublished,countCompletionReview,countRecovery} from './count-draft.js';
 import {createItemSearch,itemSearchTitle,itemSearchCaption} from './item-search.js';
@@ -148,7 +149,7 @@ function toast(text,ic='check'){const kind=ic==='circle-alert'?'error':ic==='inf
 function icons(){if(isStaff(session?.role)){document.querySelectorAll('[data-action]').forEach(el=>{if(!canUseAction(session.role,el.dataset.action))el.remove();});document.querySelectorAll('.sidebar-settings,.recipe-photo-actions,.recipe-photo input[type=file]').forEach(el=>el.remove());}globalThis.lucide?.createIcons();enhanceDateInputs();enhanceChartExpansion();}
 function goto(route){if(session&&!loginRoutes.includes(route)&&!canViewRoute(session.role,route))route='overview';if(closeModal()===false)return;const module=navigationModules.find(module=>module.routes.includes(route));for(const item of navigationModules)expandedNavigation.set(item.id,item===module);closeNavigation(false);supplierUI.reset();state={...state,route,q:'',tab:'all',supplier:'all',area:'all',page:1};history.replaceState(null,'','#'+route);render();window.scrollTo(0,0);if(data&&['purchases','inventory','sales'].includes(route)&&data.meta.preparationSalesStatus==='idle')void refreshData().then(()=>{if(state.route===route&&!dialog)render();}).catch(error=>toast(error.message,'circle-alert'));}
 function footer(){return `<div class="footer-note"><span>${icon('database')}Data as of ${date(data.meta.snapshotDate)} · Connected · Updates automatically</span><span>HOT DOOGY OPERATIONS · v0.1</span></div>`;}
-function loadingScreen(){document.title="Loading · HOT DOOGY";$('#app').innerHTML=`<main class="boot"><img src="/brand/hot-doogy-wordmark.svg" alt="HOT DOOGY"><p role="status">${bootError?"Unable to load data right now.":"You’re signed in. Loading your workspace…"}</p>${bootError?`<p>${e(bootError)}</p>${btn("Try again",'boot-retry')} ${btn("Sign out",'login-screen')}`:"<small>Getting the latest store data.</small>"}</main>`;}
+function loadingScreen(){document.title="Loading · HOT DOOGY";$('#app').innerHTML=workspaceLoading({error:bootError?`<h1>Unable to load data right now.</h1><p>${e(bootError)}</p><div class="workspace-loading-actions">${btn("Try again",'boot-retry')} ${btn("Sign out",'login-screen')}</div>`:''});}
 async function openWorkspace(route=state.route){
  bootError=null;loadingScreen();
  try{await refreshData();if(loginRoutes.includes(route))route='overview';goto(route);}
@@ -776,7 +777,7 @@ configureCommit(async (next,{refresh=true}={})=>{
 });
 createRefreshLoop({interval:60000,canRefresh:()=>!!session&&!!data&&!loginRoutes.includes(state.route)&&!syncing&&!dialog&&!document.querySelector('.chart-expanded-dialog[open]')&&!isDatePickerOpen()&&!locationPicker.isOpen&&!inventorySupplierPicker.isOpen&&!inventoryAreaPicker.isOpen&&!invoiceSupplierPicker.isOpen&&!invoiceStatusPicker.isOpen&&!foodCategoryPicker.isOpen&&!foodStatusPicker.isOpen&&!preparationUI.filterOpen&&!purchasingUI.filterOpen&&!reportsUI.filterOpen&&!isNavigationOpen()&&!document.hidden&&!document.activeElement?.closest('[data-report-filter]')&&!supplierUI.dirty&&!preparationUI.dirty&&!purchasingUI.dirty,refresh:async()=>{if(await refreshData(true))render();},onError:error=>{if(error.status===401||error.status===403){session=null;data=null;render();}else toast("Not refreshed: "+error.message,'circle-alert');}});
 async function restoreWorkspace(){
- bootError=null;$('#app').innerHTML='<main class="boot"><p role="status">Checking your session…</p></main>';
+ bootError=null;$('#app').innerHTML=workspaceLoading({label:'Checking your session…'});
  try{const restored=await api('/api/auth/session');await loginUI.accept(restored,state.route);}
  catch(error){if([401,403].includes(error.status)){session=null;render();}else{bootError=error.message;loadingScreen();}}
 }
