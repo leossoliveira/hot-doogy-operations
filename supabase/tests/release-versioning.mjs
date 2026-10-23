@@ -48,5 +48,14 @@ try {
   await run('failed', {version:'v0.1.101'}, {...plan,migrations:[m1,m2]});
   assert.equal((await db.query('select count(*)::int n from deployment.current_release')).rows[0].n, 0,'no false active state after failed recovery');
   await fails(() => run('prepare', {}, {...plan,migrations:[{...m1,sql:migration+'\n-- changed'}]}));
+  // Reconcile an already-applied operation without executing its SQL again.
+  await db.exec("insert into supabase_migrations.schema_migrations values('20261023000000','external_cleanup',array['select 1/0;'])");
+  const external = (await db.query("select version,name,md5(statements::text) statements_md5 from supabase_migrations.schema_migrations where name='external_cleanup'")).rows[0];
+  const reconciled = {...plan,baseline:{remote:[...remote,external]},migrations:[m1,m2]};
+  await run('prepare',{version:'v0.1.102'},reconciled);
+  await run('activate',{version:'v0.1.102'},reconciled);
+  assert.equal((await db.query('select schema_version from deployment.current_release')).rows[0].schema_version,external.version,'metadata includes the latest reconciled operation');
+  await db.exec("update supabase_migrations.schema_migrations set statements=array['select 2;'] where name='external_cleanup'");
+  await fails(()=>run('prepare',{version:'v0.1.103'},reconciled));
   console.log('PASS: baseline drift, unknown history, atomic failure, retry, immutable release, prepare/activate/rollback, retained schema and denied API roles.');
 } finally { await db.close(); }

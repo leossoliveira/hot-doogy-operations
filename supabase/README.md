@@ -41,3 +41,9 @@ Para reproduzir, instalar `@electric-sql/pglite@0.3.14` em uma pasta temporária
 Reversão administrativa: restaurar o atualizador anterior e o aplicativo anterior; preservar as tabelas administrativas e o histórico para auditoria. Não remover a migração aplicada nem desfazer dados do negócio. A ausência de políticas RLS neste esquema é intencional: nenhum usuário da aplicação pode ler ou gravar os registros.
 
 Verificação remota adicional: o preparo gerado pelo publicador passou contra o histórico real em transação encerrada com ROLLBACK. Nenhuma release fictícia, checksum de teste ou versão ativa ficou gravada.
+
+## Reconciliação de 23 de outubro de 2026
+
+A publicação do carregamento encontrou duas operações já aplicadas fora da sequência publicada: `20261023143240_remove_four_test_careers_applications` e `20261023150222_allow_negative_preparation_stock`. Seus nomes e MD5 do array de comandos foram conferidos diretamente em `supabase_migrations.schema_migrations` e adicionados à referência remota de `deployment-baseline.json`. Os registros anteriores e o cutoff local permanecem intactos.
+
+Esta reconciliação importa somente identidades e assinaturas: não cria SQL executável para repetir a limpeza de candidaturas, não reaplica a mudança de estoque e não modifica o histórico remoto. A publicação exige que essas duas operações já existam com o conteúdo exato. Divergências continuam bloqueando a ativação. O cálculo da versão do esquema considera também operações reconciliadas mais recentes que a última migração do repositório. Teste isolado cobre reconhecimento sem replay, rejeição de conteúdo alterado e versão do esquema na ativação.

@@ -38,7 +38,7 @@ export function buildSQL(plan, {mode, version, commit, previousVersion, previous
     throw new Error('Rollback requires the previous deployed version and SHA');
   }
   const {baseline, migrations} = plan;
-  const schemaVersion = migrations.at(-1)?.version || baseline.remote.at(-1).version;
+  const schemaVersion = [...baseline.remote, ...migrations].map(entry => entry.version).sort().at(-1);
   const identity = `environment='production' AND version=${literal(version)} AND commit_sha=${literal(commit)}`;
   const lines = ["BEGIN; SET LOCAL lock_timeout='10s'; SET LOCAL statement_timeout='120s';",
     "SELECT pg_advisory_xact_lock(207016, 1);"];

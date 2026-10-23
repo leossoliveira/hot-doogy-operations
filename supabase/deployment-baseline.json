@@ -636,6 +636,16 @@
       "version": "20261016141708",
       "name": "careers_position_options",
       "statements_md5": "23e025406e97887f8972b5eab519ec7c"
+    },
+    {
+      "version": "20261023143240",
+      "name": "remove_four_test_careers_applications",
+      "statements_md5": "4cc147b5565c19f0f5ee83c3f69e991d"
+    },
+    {
+      "version": "20261023150222",
+      "name": "allow_negative_preparation_stock",
+      "statements_md5": "494d04793aea60c2a55e4272355777ca"
     }
   ],
   "local": [
