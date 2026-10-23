@@ -31,4 +31,5 @@
 @media(max-width:1100px){.careers-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.careers-stats{grid-template-columns:1fr}.careers-section .detail-grid,.careers-files{grid-template-columns:1fr}.careers-timeline li{grid-template-columns:1fr}}
 
-.careers-profile{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}.careers-profile-photo{width:96px;height:96px;object-fit:cover;border-radius:var(--radius-m);border:1px solid var(--line)}.careers-profile .btn{margin-left:auto}
+ .careers-profile{display:flex;align-items:center;gap:16px}.careers-profile-photo{width:96px;height:96px;flex-shrink:0;object-fit:cover;border-radius:var(--radius-m);border:1px solid var(--line)}.careers-profile-info{flex:1;min-width:0;display:grid;gap:12px}.careers-profile>.btn{flex-shrink:0;align-self:flex-start}.careers-profile .careers-head .spacer{display:none}.careers-profile .careers-contact a{overflow-wrap:anywhere;min-width:0}
+@media(max-width:760px){.careers-profile{flex-wrap:wrap;align-items:flex-start}.careers-profile-photo{width:72px;height:72px}.careers-profile-info{flex-basis:calc(100% - 88px)}.careers-profile>.btn{margin-left:auto}.careers-profile .careers-contact{gap:6px}}
