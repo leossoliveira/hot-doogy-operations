@@ -1,3 +1,4 @@
+import {downloadApplicationPdf} from './careers-pdf.js';
 import {refreshInBackground} from './save-feedback.js';
 import {api} from './cloud.js';
 import {escape as e} from './model.js';
@@ -36,7 +37,9 @@ export function createCareers(ctx){
   const a=cache?.applications.find(x=>x.id===id);if(!a)return;detail={id,version:a.version};pendingRating=a.rating??null;
   const notes=(cache.notes||[]).filter(n=>n.application_id===id),events=(cache.events||[]).filter(x=>x.application_id===id);
   const eventText=x=>x.type==='submitted'?'Application submitted':x.type==='file_attached'?`${x.payload?.kind==='selfie'?'Selfie':'Resume'} attached`:x.type==='status_changed'?`${x.actor||'Team member'} moved to ${statusLabel(x.to_status)}`:x.type==='rated'?`${x.actor||'Team member'} rated ${x.payload?.to??'—'}/5`:x.type==='note_added'?`${x.actor||'Team member'} added a note`:x.type;
+  const selfie=(cache.files||[]).find(f=>f.application_id===id&&f.kind==='selfie'&&f.mime_type.startsWith('image/'));
   const body=`<div class="careers-detail">
+   <div class="careers-profile">${selfie?`<img class="careers-profile-photo" src="/api/hr/careers/${a.id}/files/${selfie.id}?inline=1" alt="Photo of ${e(fullName(a))}">`:''}${ctx.btn('Download PDF','careers-pdf','download')}</div>
    <div class="careers-head">${badge(a.status)}<span>${e(a.reference)}</span><span>·</span><span>Submitted ${when(a.created_at)}</span>${a.reviewed_at?`<span>·</span><span>Last reviewed ${when(a.reviewed_at)}</span>`:''}<span class="spacer"></span>${stars(a.rating)}</div>
    <div class="careers-contact"><a href="mailto:${e(a.email)}">${ctx.icon('mail')}${e(a.email)}</a><a href="tel:${e(a.phone.replace(/[^\d+]/g,''))}">${ctx.icon('phone')}${e(a.phone)}</a><span class="status">${ctx.icon('map-pin')}${e(a.city)}, ${e(a.state)}</span>${a.locale==='pt'?'<span class="status">Applied in Portuguese</span>':''}</div>
    <section class="careers-section"><h3>Position</h3><div class="detail-grid">${pair('Position',e(CAREERS_POSITIONS[a.position]||a.position))}${pair('Preferred location',e(where(a)))}${pair('Eligibility',`${a.at_least_16?'16+':'Under 16'} · ${a.work_authorized?'Work authorized':'Not work authorized'}`)}</div></section>
@@ -49,6 +52,12 @@ export function createCareers(ctx){
   </div>`;
   ctx.openModal(e(fullName(a)),body,'',{kind:'careers',wide:true,subtitle:e(`${CAREERS_POSITIONS[a.position]||a.position} · ${where(a)}`)});
  }
+ async function downloadPdf(el){
+  const a=cache?.applications.find(x=>x.id===detail?.id);if(!a||el.disabled)return;el.disabled=true;
+  try{await downloadApplicationPdf(a,{location:where(a),files:cache.files||[]});ctx.toast('Application PDF downloaded.','check');}
+  catch{ctx.toast('Unable to generate the PDF. Please try again.');}
+  finally{el.disabled=false;}
+ }
  function rate(el){const value=el.dataset.rating===''?null:Number(el.dataset.rating);pendingRating=value;document.querySelectorAll('#careers-review [data-rating]').forEach(b=>{if(b.dataset.rating!=='')b.setAttribute('aria-pressed',String(value!=null&&Number(b.dataset.rating)<=value));});}
  async function save(){
   if(saving||!detail)return;const form=document.querySelector('#careers-review'),errorEl=document.querySelector('#careers-error');if(!form)return;
@@ -60,5 +69,5 @@ export function createCareers(ctx){
   finally{saving=false;if(button)button.disabled=false;}
  }
  function changed(el){const key=el.dataset.careersFilter;if(!key)return false;if(key==='query')query=el.value;if(key==='status')status=el.value;if(key==='position')position=el.value;ctx.render();return true;}
- return {reset(){loadGeneration++;pendingRecords.clear();loading=false;cache=null;loaded=false;error='';status='open';position='all';query='';detail=null;},page,changed,actions:{'careers-refresh':load,'careers-view':el=>openDetail(el.dataset.id),'careers-rate':rate,'careers-save':save}};
+ return {reset(){loadGeneration++;pendingRecords.clear();loading=false;cache=null;loaded=false;error='';status='open';position='all';query='';detail=null;},page,changed,actions:{'careers-pdf':downloadPdf,'careers-refresh':load,'careers-view':el=>openDetail(el.dataset.id),'careers-rate':rate,'careers-save':save}};
 }
