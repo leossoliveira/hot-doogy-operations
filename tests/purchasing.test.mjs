@@ -128,3 +128,18 @@ test('Purchasing opens history without tabs and exposes separate planning and us
  assert.match(ui.page('usage'),/Usage by Supplier/);assert.match(ui.page('usage'),/Back to reports/);
  assert.match(ui.page(),/Order history/);
 });
+
+
+test('order summary counts all matching pages and includes partial receipts; summary buttons filter and toggle',async()=>{
+ const {createPurchasingUI}=await import('../src/purchasing-ui.js');
+ const {data,local}=fixture();data.meta={};const state={store:'l',q:'',page:1};let shown=[];
+ const orders=[...Array.from({length:27},(_,i)=>({id:`draft-${i}`,status:'draft',locationId:'l',supplierName:'Alpha'})),{id:'placed',status:'ordered',locationId:'l',supplierName:'Alpha'},{id:'partial',status:'partially_received',locationId:'l',supplierName:'Alpha'},{id:'received',status:'received',locationId:'l',supplierName:'Alpha'},{id:'canceled',status:'cancelled',locationId:'l',supplierName:'Alpha'},{id:'elsewhere',status:'received',locationId:'other',supplierName:'Alpha'}];
+ const ui=createPurchasingUI({data:()=>data,local:()=>local,state:()=>state,render:()=>{},toast:()=>{},heading:()=>'',icon:()=>'',orderTable:rows=>{shown=rows;return '';},orders:()=>orders,newOrder:()=>{}});
+ const count=(html,status)=>Number(html.match(new RegExp(`data-status="${status}"[\\s\\S]*?<strong>([0-9]+)</strong>`))[1]);
+ let html=ui.page();assert.equal(count(html,'draft'),27);assert.equal(count(html,'awaiting_receipt'),2);assert.equal(count(html,'received'),1);assert.equal(shown.length,25);
+ state.page=2;ui.actions['purchase-summary-filter']({dataset:{status:'awaiting_receipt'}});html=ui.page();assert.equal(state.page,1);assert.deepEqual(shown.map(o=>o.id),['placed','partial']);assert.match(html,/data-status="awaiting_receipt" aria-pressed="true"/);assert.equal(count(html,'draft'),27);
+ ui.actions['purchase-summary-filter']({dataset:{status:'awaiting_receipt'}});ui.page();assert.equal(shown.length,25);
+ state.q='not found';html=ui.page();assert.equal(count(html,'draft'),0);assert.equal(count(html,'received'),0);
+ state.q='';state.store='other';html=ui.page();assert.equal(count(html,'received'),1);assert.equal(count(html,'draft'),0);
+ assert.doesNotMatch(ui.page('planning'),/aria-label="Order summary"/);
+});

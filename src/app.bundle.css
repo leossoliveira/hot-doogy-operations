@@ -375,6 +375,8 @@ textarea{font-family:inherit!important;font-size:var(--control-font-size)!import
 .waste-total{color:var(--red-50)}
 .count-detail-table{overflow-x:auto}.count-detail-table table{width:100%;min-width:560px}.count-detail-table th,.count-detail-table td{padding:12px!important;vertical-align:middle}.count-detail-table td:first-child{width:45%;min-width:220px}
 
+.purchase-summary>div{grid-template-columns:1fr}.purchase-summary section:last-child{text-align:left}
+
 .login-page{min-height:100dvh;display:grid;grid-template-columns:1fr 1fr;background:var(--gray-100);padding:12px;gap:12px;color:var(--gray-24)}
 .login-content{min-width:0;display:flex;flex-direction:column;padding:27px 7%;min-height:calc(100dvh - 24px)}
 .login-brand{display:flex;align-items:center;gap:18px}.login-brand img{width:134px}.login-brand span{border-left:1px solid var(--olive-90);padding-left:18px;font-size:11px;font-weight:650;letter-spacing:2.4px;color:var(--text-muted)}
