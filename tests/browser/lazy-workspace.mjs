@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true,...(process.env.COUNT_BROWSER
 const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(10000);
 const raw=operationsFixture(2);for(const row of raw.inventory_items)row.active=true;for(const row of raw.supplier_items)row.active=true;raw.suppliers[0].active=true;
 for(const row of raw.location_inventory_items)row.active=true;
-const responses={full:projectData(raw),catalog:projectData(Object.fromEntries(CATALOG_TABLES.map(t=>[t,raw[t]||[]]))),bootstrap:projectData({locations:raw.locations})};
+const responses={overview:projectData({locations:raw.locations,inventory_items:raw.inventory_items,location_inventory_items:raw.location_inventory_items,recipes:raw.recipes,recipe_versions:raw.recipe_versions}),full:projectData(raw),catalog:projectData(Object.fromEntries(CATALOG_TABLES.map(t=>[t,raw[t]||[]]))),bootstrap:projectData({locations:raw.locations})};
 for(const [scope,value] of Object.entries(responses)){value.meta.workspaceScope=scope;value.meta.preparationSalesStatus='idle';}
 const reads=[],errors=[],assets=[];page.on('request',request=>{const path=new URL(request.url()).pathname;if(path.startsWith('/src/'))assets.push(path);});let releaseFull,failFull=false;
 page.on('pageerror',e=>errors.push(e.message));
@@ -25,10 +25,14 @@ await page.route('**/api/**',async route=>{
 });
 try{
  await page.goto('http://127.0.0.1:4196/#overview');
- // Original dashboard loads automatically; navigation remains usable during its request.
- await page.getByRole('status').filter({hasText:'Loading records'}).waitFor();
- assert.deepEqual(reads,['bootstrap','full']);assert.deepEqual(assets.sort(),['/src/app.bundle.css','/src/app.bundle.js']);
+ // Dashboard is complete without any full-history request.
+ await page.getByText('Net sales',{exact:true}).waitFor();
+ await page.getByRole('heading',{name:'Purchasing activity',exact:true}).waitFor();
+ assert.deepEqual(reads,['overview']);assert.deepEqual(assets.sort(),['/src/app.bundle.css','/src/app.bundle.js']);
  assert.equal(await page.getByRole('button',{name:'View business summary',exact:true}).count(),0);
+ const historyRequested=page.waitForRequest(request=>request.url().includes('/api/data?scope=full'));
+ await page.getByRole('button',{name:'Date: select a day or date range',exact:true}).click();
+ await historyRequested;
  await page.evaluate(()=>{location.hash='suppliers';});
  await page.locator('[data-action="supplier"]').first().waitFor();
  assert.ok(reads.includes('catalog'));await page.locator('[data-action="supplier"]').first().click();

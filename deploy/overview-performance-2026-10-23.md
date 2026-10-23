@@ -1,0 +1,11 @@
+# Original Overview, dashboard-only read
+
+The original renderer, chart, indicators, location picker and purchasing table are unchanged. Initial authenticated Overview requests one `scope=overview` dataset directly instead of bootstrap followed by the full workspace. Other routes keep their existing independent load scopes.
+
+`overview_dashboard_read` is a stable SECURITY INVOKER function. It checks MFA and organization membership, uses the caller's RLS, and skips all purchasing and sales queries for Staff. It returns current item/location associations, the latest recipe version status, open transfer headers, the latest four orders per accessible location plus all ordered headers needed for the pending count, and only those orders' minimal receiving evidence. Sales are aggregated by day/location inside PostgreSQL; individual sales, stock movements/counts, invoice lines/documents, recipe components and preparation histories are absent. Existing projections retain receipt/invoice status semantics. No cached user records or new security bypasses.
+
+Overview and catalog are independent partial scopes. Neither may render the other or a full-history page. History and editing actions fetch full details on demand, with generation checks preventing stale responses from opening a dialog after navigation. Selecting custom dates loads complete sales data to preserve timestamp/DST comparison semantics. Startup does not request photos. Existing deferred post-save refresh is unchanged.
+
+The migration adds only a read function, revoked from public/anon and callable by authenticated with unchanged table permissions. Deployment applies the migration before the corresponding app. Rollback: restore the previous app; the unused read function can remain without altering business data.
+
+Validation: isolated PostgreSQL parity checks cover 1,501 sales (including negative sales), default period totals/growth, item counts, latest recipe status, older pending orders, latest four orders, receipt evidence and open transfers. RLS location/tenant, MFA, Staff, anonymous denial and revoked SELECT are exercised. Browser tests prove the original Overview appears before any full-history request, then verify on-demand calendar data, navigation during delayed history, stale-response protection and error/retry recovery.

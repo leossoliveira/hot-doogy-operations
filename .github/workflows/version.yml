@@ -26,6 +26,7 @@ jobs:
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/release-versioning.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/list-read-performance.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/workspace-read-batch.mjs
+          PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/overview-dashboard.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/workspace-sales-page.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/derived-sales-cache.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/db-version-tests/node_modules/@electric-sql/pglite/dist/index.js" node supabase/tests/preparation-pages.mjs --catalog-cache

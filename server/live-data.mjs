@@ -24,6 +24,7 @@ export function workspaceReadGroups(tables){
  return groups;
 }
 export async function readTables(auth,token,role,{batch=false,scope='full'}={}){
+ if(scope==='overview')return bulkRead(()=>auth.request('/rest/v1/rpc/overview_dashboard_read',{token,method:'POST',body:{p_organization_id:ORGANIZATION_ID}}));
  const selectedTables=tablesForScope(scope,TABLES);
  // Bound per-workspace and process-wide reads to the same small budget.
  // Micro has twice Nano RAM; deployments can lower the limit to 1–3.

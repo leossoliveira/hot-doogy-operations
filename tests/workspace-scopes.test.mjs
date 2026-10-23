@@ -30,8 +30,11 @@ test('scope is part of in-flight identity; bootstrap cannot satisfy a history re
  const [bootstrap,full]=await Promise.all([reader.read({},session,'bootstrap'),reader.read({},session,'full')]);
  assert.equal(bootstrap.scope,'bootstrap');assert.equal(full.scope,'full');assert.deepEqual(scopes,['bootstrap','full']);
 });
-test('overview requires full dashboard data; incomplete scopes cannot render history',()=>{
- assert.equal(routeScope('overview'),'full');assert.equal(routeScope('suppliers'),'catalog');
+test('overview uses an independent dashboard scope; incomplete scopes cannot render history',()=>{
+ assert.equal(routeScope('overview'),'overview');assert.equal(routeScope('suppliers'),'catalog');
  for(const route of ['inventory','invoices','purchases','sales','recipes','reports'])assert.equal(routeScope(route),'full');
  assert.equal(scopeCovers('bootstrap','catalog'),false);assert.equal(scopeCovers('catalog','full'),false);assert.equal(scopeCovers('full','bootstrap'),true);assert.equal(refreshScope('full','catalog'),'full');
 });
+
+test('overview and catalog never cover each other',()=>{assert.equal(scopeCovers('overview','catalog'),false);assert.equal(scopeCovers('catalog','overview'),false);assert.equal(scopeCovers('overview','full'),false);assert.equal(scopeCovers('full','overview'),true);assert.equal(refreshScope('overview','catalog'),'catalog');});
+test('overview reads a single scoped RPC, never history pages',async()=>{const calls=[];const result={locations:[],overview_sales_daily:[]};const raw=await readTables({request:async(path,options)=>{calls.push(path);assert.equal(options.token,'actor');assert.ok(options.body.p_organization_id);return result;}},'actor','owner',{scope:'overview'});assert.equal(raw,result);assert.deepEqual(calls,['/rest/v1/rpc/overview_dashboard_read']);});
