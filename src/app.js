@@ -32,7 +32,7 @@ import {createLocationPicker} from './location-picker.js';
 import {openDatePicker,closeDatePicker,enhanceDateInputs,isDatePickerOpen,dateTriggerContent} from './date-picker.js';
 import {usDate,usTime} from './locale.js';
 import {prioritizeUnits,preferredUnit,validUnit,convertQuantity} from './units.js';
-import {api,command,configureWriteObserver,configureCommit,saveCloudState as saveLocal,createRefreshLoop} from './cloud.js';
+import {api,command,configureWriteObserver,configureCommit,saveCloudState as saveLocal,createRefreshLoop,createDeferredRefresh} from './cloud.js';
 import {loadCloudPhotos,saveCloudPhoto} from './photo-storage.js';
 import {itemPhotoView,itemPhotoThumbnail,prepareItemPhoto} from './item-photo-ui.js';
 import {recipePhotoView,recipeDetailTabs,selectRecipeTab,prepareRecipePhoto} from './recipe-detail-ui.js';
@@ -746,12 +746,13 @@ function refreshPhotos(){
  const owner=session;
  photoRefresh=loadCloudPhotos().then(photos=>{if(session!==owner||!data)return;const changed=JSON.stringify([local.itemPhotos,local.recipePhotos])!==JSON.stringify([photos.items,photos.recipes]);data.photoStorageConnected=true;local.itemPhotos=photos.items;local.recipePhotos=photos.recipes;confirmedLocal=structuredClone(local);if(changed&&!dialog&&!supplierUI.dirty&&!preparationUI.dirty&&!purchasingUI.dirty)render();}).catch(()=>{if(session===owner&&data)data.photoStorageConnected=false;}).finally(()=>{photoRefresh=null;});
 }
-function refreshAfterSave(){
- const owner=session;workspaceRefresh=null;
+const deferredSavedRefresh=createDeferredRefresh({run:owner=>{
+ if(owner!==session)return;
  // A confirmed write is complete; refreshing the list must not hold its form open.
  // Background application checks session, generation and active edits before rendering.
  void refreshData(true).then(applied=>{if(applied)render();}).catch(error=>{if(owner===session)toast("Saved. Screen refresh pending: "+error.message,'circle-alert');});
-}
+}});
+function refreshAfterSave(){deferredSavedRefresh(session);}
 async function refreshData(background=false){
  const generation=++refreshGeneration,owner=session,path='/api/data'+(['purchases','inventory','sales'].includes(state.route)?'?sales=1':'');
  if(!workspaceRefresh||workspaceRefresh.owner!==owner||workspaceRefresh.path!==path){const entry={owner,path};entry.promise=api(path).finally(()=>{if(workspaceRefresh===entry)workspaceRefresh=null;});workspaceRefresh=entry;}

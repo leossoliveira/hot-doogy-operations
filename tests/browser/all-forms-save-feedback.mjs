@@ -25,7 +25,7 @@ async function scenario(name,routeName,exercise,{data=fixture(),writePath,after}
   }
   return route.fulfill({json});
  });
- try{await page.goto('http://127.0.0.1:4196/#'+routeName);await page.locator('#main').waitFor();await exercise(page);await page.waitForTimeout(80);assert.ok(saved,name+' wrote');assert.ok(blockedReads>0,name+' held a refresh');if(after)await after(page,writes);assert.deepEqual(errors,[]);console.log('PASS '+name+': confirmed while list response is held.');}
+ try{await page.goto('http://127.0.0.1:4196/#'+routeName);await page.locator('#main').waitFor();await exercise(page);await page.waitForTimeout(150);assert.ok(saved,name+' wrote');assert.ok(blockedReads>0,name+' held a refresh');if(after)await after(page,writes);assert.deepEqual(errors,[]);console.log('PASS '+name+': confirmed while list response is held.');}
  catch(error){console.error(name,await page.locator('body').innerText(),errors);throw error;}
  finally{for(const route of held)await route.fulfill({status:503,json:{error:'Refresh unavailable'}}).catch(()=>{});await page.close();}
 }

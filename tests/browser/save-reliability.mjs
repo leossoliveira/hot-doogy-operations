@@ -82,7 +82,7 @@ async function browserForRefresh(){
   const started=Date.now();await tab.getByRole('button',{name:'Save changes',exact:true}).click();
   await tab.locator('#supplier-item-form').waitFor({state:'detached',timeout:1500});
   assert.ok(Date.now()-started<1500);await tab.getByText('Item details updated in the database.',{exact:true}).waitFor();
-  assert.equal(readsFinished,0);assert.ok(readsStarted>0);
+  await tab.waitForTimeout(150);assert.equal(readsFinished,0);assert.ok(readsStarted>0);
   await tab.locator(`[data-action="supplier-item"][data-id="${ids[0]}"]`).first().click();
   assert.equal(await tab.locator('#supplier-item-form').count(),0);
   await tab.getByText(/latest details are still updating/).waitFor();

@@ -17,4 +17,21 @@ export const command=(action,payload,commandId=crypto.randomUUID())=>api('/api/c
 let commit=async()=>{throw Error("Sign in to save to the database.");};
 export function configureCommit(fn){commit=fn;}
 export const saveCloudState=(state,options)=>commit(state,options);
-export function createRefreshLoop({refresh,canRefresh,onError,interval=30000,target=window}){let busy=false,stopped=false;async function tick(){if(stopped||busy||!canRefresh())return;busy=true;try{await refresh();}catch(e){onError(e);}finally{busy=false;}}const timer=setInterval(tick,interval);target.addEventListener('online',tick);target.addEventListener('focus',tick);return {tick,stop(){stopped=true;clearInterval(timer);target.removeEventListener('online',tick);target.removeEventListener('focus',tick);}};}
+// Schedule refresh after the save handler can close its form and the browser
+// can paint. Several notifications in the same burst need only one refresh.
+export function createDeferredRefresh({run,schedule=fn=>setTimeout(fn,100)}){
+ let pending=false,latest;
+ return value=>{latest=value;if(pending)return;pending=true;schedule(()=>{pending=false;run(latest);});};
+}
+export function createRefreshLoop({refresh,canRefresh,onError,interval=30000,target=window,now=Date.now}){
+ let busy=false,stopped=false,nextAt=0,failures=0;
+ async function tick(){
+  if(stopped||busy||now()<nextAt||!canRefresh())return;
+  busy=true;
+  try{await refresh();failures=0;}
+  catch(e){failures=Math.min(failures+1,4);onError(e);}
+  finally{nextAt=now()+Math.min(interval*2**failures,Math.max(interval,300000));busy=false;}
+ }
+ const timer=setInterval(tick,interval);target.addEventListener('online',tick);target.addEventListener('focus',tick);
+ return {tick,stop(){stopped=true;clearInterval(timer);target.removeEventListener('online',tick);target.removeEventListener('focus',tick);}};
+}

@@ -23,9 +23,9 @@ export function workspaceReadGroups(tables){
  return groups;
 }
 export async function readTables(auth,token,role,{batch=false}={}){
- // Batches may use idle global slots; the process-wide ceiling remains eight
- // across every user, so a single refresh does not leave half the budget idle.
- const result={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),batch?8:4);
+ // Keep only two requests in flight per workspace and across the process.
+ // More parallel pages contend for the Nano database's CPU and memory.
+ const result={},controller=new AbortController(),read=scheduleReads((url,options={})=>bulkRead(()=>{controller.signal.throwIfAborted();return auth.request(url,{...options,token,signal:controller.signal}).catch(error=>{if(!(url==='/rest/v1/rpc/workspace_read_batch'&&error.databaseCode==='57014'&&options.body?.p_tables?.length>1))controller.abort(error);throw error;});}),2);
  async function completeTable(table,firstPage){
   if(role==='staff'&&!staffTables.has(table)){result[table]=[];return;}const select=table==='inventory_count_sessions'?'id,organization_id,location_id,created_by,employee_name,status,state,published,version,created_at,updated_at,completed_at':table==='sales_item_facts'?FACT_COLUMNS.join(','):table==='invoices'?'*,financial_status':table==='invoice_documents'?'*,storage_verified':'*';
   const scope=table==='units'?`or=(organization_id.is.null,organization_id.eq.${ORGANIZATION_ID})&`:organizationTables.has(table)?`organization_id=eq.${ORGANIZATION_ID}&`:'';

@@ -14,7 +14,7 @@ test('Concurrent users share a bounded read budget and histories use cursor page
   return Array.from({length:Math.max(0,Math.min(limit,total-offset))},(_,i)=>({id:String(offset+i).padStart(6,'0')}));
  }};
  const values=await Promise.all(['user-a','user-b','user-c'].map(token=>readTables(auth,token,'owner')));
- assert.ok(peak<=8);assert.ok(peak>=4);
+ assert.equal(peak,2);
  for(const raw of values){assert.equal(raw.stock_count_lines.length,4500);assert.deepEqual(raw.stock_count_lines.map(x=>Number(x.id)),Array.from({length:4500},(_,i)=>i));}
  assert.ok(calls.some(([,table,offset])=>table==='stock_count_lines'&&offset===4000));
 });

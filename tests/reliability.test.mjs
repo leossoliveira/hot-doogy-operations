@@ -28,8 +28,9 @@ test('keyset pages preserve all rows, detect a non-advancing source and stop on 
 test('overlapping refreshes share work only inside one session and writes invalidate in-flight reads',async()=>{
  const releases=[];let count=0;const reader=createWorkspaceReader({read:()=>{count++;return new Promise(r=>releases.push(r));}}),session={token:'a',member:{role:'owner'}},other={token:'b',member:{role:'owner'}};
  const first=reader.read({},session),same=reader.read({},session),different=reader.read({},other);assert.equal(first,same);await pause();assert.equal(count,2);
- reader.invalidate(session);const after=reader.read({},session);await pause();assert.equal(count,3);
- releases.forEach((r,i)=>r(i));assert.deepEqual(await Promise.all([first,same,different,after]),[0,0,1,2]);
+ reader.invalidate(session);const after=reader.read({},session);reader.invalidate(session);const latest=reader.read({},session);await pause();assert.equal(count,2);
+ releases[0](0);releases[1](1);await pause();assert.equal(count,3);releases[2](2);
+ assert.deepEqual(await Promise.all([first,same,different,after,latest]),[0,0,1,2,2]);
 });
 test('unknown save outcome replays the exact payload and definitive rejection unlocks correction',async()=>{
  const attempt=createSaveAttempt();let changes=1,builds=0;const build=()=>({id:'original',value:changes,build:++builds});
