@@ -27,6 +27,8 @@ export const REPORTS=[
  template('reorder','Ingredient Order Guide','Operations','Demand less last physical count, converted to supplier order units.',['supplier','item'],'Sales reference period'),
  template('pnl','Profit & loss','Costs','Readiness for a complete income statement including operating expenses.',[],'Accounting period'),
 ];
+// Specialized reports keep their existing interactive screens and calculations.
+export const REPORT_CATALOG=[...REPORTS,template('prep-usage','Prep usage','Operations','Compare prepared-item usage from sales with the previous matching period.',['item'],'Sales period')];
 export const reportRoute=id=>`report-${id}`;
 export const defaultReportFilters=()=>({start:'',end:'',supplier:'all',category:'all',item:'all',area:'all',status:'all',destination:'all',reason:'all',method:'all',weekday:'all',hour:'all',dateBasis:'invoice',query:'',metric:'netSales',chartCompare:'locations',chartInterval:'day',chartView:'line',chartLimit:'10',sort:'',direction:'asc',page:1,pageSize:25});
 const num=v=>v===null||v===undefined||v===''||!Number.isFinite(Number(v))?null:Number(v);

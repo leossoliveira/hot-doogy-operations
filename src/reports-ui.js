@@ -2,7 +2,7 @@ import {withSalesComparison} from './report-analytics.js';
 import {reportChart} from './report-charts.js';
 import {createMultiSelect} from './multi-select.js';
 import {openDatePicker,closeDatePicker,dateTriggerContent} from './date-picker.js';
-import {REPORTS,reportRoute,defaultReportFilters,buildReport,reportCsv,reportDay} from './reports-model.js';
+import {REPORTS,REPORT_CATALOG,reportRoute,defaultReportFilters,buildReport,reportCsv,reportDay} from './reports-model.js';
 import {escape as e} from './model.js';
 import {usDate} from './locale.js';
 const groups=['Sales','Costs','Purchasing','Operations'];
@@ -22,7 +22,7 @@ export function createReportsUI({data,local,state,render,heading,btn,icon,downlo
  const filters=()=>{const id=currentId();if(!saved.has(id))saved.set(id,defaultReportFilters());return saved.get(id);};
  const pickers=Object.fromEntries(['item','category'].map(key=>[key,createMultiSelect({action:`report-${key}-select`,label:labels[key],allSummary:'All',rows:()=>optionsFor(key,REPORTS.find(r=>r.id===currentId())).slice().sort((a,b)=>a.name.localeCompare(b.name)),current:()=>{const value=filters()[key];return value==='all'?value:Array.isArray(value)?value:[value];},onChange:value=>{filters()[key]=value;filters().page=1;render();},beforeOpen:()=>{closeDatePicker(false);Object.entries(pickers).forEach(([other,picker])=>{if(other!==key)picker.close(false);});}})]));
  function catalog(){
-  return heading('Business intelligence','Reports','HOT DOOGY store operations: menu performance, food cost, vendor spending and inventory control.')+`<div class="reports-catalog">${groups.map(group=>`<section class="report-group"><div class="section-title">${icon(icons[group])} ${e(group)}</div><div class="report-cards">${REPORTS.filter(r=>r.group===group&&!['tickets','pnl','cogs'].includes(r.id)).map(r=>`<a class="report-card" href="#${reportRoute(r.id)}" data-route="${reportRoute(r.id)}"><div class="report-card-title"><h2>${e(r.title)}</h2>${icon('arrow-up-right')}</div><p>${e(r.description)}</p><span class="report-tag">${['tickets','pnl','cogs'].includes(r.id)?'Data readiness':r.dateLabel?'Date filters':'Current catalog'}</span></a>`).join('')}</div></section>`).join('')}</div>`;
+  return heading('Business intelligence','Reports','HOT DOOGY store operations: menu performance, food cost, vendor spending and inventory control.')+`<div class="reports-catalog">${groups.map(group=>`<section class="report-group"><div class="section-title">${icon(icons[group])} ${e(group)}</div><div class="report-cards">${REPORT_CATALOG.filter(r=>r.group===group&&!['tickets','pnl','cogs'].includes(r.id)).map(r=>`<a class="report-card" href="#${reportRoute(r.id)}" data-route="${reportRoute(r.id)}"><div class="report-card-title"><h2>${e(r.title)}</h2>${icon('arrow-up-right')}</div><p>${e(r.description)}</p><span class="report-tag">${['tickets','pnl','cogs'].includes(r.id)?'Data readiness':r.dateLabel?'Date filters':'Current catalog'}</span></a>`).join('')}</div></section>`).join('')}</div>`;
  }
  function optionsFor(key,spec){
   const d=data();

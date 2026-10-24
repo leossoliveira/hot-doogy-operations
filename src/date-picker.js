@@ -65,13 +65,14 @@ export function enhanceDateInputs(root=document){
   if(source.dataset.dateStart)continue;
   const end=source.dataset.dateEnd?document.querySelector(source.dataset.dateEnd):null;
   const fields=end?[source,end]:[source];
-  const label=end?'Date':source.labels?.[0]?.textContent.trim()||source.getAttribute('aria-label')||'Date';
+  const label=source.dataset.dateCaption||(end?'Date':source.labels?.[0]?.textContent.trim()||source.getAttribute('aria-label')||'Date');
   const wrapper=document.createElement('span');wrapper.className='hd-date-field';source.before(wrapper);fields.forEach(input=>wrapper.append(input));
   const trigger=document.createElement('button');trigger.type='button';trigger.className='hd-date-trigger';trigger.setAttribute('aria-haspopup','dialog');trigger.setAttribute('aria-expanded','false');wrapper.append(trigger);
   function sync(){
    const time=source.type==='datetime-local'&&source.value?new Intl.DateTimeFormat('en-US',{timeZone:'UTC',hour:'numeric',minute:'2-digit'}).format(new Date(source.value+'Z')):'';
    const summary=compactDateLabel(source.value.slice(0,10),end?end.value:source.value.slice(0,10));
    trigger.innerHTML=dateTriggerContent(source.value.slice(0,10),end?end.value:source.value.slice(0,10),time);
+   if(source.dataset.dateCaption)trigger.querySelector('.hd-date-caption').textContent=source.dataset.dateCaption;
    trigger.setAttribute('aria-label',`${label}${fields.some(input=>input.value)?`: ${summary}${time?' '+time:''}`:''}`);
    trigger.classList.toggle('empty',!fields.some(input=>input.value));trigger.disabled=fields.some(input=>input.disabled);
   }

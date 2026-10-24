@@ -37,7 +37,7 @@ export function createPreparationPlan(local,{rows,fromLocationId,toLocationId,da
     const unit=countUnit(origin||{}),recipe=outputRecipe(row.itemId,recipes);
     const destinationUnit=countUnit(destination||{});
     if(!origin||!destination||!unit||!destinationUnit||destinationUnit.itemUnitId!==unit.itemUnitId||!recipe)throw Error("A prep item is missing an assignment at both locations, a compatible unit, or a single active recipe.");
-    const batch={id:globalThis.crypto.randomUUID(),planId:id,number:`PREP-${date.replaceAll('-','')}-${id.slice(0,5).toUpperCase()}-${index+1}`,itemId:row.itemId,name:row.name||origin.internalName||origin.name,qty:Number(row.qty),uom:unit.name,unitFactor:Number(unit.factor),itemUnitId:unit.itemUnitId,recipeVersionId:recipe.versionId,locationId:fromLocationId,locationName:locations.find(l=>l.id===fromLocationId).name,date,status:'draft',local:true,createdAt:now,referencePeriod,safetyPercent:isQuantity(row.margin)?Number(row.margin):null};
+    const batch={id:globalThis.crypto.randomUUID(),planId:id,number:`PREP-${date.replaceAll('-','')}-${id.slice(0,5).toUpperCase()}-${index+1}`,itemId:row.itemId,name:row.name||origin.internalName||origin.name,qty:Math.ceil(Number(row.qty)),uom:unit.name,unitFactor:Number(unit.factor),itemUnitId:unit.itemUnitId,recipeVersionId:recipe.versionId,locationId:fromLocationId,locationName:locations.find(l=>l.id===fromLocationId).name,date,status:'draft',local:true,createdAt:now,referencePeriod,safetyPercent:isQuantity(row.margin)?Number(row.margin):null};
     batches.push(batch);lines.push({itemId:row.itemId,name:batch.name,qty:batch.qty,uom:batch.uom,batchId:batch.id,itemUnitId:unit.itemUnitId});
   });
   next.production.unshift(...batches);
